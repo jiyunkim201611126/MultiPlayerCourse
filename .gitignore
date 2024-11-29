@@ -1,0 +1,6 @@
+# ignore all files in the directory
+.vs/
+Binaries/
+DerivedDataCache/
+InterMediate/
+Saved/
