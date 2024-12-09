@@ -99,7 +99,7 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 				FString::Printf(TEXT("Failed to create session!"))
 				);
 		}
-		HostButton->SetIsEnabled(true);
+		//HostButton->SetIsEnabled(true);
 	}
 }
 
