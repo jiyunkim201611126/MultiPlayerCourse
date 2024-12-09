@@ -1,8 +1,7 @@
 #include "BlasterPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/PawnMovementComponent.h"
+#include "Blaster/Character/BlasterCharacter.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
@@ -39,11 +38,14 @@ void ABlasterPlayerController::SetupInputComponent()
 
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABlasterPlayerController::Move);
-	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABlasterPlayerController::Look);
-	
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ABlasterPlayerController::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ABlasterPlayerController::StopJumping);
+	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
+	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
+	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ThisClass::EquipButtonPressed);
+	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::CrouchButtonPressed);
+	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ThisClass::AimButtonPressed);
+	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ThisClass::AimButtonReleased);
 }
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -83,5 +85,53 @@ void ABlasterPlayerController::StopJumping()
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		ControlledPawn->StopJumping();
+	}
+}
+
+void ABlasterPlayerController::EquipButtonPressed()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->EquipButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::CrouchButtonPressed()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->CrouchButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::AimButtonPressed()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->AimButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::AimButtonReleased()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->AimButtonReleased();
+		}
 	}
 }
