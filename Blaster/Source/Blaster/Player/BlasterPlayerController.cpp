@@ -76,7 +76,8 @@ void ABlasterPlayerController::Jump()
 {	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ControlledPawn->Jump();
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		BlasterCharacter->Jump();
 	}
 }
 
