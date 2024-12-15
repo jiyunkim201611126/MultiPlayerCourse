@@ -46,6 +46,8 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::CrouchButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ThisClass::AimButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ThisClass::AimButtonReleased);
+	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ThisClass::FireButtonPressed);
+	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::FireButtonReleased);
 }
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -133,6 +135,30 @@ void ABlasterPlayerController::AimButtonReleased()
 		if (BlasterCharacter)
 		{
 			BlasterCharacter->AimButtonReleased();
+		}
+	}
+}
+
+void ABlasterPlayerController::FireButtonPressed()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->FireButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::FireButtonReleased()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
+		if (BlasterCharacter)
+		{
+			BlasterCharacter->FireButtonReleased();
 		}
 	}
 }
