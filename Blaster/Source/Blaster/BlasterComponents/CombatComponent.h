@@ -31,20 +31,21 @@ protected:
 
 	void FireButtonPressed(bool bPressed);
 
-	void LocalFire();
+	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
 
 	UFUNCTION(Server, Reliable)
-	void ServerFire();
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire();
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 
-	void TraceUnderCrosshairs(FHitResult& TraceHitResult);
+	FVector_NetQuantize TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
 private:
 	UPROPERTY()
 	ABlasterCharacter* Character;
-	
+
+	// 상태가 변경되면 OnRep_EquippedWeapon이 자동으로 실행됨
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 

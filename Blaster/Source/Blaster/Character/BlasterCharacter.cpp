@@ -60,7 +60,6 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->Character = this;
-		
 	}
 }
 
@@ -90,7 +89,6 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 }
 
-// 서버에서만 호출되는 함수
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
 	// 서버는 OnRep_OverlappingWeapon를 호출할 수 없기 때문에 따로 Hide 과정을 거침
