@@ -127,11 +127,10 @@ void AWeapon::Fire(const FVector& HitTarget)
 		
 		if (AmmoEjectSocket)
 		{
-			FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
+			const FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(WeaponMesh);
 			
 			// CasingClass를 기반으로 한 액터 스폰
-			UWorld* World = GetWorld();
-			if (World)
+			if (UWorld* World = GetWorld())
 			{
 				World->SpawnActor<ACasing>(
 					CasingClass,

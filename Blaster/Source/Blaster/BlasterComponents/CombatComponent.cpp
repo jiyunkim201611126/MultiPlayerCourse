@@ -7,6 +7,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/HUD/BlasterHUD.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -31,6 +33,59 @@ void UCombatComponent::BeginPlay()
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+	}
+}
+
+void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	SetHUDCrosshairs(DeltaTime);
+}
+
+void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
+{
+	if (Character == nullptr || Character->Controller == nullptr)
+	{
+		return;
+	}
+
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+
+	if (Controller)
+	{
+		HUD = HUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : HUD;
+		if (HUD)
+		{
+			FHUDPackage HUDPackage;
+			if (EquippedWeapon)
+			{
+				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
+				HUDPackage.CrosshairsLeft = EquippedWeapon->CrosshairsLeft;
+				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
+				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
+				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+			}
+			else
+			{
+				HUDPackage.CrosshairsCenter = nullptr;
+				HUDPackage.CrosshairsLeft = nullptr;
+				HUDPackage.CrosshairsRight = nullptr;
+				HUDPackage.CrosshairsTop = nullptr;
+				HUDPackage.CrosshairsBottom = nullptr;
+			}
+			
+			// 크로스헤어 스프레드 계산
+			FVector2D WalkSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
+			FVector2D VelocityMultiplierRange(0.f, 1.f);
+			FVector Velocity = Character->GetVelocity();
+			Velocity.Z = 0;
+			
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+			HUDPackage.CrosshairSpread = CrosshairVelocityFactor;
+			
+			HUD->SetHUDPackage(HUDPackage);
+		}
 	}
 }
 
@@ -84,7 +139,10 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 착용 중인 무기가 없는 경우 바로 리턴
-	if (EquippedWeapon == nullptr) return;
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
 	
 	if (Character && Character->IsLocallyControlled())
 	{
@@ -126,15 +184,13 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
 {
-	// 뷰포트 사이즈를 통해 정가운데 위치 계산
-	FVector2D ViewportSize;
-	if (GEngine && GEngine->GameViewport)
+	if (!HUD)
 	{
-		GEngine->GameViewport->GetViewportSize(ViewportSize);
+		return FVector_NetQuantize::ZeroVector;
 	}
 	
-	FVector2D CrosshairLocation(ViewportSize.X / 2.f, ViewportSize.Y / 2.f);
-
+	const FVector2D CrosshairLocation = HUD->GetCrosshairLocation();
+	
 	// 2D 화면 좌표를 3D 월드 좌표로 변환
 	FVector CrosshairWorldPosition;		// 크로스헤어 시작 위치
 	FVector CrosshairWorldDirection;	// 크로스헤어가 향하는 방향
@@ -146,8 +202,8 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 	);
 
 	// 시작점과 끝점 계산
-	FVector Start = CrosshairWorldPosition;
-	FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
+	const FVector Start = CrosshairWorldPosition;
+	const FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 	
 	// HitTarget 추적 시작
 	if (bScreenToWorld)
@@ -171,11 +227,6 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 	}
 }
 
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr)
@@ -188,8 +239,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 
 	// Attach Weapon to RightHandSocket
-	const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
+	if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
 	{
 		HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
 	}

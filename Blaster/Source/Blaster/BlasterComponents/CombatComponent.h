@@ -41,9 +41,17 @@ protected:
 
 	FVector_NetQuantize TraceUnderCrosshairs(FHitResult& TraceHitResult);
 
+	void SetHUDCrosshairs(float DeltaTime);
+
 private:
 	UPROPERTY()
 	ABlasterCharacter* Character;
+
+	// 크로스헤어를 그리기 위한 Controller와 HUD 선언
+	UPROPERTY()
+	class ABlasterPlayerController* Controller;
+	UPROPERTY()
+	class ABlasterHUD* HUD;
 
 	// 상태가 변경되면 OnRep_EquippedWeapon이 자동으로 실행됨
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
@@ -60,4 +68,9 @@ private:
 
 	UPROPERTY()
 	bool bFireButtonPressed;
+
+	/**
+	 * HUD and crosshairs
+	 */
+	float CrosshairVelocityFactor;
 };
