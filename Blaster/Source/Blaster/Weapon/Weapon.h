@@ -27,6 +27,25 @@ public:
 	void ShowPickupWidget(const bool bShowWidget);
 	virtual void Fire(const FVector& HitTarget);
 
+	/**
+	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어
+	 */
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsCenter;
+	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsLeft;
+	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsRight;
+	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsTop;
+	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	UTexture2D* CrosshairsBottom;
+
 protected:
 	virtual void BeginPlay() override;
 
