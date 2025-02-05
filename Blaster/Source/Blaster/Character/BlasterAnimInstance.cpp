@@ -52,9 +52,7 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 	if (bWeaponEquipped && EquippedWeapon && EquippedWeapon->GetWeaponMesh() && BlasterCharacter->GetMesh())
 	{
-		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(
-			FName("LeftHandSocket"),
-			RTS_World);
+		LeftHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"),RTS_World);
 
 		FVector OutPosition;
 		FRotator OutRotation;
@@ -68,5 +66,16 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 
 		LeftHandTransform.SetLocation(OutPosition);
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
+
+		// 자신의 캐릭터만 총구를 정렬
+		if (BlasterCharacter->IsLocallyControlled())
+		{
+			// 오른손에서 총구 방향으로 향하는 벡터 계산
+			bLocallyControlled = true;
+			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"),RTS_World);
+			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
+				RightHandTransform.GetLocation(),
+				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - BlasterCharacter->GetHitTarget()));
+		}
 	}
 }

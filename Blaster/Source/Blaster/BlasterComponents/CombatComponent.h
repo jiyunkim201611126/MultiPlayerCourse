@@ -67,10 +67,13 @@ private:
 	float AimWalkSpeed;
 
 	UPROPERTY()
-	bool bFireButtonPressed;
+	bool bFireButtonPressed;	
 
 	/**
 	 * HUD and crosshairs
 	 */
 	float CrosshairVelocityFactor;
+	float CrosshairInAirFactor;
+
+	FVector HitTarget;
 };
