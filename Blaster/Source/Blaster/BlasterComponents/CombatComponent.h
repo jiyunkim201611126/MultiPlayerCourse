@@ -76,4 +76,13 @@ private:
 	float CrosshairInAirFactor;
 
 	FVector HitTarget;
+
+	/**
+	 * Aiming and FOV
+	 */
+	// 카메라 Field of view; BeginPlay에서 카메라의 base FOV를 설정
+	float DefaultFOV;
+	float CurrentFOV;
+
+	void InterpFOV(float DeltaTime);
 };

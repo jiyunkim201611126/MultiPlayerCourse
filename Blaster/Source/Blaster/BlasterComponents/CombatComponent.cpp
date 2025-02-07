@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/HUD/BlasterHUD.h"
+#include "Camera/CameraComponent.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -33,18 +34,32 @@ void UCombatComponent::BeginPlay()
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
+
+		// 기본 FOV와 현재 FOV 설정
+		if (Character->GetFollowCamera())
+		{
+			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
+			CurrentFOV = DefaultFOV;
+		}
 	}
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	SetHUDCrosshairs(DeltaTime);
+	
+	// 자신의 캐릭터에만 조작할 것들
 	if (Character && Character->IsLocallyControlled())
 	{
+		// 총구가 제대로 된 방향을 가리키도록 설정해줌
 		FHitResult HitResult;
 		HitTarget = TraceUnderCrosshairs(HitResult);
+
+		// 크로스헤어 상태 조작
+		SetHUDCrosshairs(DeltaTime);
+
+		// 조준 상태에 따른 카메라 FOV 조작
+		InterpFOV(DeltaTime);
 	}
 }
 
@@ -101,6 +116,39 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			
 			HUD->SetHUDPackage(HUDPackage);
 		}
+	}
+}
+
+void UCombatComponent::InterpFOV(float DeltaTime)
+{
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
+
+	// 조준 상태에 따라 카메라의 FOV를 조작
+	if (bAiming)
+	{
+		CurrentFOV =								// CurrentFOV를
+			FMath::FInterpTo(						// 보간한다
+			CurrentFOV,								// 현재 값에서부터
+			EquippedWeapon->GetZoomedFOV(),			// EquippedWeapon의 ZoomedFOV로
+			DeltaTime,								// DeltaTime에 따라
+			EquippedWeapon->GetZoomInterpSpeed());	// ZoomInterpSpeed의 속도로
+	}
+	else
+	{
+		CurrentFOV =								// CurrentFOV를
+			FMath::FInterpTo(						// 보간한다
+			CurrentFOV,								// 현재 값에서부터
+			DefaultFOV,								// DefaultFOV(카메라의 기본 FOV)로
+			DeltaTime,								// DeltaTime에 따라
+			EquippedWeapon->GetZoomInterpSpeed());	// ZoomInterpSpeed의 속도로
+	}
+
+	if (Character && Character->GetFollowCamera())
+	{
+		Character->GetFollowCamera()->SetFieldOfView(CurrentFOV);
 	}
 }
 
