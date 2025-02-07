@@ -95,14 +95,13 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				HUDPackage.CrosshairsBottom = nullptr;
 			}
 			
-			// 크로스헤어 스프레드 계산
+			// 이동속도에 대한 크로스헤어 스프레드 (현재 이동속도를 0 ~ 1 사이로 Clamp)
 			FVector2D WalkSpeedRange(0.f, Character->GetCharacterMovement()->MaxWalkSpeed);
 			FVector2D VelocityMultiplierRange(0.f, 1.f);
 			FVector Velocity = Character->GetVelocity();
-			Velocity.Z = 0;
-			
-			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size());
+			CrosshairVelocityFactor = FMath::GetMappedRangeValueClamped(WalkSpeedRange, VelocityMultiplierRange, Velocity.Size2D());
 
+			// 체공에 대한 크로스헤어 스프레드
 			if (Character->GetCharacterMovement()->IsFalling())
 			{
 				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 2.25f, DeltaTime, 2.25f);
@@ -111,8 +110,25 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			{
 				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 			}
-			
-			HUDPackage.CrosshairSpread = CrosshairVelocityFactor + CrosshairInAirFactor;
+
+			// 사격에 대한 스프레드를 0으로 수렴, 수렴 속도는 조준 상태에 따라 다름.
+			const float ShootingInterpSpeed = bAiming ? 100.f : 10.f;
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+
+			// 조준에 대한 스프레드를 현재 착용 무기의 정확도에 반비례하게 계산
+			// 현재는 무기가 없으면 크로스헤어도 없으나 나중에 생길 수도 있으니 일단 없는 것도 구현
+			const float TargetAimFactor = bAiming ? (EquippedWeapon ? EquippedWeapon->GetZoomAccurate() : 0.6f) : 0.f;
+			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, TargetAimFactor, DeltaTime, 30.f);
+
+			// 최종 스프레드 수치 계산
+			const float CrosshairSpreadResult =
+				CrosshairVelocityFactor
+				+ CrosshairInAirFactor
+				- CrosshairAimFactor
+				+ CrosshairShootingFactor;
+
+			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지
+			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
 			
 			HUD->SetHUDPackage(HUDPackage);
 		}
@@ -196,6 +212,13 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 		// 사격 시작
 		FHitResult HitResult;
 		LocalFire(TraceUnderCrosshairs(HitResult));
+
+		if (EquippedWeapon && !bAiming)
+		{
+			// 비조준 사격 시 탄퍼짐 수치 계산
+			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
+			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, EquippedWeapon->GetHipFireAccurateMaxSubtract());
+		}
 	}
 }
 

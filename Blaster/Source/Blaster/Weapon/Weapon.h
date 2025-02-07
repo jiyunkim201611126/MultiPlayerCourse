@@ -28,7 +28,7 @@ public:
 	virtual void Fire(const FVector& HitTarget);
 
 	/**
-	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어
+	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어 지원할 수 있게 EditAnywhere
 	 */
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
@@ -55,6 +55,22 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float ZoomInterpSpeed = 20.f;
+
+	/**
+	 * 크로스헤어 스프레드 관련 변수
+	 */
+
+	// 조준 사격 정확도, 높을수록 이동하거나 점프 도중에도 정확도가 상승
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float ZoomAccurate = 0.6f;
+
+	// 비조준 사격 시 하락하는 정확도, 높을수록 크게 빗나감
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float HipFireAccurateSubtract = 0.75f;
+	
+	// 비조준 사격 시 하락하는 정확도의 최대치
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float HipFireAccurateMaxSubtract = 3.f;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -106,4 +122,7 @@ public:
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetZoomedFOV() const { return ZoomedFOV; }
 	FORCEINLINE float GetZoomInterpSpeed() const { return ZoomInterpSpeed; }
+	FORCEINLINE float GetZoomAccurate() const { return ZoomAccurate; }
+	FORCEINLINE float GetHipFireAccurateSubtract() const { return HipFireAccurateSubtract; }
+	FORCEINLINE float GetHipFireAccurateMaxSubtract() const { return HipFireAccurateMaxSubtract; }
 };

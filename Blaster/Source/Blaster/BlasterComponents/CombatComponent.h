@@ -72,8 +72,10 @@ private:
 	/**
 	 * HUD and crosshairs
 	 */
-	float CrosshairVelocityFactor;
-	float CrosshairInAirFactor;
+	float CrosshairVelocityFactor = 0.f;
+	float CrosshairInAirFactor = 0.f;
+	float CrosshairAimFactor = 0.f;
+	float CrosshairShootingFactor = 0.f;
 
 	FVector HitTarget;
 
