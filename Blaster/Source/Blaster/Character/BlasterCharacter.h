@@ -93,6 +93,7 @@ private:
 	FRotator ProxyRotation;
 	float ProxyYaw;
 	float TimeSinceLastMovementReplication;
+	float CalculateSpeed();
 
 protected:
 	virtual void BeginPlay() override;
