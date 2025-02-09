@@ -16,6 +16,7 @@ class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCro
 public:
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
+	virtual void OnRep_ReplicatedMovement() override;
 	void CalculateAO_Pitch();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
@@ -37,6 +38,7 @@ public:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+
 
 protected:
 	void PlayHitReactMontage();
