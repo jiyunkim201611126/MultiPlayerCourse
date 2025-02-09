@@ -115,7 +115,7 @@ void AWeapon::ShowPickupWidget(const bool bShowWidget)
 	}
 }
 
-void AWeapon::Fire(const FVector& HitTarget)
+void AWeapon::PlayFireMontage() const
 {
 	if (FireAnimation)
 	{
@@ -140,4 +140,8 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
+}
+
+void AWeapon::Fire(const FVector& HitTarget)
+{
 }

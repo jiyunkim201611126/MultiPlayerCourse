@@ -8,7 +8,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
-#include "Blaster/HUD/BlasterHUD.h"
 #include "Camera/CameraComponent.h"
 
 UCombatComponent::UCombatComponent()
@@ -77,7 +76,6 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 		HUD = HUD == nullptr ? Cast<ABlasterHUD>(Controller->GetHUD()) : HUD;
 		if (HUD)
 		{
-			FHUDPackage HUDPackage;
 			if (EquippedWeapon)
 			{
 				HUDPackage.CrosshairsCenter = EquippedWeapon->CrosshairsCenter;
@@ -111,21 +109,21 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				CrosshairInAirFactor = FMath::FInterpTo(CrosshairInAirFactor, 0.f, DeltaTime, 30.f);
 			}
 
-			// 사격에 대한 스프레드를 0으로 수렴, 수렴 속도는 조준 상태에 따라 다름.
-			const float ShootingInterpSpeed = bAiming ? 100.f : 10.f;
-			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
-
-			// 조준에 대한 스프레드를 현재 착용 무기의 정확도에 반비례하게 계산
+			// 조준에 대한 스프레드
 			// 현재는 무기가 없으면 크로스헤어도 없으나 나중에 생길 수도 있으니 일단 없는 것도 구현
 			const float TargetAimFactor = bAiming ? (EquippedWeapon ? EquippedWeapon->GetZoomAccurate() : 0.6f) : 0.f;
 			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, TargetAimFactor, DeltaTime, 30.f);
 
+			// 사격에 대한 스프레드를 0으로 수렴, 수렴 속도는 조준 상태에 따라 다름.
+			const float ShootingInterpSpeed = bAiming ? 100.f : 10.f;
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+
 			// 최종 스프레드 수치 계산
 			const float CrosshairSpreadResult =
-				CrosshairVelocityFactor
-				+ CrosshairInAirFactor
-				- CrosshairAimFactor
-				+ CrosshairShootingFactor;
+				CrosshairVelocityFactor			// 이동 속도에 비례해 +
+				+ CrosshairInAirFactor			// 체공 중 +
+				+ CrosshairShootingFactor		// 사격 시 +
+				- CrosshairAimFactor;			// 조준 시 -
 
 			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지
 			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
@@ -235,9 +233,10 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 		// 캐릭터 사격 애니메이션 재생
 		Character->PlayFireMontage(bAiming);
 
-		// 무기 사격 함수 호출, 다른 클라이언트는 아직 반영되지 않음
-		EquippedWeapon->Fire(TraceHitTarget);
-
+		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->PlayFireMontage();
+		
 		// 서버에 사격 요청
 		ServerFire(TraceHitTarget);
 	}
@@ -246,26 +245,27 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
-	// MulticastFire는 서버가 실질적으로 클라이언트들에게 함수를 원격 호출해주는 함수
-	// 관여하는 변수 중 Replicated 속성이 없어 함수를 한 번 거쳐 구현
 	MulticastFire(TraceHitTarget);
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
-	// 착용 중인 무기가 없는 경우 바로 리턴
-	if (EquippedWeapon == nullptr)
+	if (EquippedWeapon == nullptr || Character == nullptr)
 	{
 		return;
 	}
 
-	// 내 캐릭터인 경우 이미 사격을 시작하고 호출되었기 때문에, 내 캐릭터가 아닌 경우만 사격 함수 호출
-	if (Character && !Character->IsLocallyControlled())
+	// 자신의 캐릭터는 이미 사격 함수를 호출했으므로, 아닌 경우만 호출
+	if (!Character->IsLocallyControlled())
 	{
+		// 애니메이션만 재생
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(TraceHitTarget);
+		EquippedWeapon->PlayFireMontage();
 	}
+
+	// 모두에게 Projectile 스폰
+	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -288,7 +288,14 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 	);
 
 	// 시작점과 끝점 계산
-	const FVector Start = CrosshairWorldPosition;
+	FVector Start = CrosshairWorldPosition;
+
+	if (Character)
+	{
+		float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+		Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+	}
+	
 	const FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
 	
 	// HitTarget 추적 시작
@@ -301,6 +308,16 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 			End,
 			ECollisionChannel::ECC_Visibility
 			);
+
+		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		{
+			HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
+		}
+		else
+		{
+			HUDPackage.CrosshairsColor = FLinearColor(1.f, 1.f, 1.f, 0.7f);
+		}
 	}
 	
 	if (TraceHitResult.bBlockingHit)

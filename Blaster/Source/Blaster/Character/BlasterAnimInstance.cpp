@@ -73,9 +73,12 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			// 오른손에서 총구 방향으로 향하는 벡터 계산
 			bLocallyControlled = true;
 			FTransform RightHandTransform = EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("Hand_R"),RTS_World);
-			RightHandRotation = UKismetMathLibrary::FindLookAtRotation(
+
+			FRotator LookAtRotation =
+				UKismetMathLibrary::FindLookAtRotation(
 				RightHandTransform.GetLocation(),
 				RightHandTransform.GetLocation() + (RightHandTransform.GetLocation() - BlasterCharacter->GetHitTarget()));
+			RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaSeconds, 30.f);
 		}
 	}
 }
