@@ -143,8 +143,9 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
 	AimOffset(DeltaTime);
+	
 	HideCameraIfCharacterClose();
 }
 
@@ -180,6 +181,11 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 
+	CalculateAO_Pitch();
+}
+
+void ABlasterCharacter::CalculateAO_Pitch()
+{
 	AO_Pitch = GetBaseAimRotation().Pitch;
 	if (AO_Pitch > 90.f && !IsLocallyControlled())
 	{
@@ -188,6 +194,10 @@ void ABlasterCharacter::AimOffset(float DeltaTime)
 		FVector2D OutRange(-90.f, 0.f);
 		AO_Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AO_Pitch);
 	}
+}
+
+void ABlasterCharacter::SimProxiesTurn()
+{
 }
 
 void ABlasterCharacter::TurnInPlace(float DeltaTime)

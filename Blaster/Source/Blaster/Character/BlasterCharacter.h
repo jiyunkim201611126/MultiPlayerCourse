@@ -16,6 +16,7 @@ class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCro
 public:
 	ABlasterCharacter();
 	virtual void Tick(float DeltaTime) override;
+	void CalculateAO_Pitch();
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
@@ -84,10 +85,18 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
+	bool bRotateRootBone;
+	float TurnThreshold = 0.5f;
+	FRotator ProxyRotationLastFrame;
+	FRotator ProxyRotation;
+	float ProxyYaw;
+	float TimeSinceLastMovementReplication;
+
 protected:
 	virtual void BeginPlay() override;
 
 	void AimOffset(float DeltaTime);
+	void SimProxiesTurn();
 	
 public:
 	void SetOverlappingWeapon(AWeapon* Weapon);
@@ -99,4 +108,5 @@ public:
 	FORCEINLINE ETurningInPlace GetTurningInPlace() const { return TurningInPlace; }
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 };
