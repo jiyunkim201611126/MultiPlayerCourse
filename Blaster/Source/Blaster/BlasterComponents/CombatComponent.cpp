@@ -338,7 +338,9 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 
 	// 무기 장착, EquippedWeapon의 UPROPERTY로 인해 OnRep_EquippedWeapon이 자동 실행
+	// 하지만 서버에선 자동으로 실행되지 않으므로 서버에서도 알 수 있게 아래에서 한 번 실행
 	EquippedWeapon = WeaponToEquip;
+	OnRep_EquippedWeapon();
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 
 	// Attach Weapon to RightHandSocket
