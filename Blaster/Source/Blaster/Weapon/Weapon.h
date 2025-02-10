@@ -72,6 +72,15 @@ public:
 	// 비조준 사격 시 하락하는 정확도의 최대치
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float HipFireAccurateMaxSubtract = 3.f;
+
+	/**
+	 * Automatic fire
+	 */
+	UPROPERTY(EditAnywhere, Category = Combat)
+	float FireDelay = 0.15f;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	bool bAutomatic = true;
 	
 protected:
 	virtual void BeginPlay() override;

@@ -9,6 +9,7 @@
 #include "DrawDebugHelpers.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Camera/CameraComponent.h"
+#include "TimerManager.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -59,6 +60,187 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 		// 조준 상태에 따른 카메라 FOV 조작
 		InterpFOV(DeltaTime);
+	}
+}
+
+void UCombatComponent::FireButtonPressed(bool bPressed)
+{
+	if (EquippedWeapon == nullptr || Character == nullptr)
+	{
+		return;
+	}
+	
+	// 일단 바로 변경, 아직 다른 클라이언트는 반영되지 않음
+	bFireButtonPressed = bPressed;
+
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
+
+void UCombatComponent::Fire()
+{
+	if (bCanFire)
+	{
+		bCanFire = false;
+		
+		// 사격 시작
+		FHitResult HitResult;
+		LocalFire(TraceUnderCrosshairs(HitResult));
+
+		if (EquippedWeapon && !bAiming)
+		{
+			// 비조준 사격 시 탄퍼짐 수치 계산
+			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
+			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, EquippedWeapon->GetHipFireAccurateMaxSubtract());
+		}
+	
+		// 일정 시간 후 다시 발사되도록 타이머 시작
+		StartFireTimer();
+	}
+}
+
+void UCombatComponent::StartFireTimer()
+{
+	if (EquippedWeapon == nullptr || Character == nullptr)
+	{
+		return;
+	}
+	
+	Character->GetWorldTimerManager().SetTimer(
+		FireTimer,							// 해당 타이머를 추적하는 변수
+		this,
+		&UCombatComponent::FireTimerFinished,	// 시간 경과 후 호출될 함수
+		EquippedWeapon->FireDelay				// 해당 시간
+		);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
+	
+	// FireDelay만큼의 시간 이후 사격 가능 상태로 변경
+	// 이로 인해 단발 무기는 꾹 누르고 있어도 발사가 안 됨
+	bCanFire = true;
+	
+	// FireDelay만큼의 시간 후, 아직 마우스를 누르고 있으면서 연사 무기인 경우 다시 Fire가 실행
+	if (bFireButtonPressed && EquippedWeapon->bAutomatic)
+	{
+		Fire();
+	}
+}
+
+void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 착용 중인 무기가 없는 경우 바로 리턴
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
+	
+	if (Character && Character->IsLocallyControlled())
+	{
+		// 캐릭터 사격 애니메이션 재생
+		Character->PlayFireMontage(bAiming);
+
+		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->PlayFireMontage();
+		
+		// 서버에 사격 요청
+		ServerFire(TraceHitTarget);
+	}
+}
+
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
+	MulticastFire(TraceHitTarget);
+}
+
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
+{
+	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
+	if (EquippedWeapon == nullptr || Character == nullptr)
+	{
+		return;
+	}
+
+	// 자신의 캐릭터는 이미 사격 함수를 호출했으므로, 아닌 경우만 호출
+	if (!Character->IsLocallyControlled())
+	{
+		// 애니메이션만 재생
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->PlayFireMontage();
+	}
+
+	// 모두에게 Projectile 스폰
+	EquippedWeapon->Fire(TraceHitTarget);
+}
+
+FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
+{
+	if (!HUD)
+	{
+		return FVector_NetQuantize::ZeroVector;
+	}
+	
+	const FVector2D CrosshairLocation = HUD->GetCrosshairLocation();
+	
+	// 2D 화면 좌표를 3D 월드 좌표로 변환
+	FVector CrosshairWorldPosition;		// 크로스헤어 시작 위치
+	FVector CrosshairWorldDirection;	// 크로스헤어가 향하는 방향
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairLocation,
+		CrosshairWorldPosition,
+		CrosshairWorldDirection
+	);
+
+	// 시작점과 끝점 계산
+	FVector Start = CrosshairWorldPosition;
+
+	if (Character)
+	{
+		float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
+		Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
+	}
+	
+	const FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
+	
+	// HitTarget 추적 시작
+	if (bScreenToWorld)
+	{
+		// 두 벡터 중간에 Visibility 채널로 충돌 검출
+		GetWorld()->LineTraceSingleByChannel(
+			TraceHitResult,
+			Start,
+			End,
+			ECollisionChannel::ECC_Visibility
+			);
+
+		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우
+		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		{
+			HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
+		}
+		else
+		{
+			HUDPackage.CrosshairsColor = FLinearColor(1.f, 1.f, 1.f, 0.7f);
+		}
+	}
+	
+	if (TraceHitResult.bBlockingHit)
+	{
+		return TraceHitResult.ImpactPoint;
+	}
+	else
+	{
+		return End;
 	}
 }
 
@@ -191,145 +373,6 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
-void UCombatComponent::OnRep_EquippedWeapon()
-{
-	if (EquippedWeapon && Character)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-		Character->bUseControllerRotationYaw = true;
-	}
-}
-
-void UCombatComponent::FireButtonPressed(bool bPressed)
-{
-	// 일단 바로 변경, 아직 다른 클라이언트는 반영되지 않음
-	bFireButtonPressed = bPressed;
-
-	if (bFireButtonPressed)
-	{
-		// 사격 시작
-		FHitResult HitResult;
-		LocalFire(TraceUnderCrosshairs(HitResult));
-
-		if (EquippedWeapon && !bAiming)
-		{
-			// 비조준 사격 시 탄퍼짐 수치 계산
-			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
-			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, EquippedWeapon->GetHipFireAccurateMaxSubtract());
-		}
-	}
-}
-
-void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
-{
-	// 착용 중인 무기가 없는 경우 바로 리턴
-	if (EquippedWeapon == nullptr)
-	{
-		return;
-	}
-	
-	if (Character && Character->IsLocallyControlled())
-	{
-		// 캐릭터 사격 애니메이션 재생
-		Character->PlayFireMontage(bAiming);
-
-		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
-		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->PlayFireMontage();
-		
-		// 서버에 사격 요청
-		ServerFire(TraceHitTarget);
-	}
-}
-
-void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
-	MulticastFire(TraceHitTarget);
-}
-
-void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
-{
-	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
-	if (EquippedWeapon == nullptr || Character == nullptr)
-	{
-		return;
-	}
-
-	// 자신의 캐릭터는 이미 사격 함수를 호출했으므로, 아닌 경우만 호출
-	if (!Character->IsLocallyControlled())
-	{
-		// 애니메이션만 재생
-		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->PlayFireMontage();
-	}
-
-	// 모두에게 Projectile 스폰
-	EquippedWeapon->Fire(TraceHitTarget);
-}
-
-FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
-{
-	if (!HUD)
-	{
-		return FVector_NetQuantize::ZeroVector;
-	}
-	
-	const FVector2D CrosshairLocation = HUD->GetCrosshairLocation();
-	
-	// 2D 화면 좌표를 3D 월드 좌표로 변환
-	FVector CrosshairWorldPosition;		// 크로스헤어 시작 위치
-	FVector CrosshairWorldDirection;	// 크로스헤어가 향하는 방향
-	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
-		UGameplayStatics::GetPlayerController(this, 0),
-		CrosshairLocation,
-		CrosshairWorldPosition,
-		CrosshairWorldDirection
-	);
-
-	// 시작점과 끝점 계산
-	FVector Start = CrosshairWorldPosition;
-
-	if (Character)
-	{
-		float DistanceToCharacter = (Character->GetActorLocation() - Start).Size();
-		Start += CrosshairWorldDirection * (DistanceToCharacter + 100.f);
-	}
-	
-	const FVector End = Start + CrosshairWorldDirection * TRACE_LENGTH;
-	
-	// HitTarget 추적 시작
-	if (bScreenToWorld)
-	{
-		// 두 벡터 중간에 Visibility 채널로 충돌 검출
-		GetWorld()->LineTraceSingleByChannel(
-			TraceHitResult,
-			Start,
-			End,
-			ECollisionChannel::ECC_Visibility
-			);
-
-		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우
-		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
-		{
-			HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
-		}
-		else
-		{
-			HUDPackage.CrosshairsColor = FLinearColor(1.f, 1.f, 1.f, 0.7f);
-		}
-	}
-	
-	if (TraceHitResult.bBlockingHit)
-	{
-		return TraceHitResult.ImpactPoint;
-	}
-	else
-	{
-		return End;
-	}
-}
-
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (Character == nullptr || WeaponToEquip == nullptr)
@@ -350,4 +393,13 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 
 	EquippedWeapon->SetOwner(Character);
+}
+
+void UCombatComponent::OnRep_EquippedWeapon()
+{
+	if (EquippedWeapon && Character)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+		Character->bUseControllerRotationYaw = true;
+	}
 }

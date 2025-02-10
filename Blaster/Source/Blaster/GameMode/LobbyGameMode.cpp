@@ -6,7 +6,7 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
 	Super::PostLogin(NewPlayer);
 
 	int32 NumberOfPlayer = GameState.Get()->PlayerArray.Num();
-	if (NumberOfPlayer == 3)
+	if (NumberOfPlayer == 2)
 	{
 		UWorld* World = GetWorld();
 		if (World)

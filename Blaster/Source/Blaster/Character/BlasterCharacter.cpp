@@ -66,11 +66,45 @@ void ABlasterCharacter::PostInitializeComponents()
 	}
 }
 
+void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
 void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+}
+
+void ABlasterCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// Server Update
+	UpdatePlayerName();
+}
+
+void ABlasterCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	// Client Update
+	UpdatePlayerName();
+}
+
+void ABlasterCharacter::UpdatePlayerName() const
+{
+	if (OverheadWidget)
+	{
+		OverheadWidget->InitWidget();
+
+		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
+		{
+			Widget->SetPlayerName(GetPlayerState()->GetPlayerName());
+		}
+	}
 }
 
 void ABlasterCharacter::PlayFireMontage(bool bAiming)
@@ -317,40 +351,6 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 			Combat->EquippedWeapon->GetWeaponMesh()->bOwnerNoSee = false;
 		}
 	}
-}
-
-void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
-
-void ABlasterCharacter::UpdatePlayerName()
-{
-	if (OverheadWidget)
-	{
-		OverheadWidget->InitWidget();
-
-		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
-		{
-			Widget->SetPlayerName(GetPlayerState()->GetPlayerName());
-		}
-	}
-}
-
-void ABlasterCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-
-	// Server Update
-	UpdatePlayerName();
-}
-
-void ABlasterCharacter::OnRep_PlayerState()
-{
-	Super::OnRep_PlayerState();
-
-	// Client Update
-	UpdatePlayerName();
 }
 
 void ABlasterCharacter::EquipButtonPressed()

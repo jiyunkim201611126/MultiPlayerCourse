@@ -34,7 +34,10 @@ private:
 	UParticleSystemComponent* TracerComponent;
 
 	UPROPERTY(EditAnywhere)
-	UParticleSystem* ImpactParticle;
+	UParticleSystem* DefaultImpactParticle;
+	
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* HitCharacterImpactParticle;
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;

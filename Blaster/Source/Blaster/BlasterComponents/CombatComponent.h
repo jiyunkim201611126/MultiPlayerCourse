@@ -15,8 +15,8 @@ class BLASTER_API UCombatComponent : public UActorComponent
 public:	
 	UCombatComponent();
 	friend class ABlasterCharacter;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	
@@ -31,6 +31,8 @@ protected:
 	void OnRep_EquippedWeapon();
 
 	void FireButtonPressed(bool bPressed);
+	
+	void Fire();
 
 	void LocalFire(const FVector_NetQuantize& TraceHitTarget);
 
@@ -54,7 +56,7 @@ private:
 	UPROPERTY()
 	class ABlasterHUD* HUD;
 
-	// 상태가 변경되면 OnRep_EquippedWeapon이 자동으로 실행됨
+	// 상태가 변경되면 클라이언트에서만 OnRep_EquippedWeapon이 자동으로 실행됨
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	AWeapon* EquippedWeapon;
 
@@ -90,4 +92,14 @@ private:
 	float CurrentFOV;
 
 	void InterpFOV(float DeltaTime);
+
+	/**
+	 * Automatic fire
+	 */
+	// 타이머 추적용
+	FTimerHandle FireTimer;
+	bool bCanFire = true;
+
+	void StartFireTimer();
+	void FireTimerFinished();
 };
