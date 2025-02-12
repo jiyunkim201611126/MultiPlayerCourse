@@ -15,12 +15,16 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 
 public:
 	ABlasterPlayerController();
+	void SetHUDHealth(float Health, float MaxHealth);
 	
 protected:
 	virtual void BeginPlay() override;
+	void InitDefaultSettings();
 	virtual void SetupInputComponent() override;
 
 private:
+	class ABlasterHUD* BlasterHUD;
+	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputMappingContext> BlasterContext;
 

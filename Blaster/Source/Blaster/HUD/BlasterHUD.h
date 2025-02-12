@@ -27,6 +27,15 @@ public:
 	virtual void DrawHUD() override;
 	FVector2D GetCrosshairLocation();
 
+	UPROPERTY(EditAnywhere, Category = "Player State")
+	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+	
+	class UCharacterOverlay* CharacterOverlay;
+
+protected:
+	virtual void BeginPlay() override;
+	void AddCharacterOverlay();
+
 private:
 	FHUDPackage HUDPackage;
 

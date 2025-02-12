@@ -30,9 +30,6 @@ public:
 	
 	void PlayFireMontage(bool bAiming);
 
-	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastHit();
-
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
 	void AimButtonPressed();
@@ -98,12 +95,31 @@ private:
 	float TimeSinceLastMovementReplication;
 	float CalculateSpeed();
 
+	/**
+	 * Player health 
+	 */
+
+	UPROPERTY(EditAnywhere, Category = "Player Stats")
+	float MaxHealth = 100.f;
+
+	UPROPERTY(ReplicatedUsing = OnRep_Health, VisibleAnywhere, Category = "Player Stats")
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
+	class ABlasterPlayerController* BlasterPlayerController;
+
 protected:
 	virtual void BeginPlay() override;
 
 	void AimOffset(float DeltaTime);
 	void SimProxiesTurn();
-
+	
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	void UpdateHUDHealth();
+	
 public:
 	// Getter, Setter
 	void SetOverlappingWeapon(AWeapon* Weapon);

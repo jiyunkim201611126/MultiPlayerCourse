@@ -41,7 +41,10 @@ void AProjectile::BeginPlay()
 		);
 	}
 
-	CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+	if (HasAuthority())
+	{
+		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+	}
 }
 
 void AProjectile::OnHit(UPrimitiveComponent* HitComp,
@@ -50,9 +53,8 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp,
 	FVector NormalImpulse,
 	const FHitResult& Hit)
 {
-	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
+	if (APawn* HitActor = Cast<APawn>(OtherActor))
 	{
-		BlasterCharacter->MulticastHit();
 		DefaultImpactParticle = HitCharacterImpactParticle;
 	}
 

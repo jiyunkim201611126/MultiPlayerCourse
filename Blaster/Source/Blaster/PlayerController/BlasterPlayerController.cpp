@@ -2,6 +2,8 @@
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/HUD/BlasterHUD.h"
+#include "Blaster/HUD/CharacterOverlay.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
@@ -17,6 +19,31 @@ void ABlasterPlayerController::BeginPlay()
 		return;
 	}
 
+	InitDefaultSettings();
+
+	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+}
+
+void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	bool bHUDValid = BlasterHUD
+		&& BlasterHUD->CharacterOverlay
+		&& BlasterHUD->CharacterOverlay->HealthBar
+		&& BlasterHUD->CharacterOverlay->HealthTextBlock;
+	
+	if (bHUDValid)
+	{
+		const float HealthPercent = Health / MaxHealth;
+		BlasterHUD->CharacterOverlay->UpdateHealthBar(HealthPercent);
+		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
+		BlasterHUD->CharacterOverlay->UpdateHealthText(HealthText);
+	}
+}
+
+void ABlasterPlayerController::InitDefaultSettings()
+{
 	check(BlasterContext);
 
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
@@ -28,7 +55,6 @@ void ABlasterPlayerController::BeginPlay()
 
 	FInputModeGameOnly InputModeData;
 	InputModeData.SetConsumeCaptureMouseDown(false);
-	
 	SetInputMode(InputModeData);
 }
 

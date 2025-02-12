@@ -23,7 +23,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 		{
 			// ProjectileClass를 기반으로 한 액터 스폰
 			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
+			SpawnParams.Owner = this;
 			SpawnParams.Instigator = InstigatorPawn;
 			UWorld* World = GetWorld();
 			if (World)
