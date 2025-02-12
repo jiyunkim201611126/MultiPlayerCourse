@@ -21,6 +21,8 @@
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Blaster/Blaster.h"
+#include "Blaster/Weapon/DamageType/BaseDamageType.h"
+#include "Engine/DamageEvents.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -314,6 +316,13 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	// 서버에서 실행되는 함수
 	// Health는 클라이언트에 복제되어 OnRep_Health를 호출
 	Health = FMath::Clamp(Health - Damage, -0.f, MaxHealth);
+
+	// DamageType에 의한 추가 효과
+	if (const UBaseDamageType* CastedDamageType = Cast<const UBaseDamageType>(DamageType))
+	{
+		CastedDamageType->ApplyDamageTypeEffect(DamagedActor, InstigatorController);
+	}
+	
 	// 서버가 보는 애니메이션 재생과 HUD 업데이트
 	PlayHitReactMontage();
 	if (IsLocallyControlled())
