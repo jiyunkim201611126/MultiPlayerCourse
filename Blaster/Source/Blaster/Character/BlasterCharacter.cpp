@@ -27,6 +27,7 @@
 ABlasterCharacter::ABlasterCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	SpawnCollisionHandlingMethod = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetMesh());
@@ -111,10 +112,29 @@ void ABlasterCharacter::UpdatePlayerName() const
 	}
 }
 
-void ABlasterCharacter::Elim_Implementation()
+void ABlasterCharacter::Elim()
+{
+	MulticastElim();
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+		this,
+		&ThisClass::ElimTimerFinished,
+		ElimDelay
+		);
+}
+
+void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
 	PlayElimMontage();
+}
+
+void ABlasterCharacter::ElimTimerFinished()
+{
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -314,10 +334,10 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 }
 
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
-	float Damage,
-	const UDamageType* DamageType,
-	AController* InstigatorController,
-	AActor* DamageCauser)
+                                      float Damage,
+                                      const UDamageType* DamageType,
+                                      AController* InstigatorController,
+                                      AActor* DamageCauser)
 {
 	// 서버에서 실행되는 함수
 	// Health는 클라이언트에 복제되어 OnRep_Health를 호출
@@ -332,7 +352,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 		}
 	}
 
-	// HUD 업데이트
+	// 서버인 경우 HUD 업데이트
 	if (IsLocallyControlled())
 	{
 		UpdateHUDHealth();
@@ -391,15 +411,9 @@ void ABlasterCharacter::PlayElimMontage()
 		const FName SectionName(*FString::Printf(TEXT("Death_%d"), DeathAnimNumber));
 		AnimInstance->Montage_JumpToSection(SectionName);
 
-		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		if (Combat)
 		{
-			FDetachmentTransformRules DetachmentTransformRules(
-			EDetachmentRule::KeepWorld,
-			EDetachmentRule::KeepWorld,
-			EDetachmentRule::KeepWorld,
-			false);
-			//GetEquippedWeapon()->DetachFromActor(DetachmentTransformRules);
-			//GetEquippedWeapon()->GetWeaponMesh()->SetSimulatePhysics(true);
+			Combat->DropWeapon();
 		}
 	}
 }

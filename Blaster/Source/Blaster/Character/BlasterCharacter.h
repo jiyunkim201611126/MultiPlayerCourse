@@ -21,9 +21,9 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	void UpdatePlayerName() const;
-
-	UFUNCTION(NetMulticast, Reliable)
 	void Elim();
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim();
 	
 	virtual void Tick(float DeltaTime) override;
 
@@ -121,6 +121,13 @@ private:
 	class ABlasterPlayerController* BlasterPlayerController;
 
 	bool bElimmed = false;
+
+	FTimerHandle ElimTimer;
+
+	UPROPERTY(EditDefaultsOnly)
+	float ElimDelay = 3.f;
+
+	void ElimTimerFinished();
 
 protected:
 	

@@ -397,9 +397,29 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
-	if (EquippedWeapon && Character)
+	if (Character && EquippedWeapon)
 	{
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+	}
+	else if (Character && EquippedWeapon == nullptr)
+	{
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+		Character->bUseControllerRotationYaw = false;
+	}
+}
+
+void UCombatComponent::DropWeapon()
+{
+	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
+	{
+		FDetachmentTransformRules DetachmentTransformRules(
+		EDetachmentRule::KeepWorld,
+		EDetachmentRule::KeepWorld,
+		EDetachmentRule::KeepWorld,
+		false);
+		EquippedWeapon->DetachFromActor(DetachmentTransformRules);
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Dropped);
+		EquippedWeapon = nullptr;
 	}
 }
