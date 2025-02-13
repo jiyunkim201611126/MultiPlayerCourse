@@ -318,9 +318,12 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	Health = FMath::Clamp(Health - Damage, -0.f, MaxHealth);
 
 	// DamageType에 의한 추가 효과
-	if (const UBaseDamageType* CastedDamageType = Cast<const UBaseDamageType>(DamageType))
+	if (UDamageType* MutableDamageType = const_cast<UDamageType*>(DamageType))
 	{
-		CastedDamageType->ApplyDamageTypeEffect(DamagedActor, InstigatorController);
+		if (UBaseDamageType* CastedDamageType = Cast<UBaseDamageType>(MutableDamageType))
+		{
+			CastedDamageType->ApplyDamageTypeEffect(DamagedActor, InstigatorController);
+		}
 	}
 	
 	// 서버가 보는 애니메이션 재생과 HUD 업데이트

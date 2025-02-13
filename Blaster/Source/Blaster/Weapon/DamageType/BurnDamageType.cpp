@@ -2,7 +2,7 @@
 
 #include "Kismet/GameplayStatics.h"
 
-void UBurnDamageType::ApplyDamageTypeEffect(AActor* DamagedActor, AController* Instigator) const
+void UBurnDamageType::ApplyDamageTypeEffect(AActor* DamagedActor, AController* Instigator)
 {
     if (DamagedActor && Instigator)
     {
@@ -10,27 +10,35 @@ void UBurnDamageType::ApplyDamageTypeEffect(AActor* DamagedActor, AController* I
     }
 }
 
-void UBurnDamageType::BurnTimerStart(AActor* DamagedActor, AController* Instigator) const
+void UBurnDamageType::BurnTimerStart(AActor* DamagedActor, AController* Instigator)
 {
-    if (const UWorld* World = DamagedActor->GetWorld())
+    if (UWorld* World = DamagedActor->GetWorld())
     {
-        for (int BurnCount = 0; BurnCount <= NumberOfTimesToBurn; BurnCount++)
-        {
-            FTimerHandle BurnTimer;
-            World->GetTimerManager().SetTimer(
-                BurnTimer,
-                [this, DamagedActor, Instigator]()
-                {
-                    BurnTimerFinished(DamagedActor, Instigator);
-                },
-                BurnDelay * BurnCount,
-                false
-            );
-        }
+        World->GetTimerManager().SetTimer(
+            BurnTimer,
+            [this, DamagedActor, Instigator]()
+            {
+                BurnTimerFinished(DamagedActor, Instigator);
+            },
+            BurnDelay,
+            false
+        );
     }
 }
 
-void UBurnDamageType::BurnTimerFinished(AActor* DamagedActor, AController* Instigator) const
+void UBurnDamageType::BurnTimerFinished(AActor* DamagedActor, AController* Instigator)
 {
+    // 여기선 속성 없이 데미지 부여
     UGameplayStatics::ApplyDamage(DamagedActor, BurnDamage, Instigator, Instigator, UDamageType::StaticClass());
+
+    // Count 세면서 다시 타이머 시작
+    BurnCount++;
+    if (BurnCount < NumberOfTimesToBurn)
+    {
+        BurnTimerStart(DamagedActor, Instigator);
+    }
+    else
+    {
+        MarkAsGarbage();
+    }
 }

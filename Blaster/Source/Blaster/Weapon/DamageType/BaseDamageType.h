@@ -10,5 +10,5 @@ class BLASTER_API UBaseDamageType : public UDamageType
 	GENERATED_BODY()
 	
 public:
-	virtual void ApplyDamageTypeEffect(AActor* DamagedActor, AController* Instigator) const;
+	virtual void ApplyDamageTypeEffect(AActor* DamagedActor, AController* Instigator);
 };
