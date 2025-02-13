@@ -1,6 +1,6 @@
 #include "ProjectileBullet.h"
 
-#include "DamageType/BurnDamageType.h"
+#include "DamageType/BaseDamageType.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -14,7 +14,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
 	{
 		if (AController* InstigatorController = InstigatorCharacter->Controller)
 		{
-			UGameplayStatics::ApplyDamage(OtherActor, Damage, InstigatorController, this, UBurnDamageType::StaticClass());
+			UGameplayStatics::ApplyDamage(OtherActor, Damage, InstigatorController, this, UBaseDamageType::StaticClass());
 		}
 	}
 	Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);

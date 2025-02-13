@@ -29,7 +29,7 @@ void UBurnDamageType::BurnTimerStart(AActor* DamagedActor, AController* Instigat
 void UBurnDamageType::BurnTimerFinished(AActor* DamagedActor, AController* Instigator)
 {
     // 여기선 속성 없이 데미지 부여
-    UGameplayStatics::ApplyDamage(DamagedActor, BurnDamage, Instigator, Instigator, UDamageType::StaticClass());
+    UGameplayStatics::ApplyDamage(DamagedActor, BurnDamage, Instigator, Instigator, UBaseDamageType::StaticClass());
 
     // Count 세면서 다시 타이머 시작
     BurnCount++;

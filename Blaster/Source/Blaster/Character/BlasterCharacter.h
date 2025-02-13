@@ -21,14 +21,15 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	void UpdatePlayerName() const;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Elim();
 	
 	virtual void Tick(float DeltaTime) override;
 
 	// AimOffset functions
 	virtual void OnRep_ReplicatedMovement() override;
 	void CalculateAO_Pitch();
-	
-	void PlayFireMontage(bool bAiming);
 
 	void EquipButtonPressed();
 	void CrouchButtonPressed();
@@ -37,9 +38,15 @@ public:
 	virtual void Jump() override;
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void PlayFireMontage(bool bAiming);
+	void PlayHitReactMontage();
+	void PlayElimMontage();
 
 protected:
-	void PlayHitReactMontage();
+	virtual void BeginPlay() override;
+	
+	void AimOffset(float DeltaTime);
+	void SimProxiesTurn();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -81,6 +88,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* ElimMontage; 
+
 	void HideCameraIfCharacterClose();
 
 	UPROPERTY(EditAnywhere)
@@ -110,11 +120,9 @@ private:
 
 	class ABlasterPlayerController* BlasterPlayerController;
 
-protected:
-	virtual void BeginPlay() override;
+	bool bElimmed = false;
 
-	void AimOffset(float DeltaTime);
-	void SimProxiesTurn();
+protected:
 	
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
@@ -132,4 +140,5 @@ public:
 	FVector GetHitTarget() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
+	FORCEINLINE bool IsElimmed() const { return bElimmed; }
 };

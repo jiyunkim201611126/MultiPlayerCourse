@@ -7,6 +7,7 @@
 #include "Components/CapsuleComponent.h"
 #include "BlasterAnimInstance.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 
 // Show Username
 #include "GameFramework/PlayerState.h"
@@ -22,7 +23,6 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/DamageType/BaseDamageType.h"
-#include "Engine/DamageEvents.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -109,6 +109,12 @@ void ABlasterCharacter::UpdatePlayerName() const
 			Widget->SetPlayerName(GetPlayerState()->GetPlayerName());
 		}
 	}
+}
+
+void ABlasterCharacter::Elim_Implementation()
+{
+	bElimmed = true;
+	PlayElimMontage();
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -325,13 +331,26 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 			CastedDamageType->ApplyDamageTypeEffect(DamagedActor, InstigatorController);
 		}
 	}
-	
-	// 서버가 보는 애니메이션 재생과 HUD 업데이트
-	PlayHitReactMontage();
+
+	// HUD 업데이트
 	if (IsLocallyControlled())
 	{
 		UpdateHUDHealth();
 	}
+	
+	if (Health == 0.f)
+	{
+		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		{
+			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+			return;
+		}
+	}
+	
+	// 서버가 보는 애니메이션 재생
+	PlayHitReactMontage();
 }
 
 void ABlasterCharacter::OnRep_Health()
@@ -359,6 +378,29 @@ void ABlasterCharacter::PlayHitReactMontage()
 		AnimInstance->Montage_Play(HitReactMontage);
 		const FName SectionName("FromFront");
 		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayElimMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ElimMontage)
+	{
+		AnimInstance->Montage_Play(ElimMontage);
+		const int8 DeathAnimNumber = FMath::RandRange(1, 5);
+		const FName SectionName(*FString::Printf(TEXT("Death_%d"), DeathAnimNumber));
+		AnimInstance->Montage_JumpToSection(SectionName);
+
+		if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh())
+		{
+			FDetachmentTransformRules DetachmentTransformRules(
+			EDetachmentRule::KeepWorld,
+			EDetachmentRule::KeepWorld,
+			EDetachmentRule::KeepWorld,
+			false);
+			//GetEquippedWeapon()->DetachFromActor(DetachmentTransformRules);
+			//GetEquippedWeapon()->GetWeaponMesh()->SetSimulatePhysics(true);
+		}
 	}
 }
 
