@@ -58,6 +58,8 @@ ABlasterCharacter::ABlasterCharacter()
 
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
+
+	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -127,6 +129,15 @@ void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
 	PlayElimMontage();
+
+	if (DissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicDissolveMaterialInstance);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Dissolve"), 0.55f);
+		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
+	}
+	StartDissolve();
 }
 
 void ABlasterCharacter::ElimTimerFinished()
@@ -415,6 +426,25 @@ void ABlasterCharacter::PlayElimMontage()
 		{
 			Combat->DropWeapon();
 		}
+	}
+}
+
+void ABlasterCharacter::StartDissolve()
+{
+	// 시간에 따라 DissolveCurve대로 변화하는 값을 매개변수로 DissolveTrack에 바인딩된 함수를 프레임마다 호출
+	DissolveTrack.BindDynamic(this, &ThisClass::UpdateDissolveMaterial);
+	if (DissolveCurve && DissolveTimeline)
+	{
+		DissolveTimeline->AddInterpFloat(DissolveCurve, DissolveTrack);
+		DissolveTimeline->Play();
+	}
+}
+
+void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
+{
+	if (DynamicDissolveMaterialInstance)
+	{
+		DynamicDissolveMaterialInstance->SetScalarParameterValue("Dissolve", DissolveValue);
 	}
 }
 

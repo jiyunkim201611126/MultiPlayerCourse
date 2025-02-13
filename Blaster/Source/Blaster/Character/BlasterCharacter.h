@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "Blaster/BlasterTypes/TurningInPlace.h"
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
+#include "Components/TimelineComponent.h"
 #include "BlasterCharacter.generated.h"
 
 class UInputMappingContext;
@@ -129,6 +130,31 @@ private:
 
 	void ElimTimerFinished();
 
+	/**
+	 * Dissolve effect
+	 */
+
+	// 타임라인 컴포넌트와 델리게이트
+	UPROPERTY(VisibleAnywhere)
+	UTimelineComponent* DissolveTimeline;
+	FOnTimelineFloat DissolveTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveFloat* DissolveCurve;
+
+	void StartDissolve();
+	
+	UFUNCTION()
+	void UpdateDissolveMaterial(float DissolveValue);
+
+	// 아래 머티리얼 인스턴스를 통해 만들어지는 런타임 중 편집 가능한 다이나믹 머티리얼 인스턴스
+	UPROPERTY(VisibleAnywhere, Category = "Elim")
+	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
+
+	// 블루프린트에서 편집 가능한 머티리얼 인스턴스
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* DissolveMaterialInstance;
+	
 protected:
 	
 	UFUNCTION()
