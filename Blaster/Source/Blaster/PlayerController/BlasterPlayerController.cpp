@@ -24,6 +24,16 @@ void ABlasterPlayerController::BeginPlay()
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 }
 
+void ABlasterPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
+	{
+		SetHUDHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
+	}
+}
+
 void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 {
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
@@ -121,8 +131,7 @@ void ABlasterPlayerController::EquipButtonPressed()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->EquipButtonPressed();
 		}
@@ -133,8 +142,7 @@ void ABlasterPlayerController::CrouchButtonPressed()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->CrouchButtonPressed();
 		}
@@ -145,8 +153,7 @@ void ABlasterPlayerController::AimButtonPressed()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->AimButtonPressed();
 		}
@@ -157,8 +164,7 @@ void ABlasterPlayerController::AimButtonReleased()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->AimButtonReleased();
 		}
@@ -169,8 +175,7 @@ void ABlasterPlayerController::FireButtonPressed()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->FireButtonPressed();
 		}
@@ -181,8 +186,7 @@ void ABlasterPlayerController::FireButtonReleased()
 {
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
-		if (BlasterCharacter)
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->FireButtonReleased();
 		}

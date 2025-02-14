@@ -27,6 +27,7 @@ public:
 	void ShowPickupWidget(const bool bShowWidget);
 	void PlayFireMontage() const;
 	virtual void Fire(const FVector& HitTarget);
+	void Dropped();
 
 	/**
 	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어 지원할 수 있게 EditAnywhere

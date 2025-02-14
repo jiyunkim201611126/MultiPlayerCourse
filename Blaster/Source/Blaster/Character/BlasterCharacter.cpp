@@ -23,6 +23,9 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/DamageType/BaseDamageType.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
+#include "Sound/SoundCue.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -116,6 +119,14 @@ void ABlasterCharacter::UpdatePlayerName() const
 
 void ABlasterCharacter::Elim()
 {
+	// GameMode에 의해 실행됨
+	if (Combat && Combat->EquippedWeapon)
+	{
+		// 무기 드랍
+		Combat->EquippedWeapon->Dropped();
+	}
+
+	// 클라이언트들에게 알림
 	MulticastElim();
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
@@ -130,6 +141,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bElimmed = true;
 	PlayElimMontage();
 
+	// Dissolve effect 시작
 	if (DissolveMaterialInstance)
 	{
 		DynamicDissolveMaterialInstance = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
@@ -138,13 +150,56 @@ void ABlasterCharacter::MulticastElim_Implementation()
 		DynamicDissolveMaterialInstance->SetScalarParameterValue(TEXT("Glow"), 200.f);
 	}
 	StartDissolve();
+
+	// 캐릭터 움직임 중단, 마우스 움직임으로 인한 캐릭터 회전도 중단
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+	if (BlasterPlayerController)
+	{
+		// 마우스 인풋 중단
+		DisableInput(BlasterPlayerController);
+	}
+	// 콜리전 끄기
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Elim bot 스폰
+	if (ElimBotEffect)
+	{
+		FVector ElimBotSpawnPoint(GetActorLocation().X, GetActorLocation().Y, GetActorLocation().Z + 200.f);
+		ElimBotComponent = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ElimBotEffect,
+			ElimBotSpawnPoint,
+			GetActorRotation()
+			);
+	}
+	if (ElimBotSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(
+			this,
+			ElimBotSound,
+			GetActorLocation()
+			);
+	}
 }
 
 void ABlasterCharacter::ElimTimerFinished()
 {
+	// ElimDelay만큼의 시간 이후 리스폰
 	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
+void ABlasterCharacter::Destroyed()
+{
+	Super::Destroyed();
+
+	if (ElimBotComponent)
+	{
+		ElimBotComponent->DestroyComponent();
 	}
 }
 
@@ -299,10 +354,6 @@ void ABlasterCharacter::SimProxiesTurn()
 	ProxyRotation = GetActorRotation();
 	ProxyYaw = UKismetMathLibrary::NormalizedDeltaRotator(ProxyRotation, ProxyRotationLastFrame).Yaw;
 
-	UE_LOG(LogTemp, Warning, TEXT("Proxy Rotation LastFrame: %f"), ProxyRotationLastFrame.Yaw);
-	UE_LOG(LogTemp, Warning, TEXT("Proxy Rotation: %f"), ProxyRotation.Yaw);
-	UE_LOG(LogTemp, Warning, TEXT("Proxy Yaw: %f"), ProxyYaw);
-
 	if (FMath::Abs(ProxyYaw) > TurnThreshold)
 	{
 		if (ProxyYaw > TurnThreshold)
@@ -350,7 +401,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
                                       AController* InstigatorController,
                                       AActor* DamageCauser)
 {
-	// 서버에서 실행되는 함수
+	// 서버에서 실행되는 함수 (서버가 권한을 가진 액터에서 ApplyDamage를 호출하는 것도 있지만, 애초에 서버에서만 바인딩했음)
 	// Health는 클라이언트에 복제되어 OnRep_Health를 호출
 	Health = FMath::Clamp(Health - Damage, -0.f, MaxHealth);
 
@@ -368,7 +419,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	{
 		UpdateHUDHealth();
 	}
-	
+
+	// HP가 0에 도달할 경우 GameMode에게 자신이 사망했다고 알림
 	if (Health == 0.f)
 	{
 		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
@@ -421,11 +473,6 @@ void ABlasterCharacter::PlayElimMontage()
 		const int8 DeathAnimNumber = FMath::RandRange(1, 5);
 		const FName SectionName(*FString::Printf(TEXT("Death_%d"), DeathAnimNumber));
 		AnimInstance->Montage_JumpToSection(SectionName);
-
-		if (Combat)
-		{
-			Combat->DropWeapon();
-		}
 	}
 }
 

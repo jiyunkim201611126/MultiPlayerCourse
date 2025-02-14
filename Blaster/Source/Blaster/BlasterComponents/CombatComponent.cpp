@@ -383,7 +383,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// 무기 장착, EquippedWeapon의 UPROPERTY로 인해 OnRep_EquippedWeapon이 자동 실행
 	// 하지만 서버에선 자동으로 실행되지 않으므로 서버에서도 알 수 있게 아래에서 한 번 실행
 	EquippedWeapon = WeaponToEquip;
-	OnRep_EquippedWeapon();
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 
 	// Attach Weapon to RightHandSocket
@@ -393,33 +392,21 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 
 	EquippedWeapon->SetOwner(Character);
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
 	if (Character && EquippedWeapon)
 	{
+		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+
+		if (const USkeletalMeshSocket* HandSocket = Character->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+		{
+			HandSocket->AttachActor(EquippedWeapon, Character->GetMesh());
+		}
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
-	}
-	else if (Character && EquippedWeapon == nullptr)
-	{
-		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
-		Character->bUseControllerRotationYaw = false;
-	}
-}
-
-void UCombatComponent::DropWeapon()
-{
-	if (EquippedWeapon && EquippedWeapon->GetWeaponMesh())
-	{
-		FDetachmentTransformRules DetachmentTransformRules(
-		EDetachmentRule::KeepWorld,
-		EDetachmentRule::KeepWorld,
-		EDetachmentRule::KeepWorld,
-		false);
-		EquippedWeapon->DetachFromActor(DetachmentTransformRules);
-		EquippedWeapon->SetWeaponState(EWeaponState::EWS_Dropped);
-		EquippedWeapon = nullptr;
 	}
 }

@@ -25,6 +25,7 @@ public:
 	void Elim();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
+	virtual void Destroyed() override;
 	
 	virtual void Tick(float DeltaTime) override;
 
@@ -154,6 +155,19 @@ private:
 	// 블루프린트에서 편집 가능한 머티리얼 인스턴스
 	UPROPERTY(EditAnywhere, Category = "Elim")
 	UMaterialInstance* DissolveMaterialInstance;
+
+	/**
+	 * Elim bot
+	 */
+
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UParticleSystem* ElimBotEffect;
+
+	UPROPERTY(VisibleAnywhere, Category = "Elim")
+	UParticleSystemComponent* ElimBotComponent;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	class USoundCue* ElimBotSound;
 	
 protected:
 	
@@ -174,4 +188,6 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE bool ShouldRotateRootBone() const { return bRotateRootBone; }
 	FORCEINLINE bool IsElimmed() const { return bElimmed; }
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };
