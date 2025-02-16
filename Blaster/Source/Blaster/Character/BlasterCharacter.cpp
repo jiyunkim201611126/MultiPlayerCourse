@@ -8,6 +8,7 @@
 #include "BlasterAnimInstance.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 
 // Show Username
 #include "GameFramework/PlayerState.h"
@@ -139,6 +140,13 @@ void ABlasterCharacter::Elim()
 void ABlasterCharacter::MulticastElim_Implementation()
 {
 	bElimmed = true;
+	if (OverheadWidget)
+	{
+		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
+		{
+			Widget->SetPlayerName(FString(""));
+		}
+	}
 	PlayElimMontage();
 
 	// Dissolve effect 시작
@@ -213,6 +221,8 @@ void ABlasterCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
+	
+	PollInit();
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
@@ -448,6 +458,19 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+	}
+}
+
+void ABlasterCharacter::PollInit()
+{
+	if (BlasterPlayerState == nullptr)
+	{
+		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (BlasterPlayerState)
+		{
+			BlasterPlayerState->AddToScore(0.f);
+			BlasterPlayerState->AddToDefeats(0);
+		}
 	}
 }
 

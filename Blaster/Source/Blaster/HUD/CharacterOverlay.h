@@ -15,7 +15,15 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* HealthTextBlock;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* ScoreAmount;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* DefeatsAmount;
 
 	void UpdateHealthBar(const float BarPercent);
 	void UpdateHealthText(FString HealthText);
+	void UpdateScoreAmount(const FString& String);
+	void UpdateDefeatsAmount(const FString& String);
 };

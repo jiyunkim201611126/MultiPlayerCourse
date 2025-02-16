@@ -120,6 +120,7 @@ private:
 	UFUNCTION()
 	void OnRep_Health();
 
+	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
 
 	bool bElimmed = false;
@@ -152,7 +153,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Elim")
 	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 
-	// 블루프린트에서 편집 가능한 머티리얼 인스턴스
+	// 머티리얼 인스턴스
 	UPROPERTY(EditAnywhere, Category = "Elim")
 	UMaterialInstance* DissolveMaterialInstance;
 
@@ -168,12 +169,17 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Elim")
 	class USoundCue* ElimBotSound;
+
+	UPROPERTY()
+	class ABlasterPlayerState* BlasterPlayerState;
 	
 protected:
 	
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
 	void UpdateHUDHealth();
+	// 시작 시 우상단 Score를 Refresh하기 위한 함수
+	void PollInit();
 	
 public:
 	// Getter, Setter
