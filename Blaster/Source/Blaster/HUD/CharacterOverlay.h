@@ -21,9 +21,17 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* DefeatsAmount;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* WeaponAmmoAmount;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* CarriedAmmoAmount;
 
 	void UpdateHealthBar(const float BarPercent);
 	void UpdateHealthText(FString HealthText);
 	void UpdateScoreAmount(const FString& String);
 	void UpdateDefeatsAmount(const FString& String);
+	void UpdateWeaponAmmoAmount(const FString& String);
+	void UpdateCarriedAmmoAmount(const FString& String);
 };

@@ -22,3 +22,13 @@ void UCharacterOverlay::UpdateDefeatsAmount(const FString& String)
 {
 	DefeatsAmount->SetText(FText::FromString(String));
 }
+
+void UCharacterOverlay::UpdateWeaponAmmoAmount(const FString& String)
+{
+	WeaponAmmoAmount->SetText(FText::FromString(String));
+}
+
+void UCharacterOverlay::UpdateCarriedAmmoAmount(const FString& String)
+{
+	CarriedAmmoAmount->SetText(FText::FromString(String));
+}
