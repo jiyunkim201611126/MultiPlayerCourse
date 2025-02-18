@@ -63,7 +63,7 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
 	// Overlap될 때 변수 자체는 서버와 클라이언트 모두가 변경되지만, 콜백 함수는 겹친 클라이언트의 인스턴스에서만 호출.

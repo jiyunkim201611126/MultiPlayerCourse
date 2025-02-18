@@ -23,6 +23,13 @@ public:
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	void Reload();
 
+	// 애니메이션 재생 중 ReloadFinished 노티파이를 만나면 호출되는 함수
+	UFUNCTION(BlueprintCallable)
+	void FinishReloading();
+	
+	// 장전 완료에 따른 탄알 수 조정
+	void UpdateAmmoValues();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -53,6 +60,8 @@ protected:
 	void ServerReload();
 
 	void HandleReload();
+	// 장전해야 하는 Ammo의 수를 구하는 함수
+	int32 AmountToReload();
 
 private:
 	UPROPERTY()
@@ -113,14 +122,14 @@ private:
 
 	bool CanFire();
 
-	// 현재 탄창
+	// 현재 총기 종류에 해당하는 남은 탄 수
 	UPROPERTY(ReplicatedUsing=OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
 
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
-	// 탄창 초기화 용도의 TMap
+	// 현재 캐릭터가 가지고 있는 총기 종류별 탄 수
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
 	UPROPERTY(EditAnywhere)

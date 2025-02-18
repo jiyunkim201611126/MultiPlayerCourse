@@ -171,7 +171,8 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
-	if (EquippedWeapon == nullptr || Character == nullptr)
+	
+	if (EquippedWeapon == nullptr || Character == nullptr || CombatState != ECombatState::ECS_Unoccupied)
 	{
 		return;
 	}
@@ -422,30 +423,74 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::Reload()
 {
-	// 클라이언트에서 서버에 재장전 요청
-	if (CarriedAmmo > 0)
+	if (EquippedWeapon && EquippedWeapon->GetMagCapacity() > EquippedWeapon->GetAmmo() && CarriedAmmo > 0 && CombatState != ECombatState::ECS_Reloading)
 	{
 		ServerReload();
 	}
 }
 
-void UCombatComponent::ServerReload_Implementation()
+void UCombatComponent::FinishReloading()
 {
 	if (Character == nullptr)
 	{
 		return;
 	}
+	if (Character->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValues();
+	}
+	
+	// 좌클릭 누르고 있는 상태면 사격
+	if (bFireButtonPressed)
+	{
+		Fire();
+	}
+}
 
-	// 상태 변경 후 Reload 호출, 서버에서만 작동
+void UCombatComponent::UpdateAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}
+	
+	int32 ReloadAmount = AmountToReload();
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	EquippedWeapon->AddAmmo(-ReloadAmount);
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}	
+
+	// 상태 변경 후 애니메이션 재생 함수 호출
 	CombatState = ECombatState::ECS_Reloading;
 	HandleReload();
 }
 
 void UCombatComponent::OnRep_CombatState()
 {
-	// 상태 변경에 따른 클라이언트에서의 Reload 호출
 	switch (CombatState)
 	{
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed)
+		{
+			Fire();
+		}
+		break;
 	case ECombatState::ECS_Reloading:
 		HandleReload();
 		break;
@@ -455,6 +500,25 @@ void UCombatComponent::OnRep_CombatState()
 void UCombatComponent::HandleReload()
 {
 	Character->PlayReloadMontage();
+}
+
+int32 UCombatComponent::AmountToReload()
+{
+	if (EquippedWeapon == nullptr)
+	{
+		return 0;
+	}
+
+	const int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		const int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		const int32 Least = FMath::Min(RoomInMag, AmountCarried);
+		return FMath::Clamp(RoomInMag, 0, Least);
+	}
+	
+	return int32();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -479,7 +543,7 @@ bool UCombatComponent::CanFire()
 		return false;
 	}
 
-	return !EquippedWeapon->IsEmpty() && bCanFire;
+	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

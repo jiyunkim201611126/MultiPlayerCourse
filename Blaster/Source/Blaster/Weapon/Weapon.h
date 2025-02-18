@@ -31,6 +31,7 @@ public:
 	void PlayFireMontage() const;
 	virtual void Fire(const FVector& HitTarget);
 	void Dropped();
+	void AddAmmo(int32 AmmoToAdd);
 
 	/**
 	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어 지원할 수 있게 EditAnywhere
@@ -138,6 +139,7 @@ private:
 
 	void SpendRound();
 
+	// 최대 탄창
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
 
@@ -160,4 +162,6 @@ public:
 	FORCEINLINE float GetHipFireAccurateMaxSubtract() const { return HipFireAccurateMaxSubtract; }
 	bool IsEmpty();
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 };
