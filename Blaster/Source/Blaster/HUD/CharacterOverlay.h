@@ -27,11 +27,15 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* CarriedAmmoAmount;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchCountdownText;
 
-	void UpdateHealthBar(const float BarPercent);
-	void UpdateHealthText(FString HealthText);
-	void UpdateScoreAmount(const FString& String);
-	void UpdateDefeatsAmount(const FString& String);
-	void UpdateWeaponAmmoAmount(const FString& String);
-	void UpdateCarriedAmmoAmount(const FString& String);
+	void UpdateHealthBar(const float BarPercent) const;
+	void UpdateHealthText(const FString& HealthText) const;
+	void UpdateScoreAmount(const FString& String) const;
+	void UpdateDefeatsAmount(const FString& String) const;
+	void UpdateWeaponAmmoAmount(const FString& String) const;
+	void UpdateCarriedAmmoAmount(const FString& String) const;
+	void UpdateMatchCountdownText(const FString& String) const;
 };

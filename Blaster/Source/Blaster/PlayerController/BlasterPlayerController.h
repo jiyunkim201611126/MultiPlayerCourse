@@ -20,17 +20,57 @@ public:
 	void SetHUDDefeats(int32 Defeats);
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
+	void SetHUDMatchCountdown(int32 CountdownTime);
 	virtual void OnPossess(APawn* InPawn) override;
-	
+	virtual void Tick(float DeltaTime) override;
+
+	virtual float GetServerTime();
+	// 플레이어 접속 시 호출
+	virtual void ReceivedPlayer() override;
+
 protected:
 	virtual void BeginPlay() override;
+	
+	void SetHUDTime();
+
+	/**
+	 * 서버와 클라이언트간 매치 카운트다운 싱크
+	 */
+
+	UFUNCTION(Server, Reliable)
+	void ServerRequestServerTime(float TimeOfClientRequest);
+
+	UFUNCTION(Client, Reliable)
+	void ClientReportServerTime(float TimeOfClientRequest, float TimeServerReceivedClientRequest);
+
+	float ClientServerDelta = 0.f;
+
+	// n초 주기로 매치 카운트다운 싱크 업데이트
+	UPROPERTY(EditAnywhere, Category = "Time")
+	float TimeSyncFrequency = 5.f;
+
+	// 위 주기를 세기 위한 또 다른 float
+	float TimeSyncRunningTime = 0.f;
+
+	// 매치 카운트다운 싱크 업데이트
+	void CheckTimeSync(float DeltaTime);
+	
+private:
+	UPROPERTY()
+	class ABlasterHUD* BlasterHUD;
+
+	float MatchTime = 120.f;
+	uint32 CountdownInt;
+
+	/**
+	 * 플레이어 인풋 관련 세팅
+	 */
+
+protected:
 	void InitDefaultSettings();
 	virtual void SetupInputComponent() override;
 
 private:
-	UPROPERTY()
-	class ABlasterHUD* BlasterHUD;
-	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputMappingContext> BlasterContext;
 
