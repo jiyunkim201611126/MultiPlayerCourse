@@ -5,6 +5,36 @@
 #include "GameFramework/PlayerStart.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 
+ABlasterGameMode::ABlasterGameMode()
+{
+	// 게임을 바로 시작하지 않고 대기 시간을 갖도록 함
+	bDelayedStart = true;
+}
+
+void ABlasterGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// 레벨 시작 시간 기록
+	LevelStartingTime = GetWorld()->GetTimeSeconds();
+}
+
+void ABlasterGameMode::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// 게임 시작 대기 상태면
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		// WarmupTime만큼 시간 센 뒤 매치 시작
+		CountdownTime = WarmupTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			StartMatch();
+		}
+	}
+}
+
 void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
                                         ABlasterPlayerController* VictimController,
                                         ABlasterPlayerController* AttackerController)
