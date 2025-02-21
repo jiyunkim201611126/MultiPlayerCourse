@@ -4,10 +4,18 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
+#include "Net/UnrealNetwork.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
 	bReplicates = true;
+}
+
+void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABlasterPlayerController, MatchState);
 }
 
 void ABlasterPlayerController::BeginPlay()
@@ -205,6 +213,20 @@ void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 		BlasterHUD->CharacterOverlay->UpdateMatchCountdownText(CountdownText);
 	}
 }
+
+void ABlasterPlayerController::OnMatchStateSet(FName State)
+{
+	MatchState = State;
+}
+
+void ABlasterPlayerController::OnRep_MatchState()
+{
+	
+}
+
+/**
+ * 플레이어 인풋 관련 세팅
+ */
 
 void ABlasterPlayerController::InitDefaultSettings()
 {

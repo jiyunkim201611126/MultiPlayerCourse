@@ -15,6 +15,8 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 
 public:
 	ABlasterPlayerController();
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void Tick(float DeltaTime) override;
 	void SetHUDHealth(float Health, float MaxHealth);
 	void SetHUDScore(float Score);
 	void SetHUDDefeats(int32 Defeats);
@@ -22,11 +24,11 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(int32 CountdownTime);
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void Tick(float DeltaTime) override;
 
 	virtual float GetServerTime();
 	// 플레이어 접속 시 호출
 	virtual void ReceivedPlayer() override;
+	void OnMatchStateSet(FName State);
 
 protected:
 	virtual void BeginPlay() override;
@@ -61,6 +63,12 @@ private:
 
 	float MatchTime = 120.f;
 	uint32 CountdownInt;
+
+	UPROPERTY(ReplicatedUsing=OnRep_MatchState)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
 
 	/**
 	 * 플레이어 인풋 관련 세팅
