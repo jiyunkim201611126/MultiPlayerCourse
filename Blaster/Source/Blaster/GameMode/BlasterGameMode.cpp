@@ -39,6 +39,7 @@ void ABlasterGameMode::OnMatchStateSet()
 {
 	Super::OnMatchStateSet();
 
+	// 모든 플레이어에게 MatchState의 변경 사항에 대해 알림
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
 		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get());

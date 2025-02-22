@@ -28,14 +28,15 @@ public:
 	FVector2D GetCrosshairLocation();
 
 	UPROPERTY(EditAnywhere, Category = "Player State")
-	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+	TSubclassOf<UUserWidget> CharacterOverlayClass;
+	
+	void AddCharacterOverlay();
 	
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 
 protected:
 	virtual void BeginPlay() override;
-	void AddCharacterOverlay();
 
 private:
 	FHUDPackage HUDPackage;

@@ -5,6 +5,7 @@
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
 #include "Net/UnrealNetwork.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
@@ -39,6 +40,8 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 	// 클라이언트에서 시간을 계속 계산하며 HUD에 표시
 	SetHUDTime();
 	CheckTimeSync(DeltaTime);
+	
+	PollInit();
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
@@ -63,6 +66,23 @@ void ABlasterPlayerController::SetHUDTime()
 	{
 		SetHUDMatchCountdown(MatchTime - GetServerTime());
 		CountdownInt = SecondsLeft;
+	}
+}
+
+void ABlasterPlayerController::PollInit()
+{
+	if (CharacterOverlay == nullptr)
+	{
+		if (BlasterHUD && BlasterHUD->CharacterOverlay)
+		{
+			CharacterOverlay = BlasterHUD->CharacterOverlay;
+			if (CharacterOverlay)
+			{
+				SetHUDHealth(HUDHealth, HUDMaxHealth);
+				SetHUDScore(HUDScore);
+				SetHUDDefeats(HUDDefeats);
+			}
+		}
 	}
 }
 
@@ -134,6 +154,12 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->UpdateHealthText(HealthText);
 	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDHealth = Health;
+		HUDMaxHealth = MaxHealth;
+	}
 }
 
 void ABlasterPlayerController::SetHUDScore(float Score)
@@ -148,7 +174,12 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 	{
 		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
 		BlasterHUD->CharacterOverlay->UpdateScoreAmount(ScoreText);
-	}	
+	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDScore = Score;
+	}
 }
 
 void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
@@ -163,7 +194,12 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	{
 		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
 		BlasterHUD->CharacterOverlay->UpdateDefeatsAmount(DefeatsText);
-	}	
+	}
+	else
+	{
+		bInitializeCharacterOverlay = true;
+		HUDDefeats = Defeats;
+	}
 }
 
 void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
@@ -216,12 +252,29 @@ void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 
 void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
+	// 변경된 MatchState를 적용하고, HUD 상단 Countdown을 상태에 따라 새로고침
 	MatchState = State;
+
+	if (MatchState == MatchState::InProgress)
+	{
+		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+		if (BlasterHUD)
+		{
+			BlasterHUD->AddCharacterOverlay();
+		}
+	}
 }
 
 void ABlasterPlayerController::OnRep_MatchState()
 {
-	
+	if (MatchState == MatchState::InProgress)
+	{
+		BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+		if (BlasterHUD)
+		{
+			BlasterHUD->AddCharacterOverlay();
+		}
+	}
 }
 
 /**

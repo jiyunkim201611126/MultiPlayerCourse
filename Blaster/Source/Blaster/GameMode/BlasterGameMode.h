@@ -24,6 +24,8 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	// MatchState에 변경 사항이 있는 경우 호출되는 함수
 	virtual void OnMatchStateSet() override;
 
 private:

@@ -35,6 +35,9 @@ protected:
 	
 	void SetHUDTime();
 
+	// nullptr 문제를 해소하기 위해 호출하는 함수.
+	void PollInit();
+
 	/**
 	 * 서버와 클라이언트간 매치 카운트다운 싱크
 	 */
@@ -69,6 +72,16 @@ private:
 
 	UFUNCTION()
 	void OnRep_MatchState();
+
+	UPROPERTY()
+	class UCharacterOverlay* CharacterOverlay;
+
+	bool bInitializeCharacterOverlay = false;
+
+	float HUDHealth;
+	float HUDMaxHealth;
+	float HUDScore;
+	int32 HUDDefeats;
 
 	/**
 	 * 플레이어 인풋 관련 세팅
