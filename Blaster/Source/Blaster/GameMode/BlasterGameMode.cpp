@@ -5,6 +5,11 @@
 #include "GameFramework/PlayerStart.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 
+namespace MatchState
+{
+	const FName Cooldown = FName("Cooldown");
+}
+
 ABlasterGameMode::ABlasterGameMode()
 {
 	// 게임을 바로 시작하지 않고 대기 시간을 갖도록 함
@@ -31,6 +36,16 @@ void ABlasterGameMode::Tick(float DeltaTime)
 		if (CountdownTime <= 0.f)
 		{
 			StartMatch();
+		}
+	}
+	// 게임 플레이 중 상태면
+	else if (MatchState == MatchState::InProgress)
+	{
+		// MatchTime만큼 시간 센 뒤 게임 상태를 Cooldown으로 변경
+		CountdownTime = WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			SetMatchState(MatchState::Cooldown);
 		}
 	}
 }

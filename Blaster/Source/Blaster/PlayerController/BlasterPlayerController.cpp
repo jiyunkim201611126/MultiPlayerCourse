@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/HUD/Announcement.h"
+#include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
@@ -65,62 +66,31 @@ void ABlasterPlayerController::ServerCheckMatchState_Implementation()
 	if (GameMode)
 	{
 		// 게임 시작 직후 필요한 정보들
+		MatchState = GameMode->GetMatchState();
 		LevelStartingTime = GameMode->LevelStartingTime;
 		WarmupTime = GameMode->WarmupTime;
 		MatchTime = GameMode->MatchTime;
-		MatchState = GameMode->GetMatchState();
+		CooldownTime = GameMode->CooldownTime;
 
 		// 위 정보를 클라이언트에게 전송. 단, 플레이어 컨트롤러는 서버도 하나 소유하기 때문에, 아래 함수는 서버도 호출함.
-		ClientJoinMidgame(MatchState, WarmupTime, MatchTime, LevelStartingTime);
+		ClientJoinMidgame(MatchState, LevelStartingTime, WarmupTime, MatchTime, CooldownTime);
 	}
 }
 
-void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Warmup, float Match, float Starting)
+void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMatch, float Starting, float Warmup, float Match, float Cooldown)
 {
 	// 서버는 이미 초기화했으므로 클라이언트만 걸러서 초기화해줌
 	if (IsLocalController())
 	{
+		MatchState = StateOfMatch;
+		LevelStartingTime = Starting;
 		WarmupTime = Warmup;
 		MatchTime = Match;
-		LevelStartingTime = Starting;
-		MatchState = StateOfMatch;
+		CooldownTime = Cooldown;
 	}
 	
 	// MatchState의 변경 사항에 따른 동작은 서버와 클라이언트 모두가 실행
 	OnMatchStateSet(MatchState);
-}
-
-void ABlasterPlayerController::SetHUDTime()
-{
-	// HUD에 표시해야 하는 시간 계산
-	float TimeLeft = 0.f;
-	if (MatchState == MatchState::WaitingToStart)
-	{
-		// WarmupTime에서 게임 시작 후 지난 시간만큼 빼기
-		TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
-	}
-	else if (MatchState == MatchState::InProgress)
-	{
-		// WarmupTime + MatchTime에서 게임 시작 후 지난 시간만큼 빼기
-		TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
-	}
-	
-	// 매치 시간에서 유추한 서버 시간을 빼는 것으로 남은 시간 계산
-	uint32 SecondsLeft = FMath::CeilToInt(MatchTime - GetServerTime());
-
-	// 실질적으로 시간이 바뀌었을 때만 업데이트를 호출해 최적화
-	if (CountdownInt != SecondsLeft)
-	{
-		if (MatchState == MatchState::WaitingToStart)
-		{
-			SetHUDAnnouncementCountdown(TimeLeft);
-		}
-		if (MatchState == MatchState::InProgress)
-		{
-			SetHUDMatchCountdown(TimeLeft);
-		}
-		CountdownInt = SecondsLeft;
-	}
 }
 
 void ABlasterPlayerController::PollInit()
@@ -286,6 +256,43 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	}
 }
 
+void ABlasterPlayerController::SetHUDTime()
+{
+	// HUD에 표시해야 하는 시간 계산
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		// WarmupTime에서 게임 시작 후 지난 시간만큼 빼기
+		TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		// WarmupTime + MatchTime에서 게임 시작 후 지난 시간만큼 빼기
+		TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		TimeLeft = WarmupTime + MatchTime + CooldownTime - GetServerTime() + LevelStartingTime;
+	}
+	
+	// 매치 시간에서 유추한 서버 시간을 빼는 것으로 남은 시간 계산
+	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+
+	// 실질적으로 시간이 바뀌었을 때만 업데이트를 호출해 최적화
+	if (CountdownInt != SecondsLeft)
+	{
+		if (MatchState == MatchState::WaitingToStart || MatchState == MatchState::Cooldown)
+		{
+			SetHUDAnnouncementCountdown(TimeLeft);
+		}
+		if (MatchState == MatchState::InProgress)
+		{
+			SetHUDMatchCountdown(TimeLeft);
+		}
+		CountdownInt = SecondsLeft;
+	}
+}
+
 void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 {
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
@@ -296,6 +303,12 @@ void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 
 	if (bHUDValid)
 	{
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->CharacterOverlay->UpdateMatchCountdownText(FString());
+			return;
+		}
+		
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 		
@@ -314,6 +327,12 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(int32 CountdownTime)
 
 	if (bHUDValid)
 	{
+		if (CountdownTime < 0.f)
+		{
+			BlasterHUD->Announcement->UpdateWarmupTimeText(FString());
+			return;
+		}
+		
 		int32 Minutes = FMath::FloorToInt(CountdownTime / 60.f);
 		int32 Seconds = CountdownTime - Minutes * 60;
 		
@@ -346,6 +365,10 @@ void ABlasterPlayerController::HandleWidgetState()
 	{
 		HandleMatchHasStarted();
 	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		HandleCooldown();
+	}
 }
 
 void ABlasterPlayerController::HandleMatchHasStarted()
@@ -353,14 +376,30 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	if (BlasterHUD)
 	{
-		// 게임 플레이에 필요한 위젯 추가
 		BlasterHUD->AddCharacterOverlay();
 		SetHUDTime();
 
-		// 기존 대기 화면에서 쓰던 위젯은 숨김 처리
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Collapsed);
+		}
+	}
+}
+
+void ABlasterPlayerController::HandleCooldown()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (BlasterHUD)
+	{
+		BlasterHUD->CharacterOverlay->RemoveFromParent();
+
+		if (BlasterHUD->Announcement)
+		{
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
+			FString AnnouncementText("New Match Starts In:");
+			BlasterHUD->Announcement->UpdateAnnouncementText(AnnouncementText);
+			BlasterHUD->Announcement->UpdateInfoText(FString());
+			SetHUDTime();
 		}
 	}
 }
