@@ -14,13 +14,17 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PlayerEliminated(class ABlasterCharacter* EliminatedCharacter, class ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
-
+	
+	// 레벨이 시작된 시간 (게임 시작 시간이랑 다름)
+	float LevelStartingTime = 0.f;
+	
 	// 게임 시작 대기 시간
 	UPROPERTY(EditDefaultsOnly)
 	float WarmupTime = 10.f;
 
-	// 레벨이 시작된 시간 (게임 시작 시간이랑 다름)
-	float LevelStartingTime = 0.f;
+	// 매치 시간
+	UPROPERTY(EditDefaultsOnly)
+	float MatchTime = 120.f;
 
 protected:
 	virtual void BeginPlay() override;

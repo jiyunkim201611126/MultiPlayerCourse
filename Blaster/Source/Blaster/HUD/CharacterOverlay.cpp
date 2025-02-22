@@ -8,32 +8,32 @@ void UCharacterOverlay::UpdateHealthBar(const float BarPercent) const
 	HealthBar->SetPercent(BarPercent);
 }
 
-void UCharacterOverlay::UpdateHealthText(const FString& HealthText) const
+void UCharacterOverlay::UpdateHealthText(const FString& InString) const
 {
-	HealthTextBlock->SetText(FText::FromString(HealthText));
+	HealthTextBlock->SetText(FText::FromString(InString));
 }
 
-void UCharacterOverlay::UpdateScoreAmount(const FString& String) const
+void UCharacterOverlay::UpdateScoreAmount(const FString& InString) const
 {
-	ScoreAmount->SetText(FText::FromString(String));
+	ScoreAmount->SetText(FText::FromString(InString));
 }
 
-void UCharacterOverlay::UpdateDefeatsAmount(const FString& String) const
+void UCharacterOverlay::UpdateDefeatsAmount(const FString& InString) const
 {
-	DefeatsAmount->SetText(FText::FromString(String));
+	DefeatsAmount->SetText(FText::FromString(InString));
 }
 
-void UCharacterOverlay::UpdateWeaponAmmoAmount(const FString& String) const
+void UCharacterOverlay::UpdateWeaponAmmoAmount(const FString& InString) const
 {
-	WeaponAmmoAmount->SetText(FText::FromString(String));
+	WeaponAmmoAmount->SetText(FText::FromString(InString));
 }
 
-void UCharacterOverlay::UpdateCarriedAmmoAmount(const FString& String) const
+void UCharacterOverlay::UpdateCarriedAmmoAmount(const FString& InString) const
 {
-	CarriedAmmoAmount->SetText(FText::FromString(String));
+	CarriedAmmoAmount->SetText(FText::FromString(InString));
 }
 
-void UCharacterOverlay::UpdateMatchCountdownText(const FString& String) const
+void UCharacterOverlay::UpdateMatchCountdownText(const FString& InString) const
 {
-	MatchCountdownText->SetText(FText::FromString(String));
+	MatchCountdownText->SetText(FText::FromString(InString));
 }

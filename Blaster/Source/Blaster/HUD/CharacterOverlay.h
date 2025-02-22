@@ -32,10 +32,10 @@ public:
 	UTextBlock* MatchCountdownText;
 
 	void UpdateHealthBar(const float BarPercent) const;
-	void UpdateHealthText(const FString& HealthText) const;
-	void UpdateScoreAmount(const FString& String) const;
-	void UpdateDefeatsAmount(const FString& String) const;
-	void UpdateWeaponAmmoAmount(const FString& String) const;
-	void UpdateCarriedAmmoAmount(const FString& String) const;
-	void UpdateMatchCountdownText(const FString& String) const;
+	void UpdateHealthText(const FString& InString) const;
+	void UpdateScoreAmount(const FString& InString) const;
+	void UpdateDefeatsAmount(const FString& InString) const;
+	void UpdateWeaponAmmoAmount(const FString& InString) const;
+	void UpdateCarriedAmmoAmount(const FString& InString) const;
+	void UpdateMatchCountdownText(const FString& InString) const;
 };

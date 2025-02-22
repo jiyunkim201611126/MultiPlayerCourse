@@ -23,12 +23,15 @@ public:
 	void SetHUDWeaponAmmo(int32 Ammo);
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(int32 CountdownTime);
+	void SetHUDAnnouncementCountdown(int32 CountdownTime);
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual float GetServerTime();
 	// 플레이어 접속 시 호출
 	virtual void ReceivedPlayer() override;
 	void OnMatchStateSet(FName State);
+	void HandleWidgetState();
+	void HandleMatchHasStarted();
 
 protected:
 	virtual void BeginPlay() override;
@@ -59,12 +62,21 @@ protected:
 
 	// 매치 카운트다운 싱크 업데이트
 	void CheckTimeSync(float DeltaTime);
+
+	// 게임 시작 시 서버에게 현재 매치 상태 정보 요청
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidgame(FName StateOfMatch, float Warmup, float Match, float Starting);
 	
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 
-	float MatchTime = 120.f;
+	float LevelStartingTime = 0.f;
+	float WarmupTime = 0.f;
+	float MatchTime = 0.f;
 	uint32 CountdownInt;
 
 	UPROPERTY(ReplicatedUsing=OnRep_MatchState)
