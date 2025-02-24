@@ -104,8 +104,7 @@ void ABlasterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 		ElimmedCharacter->Destroy();
 	}
 	
-	ABlasterPlayerController* ElimmedBlasterPlayerController = Cast<ABlasterPlayerController>(ElimmedController);
-	if (ElimmedBlasterPlayerController && !ElimmedBlasterPlayerController->bDisableGameplay)
+	if (ElimmedController && MatchState == MatchState::InProgress)
 	{
 		TArray<AActor*> PlayerStarts;
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
