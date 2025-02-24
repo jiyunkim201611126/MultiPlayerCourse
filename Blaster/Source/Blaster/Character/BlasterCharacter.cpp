@@ -172,6 +172,7 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	{
 		// 마우스 인풋 중단
 		DisableInput(BlasterPlayerController);
+		BlasterPlayerController->bDisableGameplay = true;
 	}
 	// 콜리전 끄기
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -214,6 +215,10 @@ void ABlasterCharacter::Destroyed()
 	if (ElimBotComponent)
 	{
 		ElimBotComponent->DestroyComponent();
+	}
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Destroy();
 	}
 }
 
@@ -269,23 +274,27 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 void ABlasterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	// 서버에 의해 원격 조작되는 캐릭터는 SimProxiesTurn을 사용
-	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
-	{
-		AimOffset(DeltaTime);		
-	}
-	else
-	{
-		TimeSinceLastMovementReplication += DeltaTime;		
-		if (TimeSinceLastMovementReplication > 0.25f)
-		{
-			OnRep_ReplicatedMovement();
-		}
-		CalculateAO_Pitch();
-	}
 	
+	RotateInPlace(DeltaTime);
 	HideCameraIfCharacterClose();
+}
+
+void ABlasterCharacter::RotateInPlace(float DeltaTime)
+{
+	// 서버에 의해 원격 조작되는 캐릭터는 SimProxiesTurn을 사용
+ 	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
+ 	{
+ 		AimOffset(DeltaTime);		
+ 	}
+ 	else
+ 	{
+ 		TimeSinceLastMovementReplication += DeltaTime;		
+ 		if (TimeSinceLastMovementReplication > 0.25f)
+ 		{
+ 			OnRep_ReplicatedMovement();
+ 		}
+ 		CalculateAO_Pitch();
+ 	}
 }
 
 void ABlasterCharacter::OnRep_ReplicatedMovement()

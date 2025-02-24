@@ -20,6 +20,7 @@ void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABlasterPlayerController, MatchState);
+	DOREPLIFETIME(ABlasterPlayerController, bDisableGameplay);
 }
 
 void ABlasterPlayerController::BeginPlay()
@@ -155,6 +156,8 @@ void ABlasterPlayerController::ReceivedPlayer()
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	bDisableGameplay = false;
 
 	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
 	{
@@ -402,6 +405,10 @@ void ABlasterPlayerController::HandleCooldown()
 			SetHUDTime();
 		}
 	}
+
+	// 일부 조작 중단, 사격 중이면 사격 중단
+	bDisableGameplay = true;
+	FireButtonReleased();
 }
 
 /**
@@ -434,6 +441,7 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
+	
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ThisClass::EquipButtonPressed);
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::CrouchButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ThisClass::AimButtonPressed);
@@ -486,6 +494,11 @@ void ABlasterPlayerController::StopJumping()
 
 void ABlasterPlayerController::EquipButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
@@ -508,6 +521,11 @@ void ABlasterPlayerController::CrouchButtonPressed()
 
 void ABlasterPlayerController::AimButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
@@ -530,6 +548,11 @@ void ABlasterPlayerController::AimButtonReleased()
 
 void ABlasterPlayerController::FireButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
@@ -552,6 +575,11 @@ void ABlasterPlayerController::FireButtonReleased()
 
 void ABlasterPlayerController::ReloadButtonPressed()
 {
+	if (bDisableGameplay)
+	{
+		return;
+	}
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))

@@ -147,4 +147,8 @@ private:
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void ReloadButtonPressed();
+	
+public:
+	UPROPERTY(Replicated)
+	bool bDisableGameplay = false;
 };

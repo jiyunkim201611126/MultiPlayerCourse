@@ -190,6 +190,7 @@ protected:
 	void UpdateHUDHealth();
 	// 시작 시 우상단 Score를 Refresh하기 위한 함수
 	void PollInit();
+	void RotateInPlace(float DeltaTime);
 	
 public:
 	// Getter, Setter

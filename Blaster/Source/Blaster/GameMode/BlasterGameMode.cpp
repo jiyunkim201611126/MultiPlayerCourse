@@ -48,6 +48,14 @@ void ABlasterGameMode::Tick(float DeltaTime)
 			SetMatchState(MatchState::Cooldown);
 		}
 	}
+	else if (MatchState == MatchState::Cooldown)
+	{
+		CountdownTime = CooldownTime + WarmupTime + MatchTime - GetWorld()->GetTimeSeconds() + LevelStartingTime;
+		if (CountdownTime <= 0.f)
+		{
+			RestartGame();
+		}
+	}
 }
 
 void ABlasterGameMode::OnMatchStateSet()
@@ -95,7 +103,9 @@ void ABlasterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 		ElimmedCharacter->Reset();
 		ElimmedCharacter->Destroy();
 	}
-	if (ElimmedController)
+	
+	ABlasterPlayerController* ElimmedBlasterPlayerController = Cast<ABlasterPlayerController>(ElimmedController);
+	if (ElimmedBlasterPlayerController && !ElimmedBlasterPlayerController->bDisableGameplay)
 	{
 		TArray<AActor*> PlayerStarts;
 		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);

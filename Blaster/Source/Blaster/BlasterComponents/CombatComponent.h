@@ -30,6 +30,8 @@ public:
 	// 장전 완료에 따른 탄알 수 조정
 	void UpdateAmmoValues();
 
+	void FireButtonPressed(bool bPressed);
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -39,8 +41,6 @@ protected:
 
 	UFUNCTION()
 	void OnRep_EquippedWeapon();
-
-	void FireButtonPressed(bool bPressed);
 	
 	void Fire();
 
