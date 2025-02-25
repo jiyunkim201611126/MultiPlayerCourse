@@ -9,6 +9,8 @@
 #include "Blaster/HUD/Announcement.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blaster/GameState/BlasterGameState.h"
+#include "Blaster/PlayerState/BlasterPlayerState.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
@@ -317,6 +319,11 @@ void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 		
 		FString CountdownText = FString::Printf(TEXT("%02d : %02d"), Minutes, Seconds);
 		BlasterHUD->CharacterOverlay->UpdateMatchCountdownText(CountdownText);
+
+		if (CountdownTime < 30.f)
+		{
+			BlasterHUD->CharacterOverlay->LerpMatchCountdownTextColor();
+		}
 	}
 }
 
@@ -401,7 +408,38 @@ void ABlasterPlayerController::HandleCooldown()
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
 			FString AnnouncementText("New Match Starts In:");
 			BlasterHUD->Announcement->UpdateAnnouncementText(AnnouncementText);
-			BlasterHUD->Announcement->UpdateInfoText(FString());
+
+			// 대기 시간 중 직전 라운드 우승자 표시
+			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+			ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+			if (BlasterGameState && BlasterPlayerState)
+			{
+				TArray<ABlasterPlayerState*> TopPlayers = BlasterGameState->TopScoringPlayers;
+				FString InfoTextString;
+				if (TopPlayers.Num() == 0)
+				{
+					InfoTextString = FString("There is no winner.");
+				}
+				else if (TopPlayers.Num() == 1 && TopPlayers[0] == BlasterPlayerState)
+				{
+					InfoTextString = FString("You are the winner!");
+				}
+				else if (TopPlayers.Num() == 1)
+				{
+					InfoTextString = FString::Printf(TEXT("Winner: \n%s"), *TopPlayers[0]->GetPlayerName());
+				}
+				else if (TopPlayers.Num() > 1)
+				{
+					InfoTextString = FString("Players tied for the win: \n");
+					for (const auto TiedPlayer : TopPlayers)
+					{
+						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+					}
+				}
+				
+				BlasterHUD->Announcement->UpdateInfoText(InfoTextString);
+			}
+			
 			SetHUDTime();
 		}
 	}

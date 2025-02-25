@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/TimelineComponent.h"
 #include "CharacterOverlay.generated.h"
 
 UCLASS()
@@ -31,6 +32,13 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
 
+	UPROPERTY()
+	FTimeline MatchCountdownColorTimeline;
+	FOnTimelineLinearColor UpdateColorTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveLinearColor* MatchCountdownColorCurve;
+	
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
 	void UpdateScoreAmount(const FString& InString) const;
@@ -38,4 +46,16 @@ public:
 	void UpdateWeaponAmmoAmount(const FString& InString) const;
 	void UpdateCarriedAmmoAmount(const FString& InString) const;
 	void UpdateMatchCountdownText(const FString& InString) const;
+
+	/**
+	 * 매치 카운트다운 빨간색으로 점멸
+	 */
+	
+	void LerpMatchCountdownTextColor();
+
+	UFUNCTION()
+	void UpdateColorLerp(const FLinearColor Color);
+
+protected:
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 };
