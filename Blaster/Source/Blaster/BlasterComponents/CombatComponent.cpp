@@ -156,9 +156,6 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 	
 	if (Character && Character->IsLocallyControlled())
 	{
-		// 캐릭터 사격 애니메이션 재생
-		Character->PlayFireMontage(bAiming);
-
 		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->PlayFireMontage();
@@ -172,6 +169,9 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 {
 	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
 	MulticastFire(TraceHitTarget);
+	
+	// 서버의 Projectile 스폰, Replicates가 true인 액터이므로 모두에게 스폰
+	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -183,16 +183,13 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 		return;
 	}
 
-	// 자신의 캐릭터는 이미 사격 함수를 호출했으므로, 아닌 경우만 호출
+	// 자신의 캐릭터는 이미 애니메이션을 재생했으므로 아닌 경우만 호출
 	if (!Character->IsLocallyControlled())
 	{
 		// 애니메이션만 재생
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->PlayFireMontage();
 	}
-
-	// 모두에게 Projectile 스폰
-	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)

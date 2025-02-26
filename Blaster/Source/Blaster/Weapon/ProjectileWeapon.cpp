@@ -5,7 +5,7 @@
 
 void AProjectileWeapon::Fire(const FVector& HitTarget)
 {
-	// 격발 애니메이션 재생
+	// 탄환 소모
 	Super::Fire(HitTarget);
 
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
