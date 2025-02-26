@@ -29,7 +29,7 @@ void ABlasterHUD::AddAnnouncement()
 		return;
 	}
 	APlayerController* PlayerController = GetOwningPlayerController();
-	if (PlayerController && CharacterOverlayClass && Announcement == nullptr)
+	if (PlayerController && AnnouncementClass)
 	{
 		Announcement = CreateWidget<UAnnouncement>(PlayerController, AnnouncementClass);
 		Announcement->AddToViewport();

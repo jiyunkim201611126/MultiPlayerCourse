@@ -53,7 +53,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp,
 	FVector NormalImpulse,
 	const FHitResult& Hit)
 {
-	if (APawn* HitActor = Cast<APawn>(OtherActor))
+	if (OtherActor->IsA(APawn::StaticClass()))
 	{
 		DefaultImpactParticle = HitCharacterImpactParticle;
 	}

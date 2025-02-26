@@ -1,6 +1,6 @@
 #include "ProjectileBullet.h"
 
-#include "DamageType/BaseDamageType.h"
+#include "Blaster/Weapon/DamageType/BaseDamageType.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 

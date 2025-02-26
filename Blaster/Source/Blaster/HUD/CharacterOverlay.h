@@ -32,13 +32,6 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
 
-	UPROPERTY()
-	FTimeline MatchCountdownColorTimeline;
-	FOnTimelineLinearColor UpdateColorTrack;
-
-	UPROPERTY(EditAnywhere)
-	UCurveLinearColor* MatchCountdownColorCurve;
-	
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
 	void UpdateScoreAmount(const FString& InString) const;
@@ -50,6 +43,12 @@ public:
 	/**
 	 * 매치 카운트다운 빨간색으로 점멸
 	 */
+	UPROPERTY()
+	FTimeline MatchCountdownColorTimeline;
+	FOnTimelineLinearColor UpdateColorTrack;
+
+	UPROPERTY(EditAnywhere)
+	UCurveLinearColor* MatchCountdownColorCurve;
 	
 	void LerpMatchCountdownTextColor();
 

@@ -1,7 +1,7 @@
 #include "ProjectileWeapon.h"
 
 #include "Engine/SkeletalMeshSocket.h"
-#include "Projectile.h"
+#include "Projectiles/Projectile.h"
 
 void AProjectileWeapon::Fire(const FVector& HitTarget)
 {
