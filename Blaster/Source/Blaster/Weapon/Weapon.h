@@ -90,7 +90,6 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	class USoundCue* EquipSound;
 	
-	
 protected:
 	virtual void BeginPlay() override;
 
@@ -112,6 +111,10 @@ protected:
 		int32 OtherBodyIndex
 		);
 
+	// 데미지가 0인 경우 발사체의 데미지를 그대로 사용
+	UPROPERTY(EditAnywhere)
+	float Damage = 0.f;
+	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;

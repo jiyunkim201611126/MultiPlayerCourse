@@ -169,11 +169,6 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 {
 	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
 	MulticastFire(TraceHitTarget);
-
-	// 장착한 무기에 따라 다른 Fire 함수 호출
-	// 서버의 Projectile 스폰, Replicates가 true인 액터이므로 모두에게 스폰
-	// HitScan은 라인 트레이스 시작
-	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
@@ -192,6 +187,11 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->PlayFireMontage();
 	}
+
+	// 장착한 무기에 따라 다른 Fire 함수 호출
+	// 서버의 Projectile 스폰, Replicates가 true인 액터이므로 모두에게 스폰
+	// HitScan은 라인 트레이스 시작
+	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -587,4 +587,5 @@ void UCombatComponent::InitializeCarriedAmmo()
 {
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, StartingARAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, StartingRocketAmmo);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, StartingPistolAmmo);
 }
