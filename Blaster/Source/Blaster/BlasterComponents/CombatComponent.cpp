@@ -154,7 +154,7 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 		return;
 	}
 	
-	if (Character && Character->IsLocallyControlled())
+	if (Character && Character->IsLocallyControlled() && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
 		Character->PlayFireMontage(bAiming);
@@ -169,8 +169,10 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 {
 	// 해당 함수는 ServerFire는 클라이언트가 서버에 요청하는 함수
 	MulticastFire(TraceHitTarget);
-	
+
+	// 장착한 무기에 따라 다른 Fire 함수 호출
 	// 서버의 Projectile 스폰, Replicates가 true인 액터이므로 모두에게 스폰
+	// HitScan은 라인 트레이스 시작
 	EquippedWeapon->Fire(TraceHitTarget);
 }
 

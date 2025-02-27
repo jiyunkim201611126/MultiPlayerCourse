@@ -8,6 +8,11 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	// 탄환 소모
 	Super::Fire(HitTarget);
 
+	if (!HasAuthority())
+	{
+		return;
+	}
+
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
 	// 총구쪽 Socket
