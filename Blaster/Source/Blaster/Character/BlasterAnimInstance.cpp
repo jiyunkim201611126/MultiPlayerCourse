@@ -63,12 +63,12 @@ void UBlasterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		BlasterCharacter->GetMesh()->TransformToBoneSpace(
 			FName("Hand_R"),
 			LeftHandTransform.GetLocation(),
-			FRotator::ZeroRotator,
+			LeftHandTransform.Rotator(),
 			OutPosition,
 			OutRotation);
 
 		LeftHandTransform.SetLocation(OutPosition);
-		LeftHandTransform.SetRotation(FQuat(OutRotation));
+		LeftHandTransform.SetRotation(OutRotation.Quaternion());
 
 		// 자신의 캐릭터만 총구를 정렬
 		if (BlasterCharacter->IsLocallyControlled())
