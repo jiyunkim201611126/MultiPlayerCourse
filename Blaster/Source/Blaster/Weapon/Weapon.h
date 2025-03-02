@@ -111,7 +111,6 @@ protected:
 		int32 OtherBodyIndex
 		);
 
-	// 데미지가 0인 경우 발사체의 데미지를 그대로 사용
 	UPROPERTY(EditAnywhere)
 	float Damage = 0.f;
 	

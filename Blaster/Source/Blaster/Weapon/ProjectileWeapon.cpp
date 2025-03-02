@@ -39,10 +39,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 					TargetRotation,
 					SpawnParams
 				);
-				if (Damage != 0.f)
-				{
-					Projectile->Damage = Damage;
-				}
+				Projectile->Damage = Damage;
 			}
 		}
 	}
