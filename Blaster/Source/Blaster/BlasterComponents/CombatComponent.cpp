@@ -317,15 +317,16 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, TargetAimFactor, DeltaTime, 30.f);
 
 			// 사격에 대한 스프레드를 0으로 수렴, 수렴 속도는 조준 상태에 따라 다름.
-			const float ShootingInterpSpeed = bAiming ? 100.f : 10.f;
+			const float ShootingInterpSpeed = bAiming ? 20.f : 10.f;
 			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
 
 			// 최종 스프레드 수치 계산
 			const float CrosshairSpreadResult =
-				CrosshairVelocityFactor			// 이동 속도에 비례해 +
-				+ CrosshairInAirFactor			// 체공 중 +
-				+ CrosshairShootingFactor		// 사격 시 +
-				- CrosshairAimFactor;			// 조준 시 -
+				EquippedWeapon->DefaultSpreadFactor / 10.f	// 장착 무기의 기본 스프레드 수치
+				+ CrosshairVelocityFactor					// 이동 속도에 비례해 +
+				+ CrosshairInAirFactor						// 체공 중 +
+				+ CrosshairShootingFactor					// 사격 시 +
+				- CrosshairAimFactor;						// 조준 시 -
 
 			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지
 			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
@@ -333,8 +334,8 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			HUD->SetHUDPackage(HUDPackage);
 
 			// 크로스헤어 스프레드 정도에 따라 탄퍼짐도 추가
-			EquippedWeapon->AddSphereRadius = CrosshairSpreadResult;
-			EquippedWeapon->AddSphereRadius = FMath::FInterpTo(EquippedWeapon->AddSphereRadius, 0.f, DeltaTime, ShootingInterpSpeed);
+			EquippedWeapon->SpreadFactor = CrosshairSpreadResult;
+			EquippedWeapon->SpreadFactor = FMath::FInterpTo(EquippedWeapon->SpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
 		}
 	}
 }

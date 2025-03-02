@@ -42,8 +42,4 @@ private:
 	// 탄퍼짐의 기준이 되는 구체의 거리. 클수록 탄퍼짐이 좁아짐
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	float DistanceToSphere = 800.f;
-
-	// 탄퍼짐의 기준이 되는 구체의 반지름. 클수록 탄퍼짐이 심해짐
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
-	float SphereRadius = 75.f;
 };

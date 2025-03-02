@@ -81,9 +81,13 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
 	bool bUseScatter = false;
 
-	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 기준 구체 반지름
+	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 정도
+	// Projectile은 RandomRotator, HitScan은 구체의 반지름으로 적용
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Scatter")
-	float AddSphereRadius = 0.f;
+	float SpreadFactor = 0.f;
+	
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	float DefaultSpreadFactor = 0.f;
 
 	/**
 	 * Automatic fire
