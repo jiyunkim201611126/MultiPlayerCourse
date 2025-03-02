@@ -33,7 +33,7 @@ protected:
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* LoopingSoundAttenuation;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class URocketMovementComponent* RocketMovementComponent;
 	
 private:

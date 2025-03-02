@@ -63,9 +63,8 @@ public:
 	float ZoomInterpSpeed = 20.f;
 
 	/**
-	 * 크로스헤어 스프레드 관련 변수
+	 * 크로스헤어 스프레드, 탄퍼짐 관련 변수
 	 */
-
 	// 조준 사격 정확도, 높을수록 이동하거나 점프 도중에도 정확도가 상승
 	UPROPERTY(EditAnywhere, Category = "Crosshairs")
 	float ZoomAccurate = 0.6f;
@@ -77,6 +76,14 @@ public:
 	// 비조준 사격 시 하락하는 정확도의 최대치
 	UPROPERTY(EditAnywhere, Category = "Crosshairs")
 	float HipFireAccurateMaxSubtract = 3.f;
+
+	// 탄퍼짐 사용 여부를 결정하는 bool.
+	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	bool bUseScatter = false;
+
+	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 기준 구체 반지름
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Scatter")
+	float AddSphereRadius = 0.f;
 
 	/**
 	 * Automatic fire

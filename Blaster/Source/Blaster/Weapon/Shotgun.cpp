@@ -3,7 +3,6 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "Sound/SoundCue.h"
 
 void AShotgun::Fire(const FVector& HitTarget)
 {

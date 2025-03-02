@@ -96,7 +96,7 @@ void UCombatComponent::Fire()
 		FHitResult HitResult;
 		LocalFire(TraceUnderCrosshairs(HitResult));
 
-		if (EquippedWeapon && !bAiming)
+		if (EquippedWeapon && EquippedWeapon->bUseScatter)
 		{
 			// 비조준 사격 시 탄퍼짐 수치 계산
 			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
@@ -323,6 +323,13 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
 			
 			HUD->SetHUDPackage(HUDPackage);
+
+			// 크로스헤어 스프레드 정도에 따라 탄퍼짐도 추가
+			if (EquippedWeapon && EquippedWeapon->bUseScatter)
+			{
+				EquippedWeapon->AddSphereRadius = CrosshairSpreadResult;
+				EquippedWeapon->AddSphereRadius = FMath::FInterpTo(EquippedWeapon->AddSphereRadius, 0.f, DeltaTime, ShootingInterpSpeed);
+			}
 		}
 	}
 }
