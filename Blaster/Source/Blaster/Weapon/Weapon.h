@@ -87,7 +87,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	bool bAutomatic = true;
 
-	UPROPERTY(EditAnywhere, Category = "Combat")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	class USoundCue* EquipSound;
 	
 protected:
@@ -111,7 +111,7 @@ protected:
 		int32 OtherBodyIndex
 		);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Combat")
 	float Damage = 0.f;
 	
 private:
@@ -137,7 +137,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
 
-	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Ammo)
+	UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Ammo, Category = "Combat")
 	int32 Ammo;
 
 	UFUNCTION()
@@ -146,7 +146,7 @@ private:
 	void SpendRound();
 
 	// 최대 탄창
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Combat")
 	int32 MagCapacity;
 
 	UPROPERTY()
@@ -154,10 +154,10 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* BlasterOwnerController;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	EWeaponType WeaponType;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	bool bNeedPhysicsSimulate = false;
 	
 public:
