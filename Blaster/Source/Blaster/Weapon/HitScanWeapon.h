@@ -13,13 +13,20 @@ public:
 	virtual void Fire(const FVector& HitTarget) override;
 
 protected:
-	// 탄퍼짐을 구현하는 함수
+	// 탄퍼짐을 적용한 수치로 라인 트레이스의 End 벡터를 계산하는 함수
 	FVector TraceEndWithScatter(const FVector& TraceStart, const FVector& HitTarget);
-
-private:
+	// 기본 End 벡터 혹은 위에서 계산된 End 벡터를 기반으로 라인 트레이스
+	void WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit);
+	// FX 재생
+	void PlayFX(const FHitResult& FireHit, const FTransform& SocketTransform);
+	
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* ImpactParticles;
 
+	UPROPERTY(EditAnywhere)
+	USoundCue* HitSound;
+	
+private:
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* BeamParticles;
 
@@ -28,10 +35,6 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	USoundCue* FireSound;
-
-	UPROPERTY(EditAnywhere)
-	USoundCue* HitSound;
-
 	/**
 	 * Trace end with scatter
 	 */

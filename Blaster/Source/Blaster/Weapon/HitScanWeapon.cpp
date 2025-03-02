@@ -26,86 +26,62 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 	{
 		FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 		FVector Start = SocketTransform.GetLocation();
-		FVector End = Start + (HitTarget - Start) * 1.25f;
+
+		// 라인 트레이스 시작
 		FHitResult FireHit;
-		
-		// 라인 트레이스
-		if (UWorld* World = GetWorld())
+		WeaponTraceHit(Start, HitTarget, FireHit);
+
+		// 맞은 액터가 캐릭터인 경우 데미지 적용
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
+		AController* InstigatorController = OwnerPawn->GetController();
+		if (BlasterCharacter && InstigatorController && HasAuthority())
 		{
-			World->LineTraceSingleByChannel(
-				FireHit,
-				Start,
-				End,
-				ECC_Visibility
+			UGameplayStatics::ApplyDamage(
+			BlasterCharacter,
+			Damage,
+			InstigatorController,
+			this,
+			UDamageType::StaticClass()
+			);
+		}
+		PlayFX(FireHit, SocketTransform);
+	}
+}
+
+void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& HitTarget, FHitResult& OutHit)
+{
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		FVector End = bUseScatter ? TraceEndWithScatter(TraceStart, HitTarget) : TraceStart + (HitTarget - TraceStart) * 1.25f;
+		
+		World->LineTraceSingleByChannel(
+			OutHit,
+			TraceStart,
+			End,
+			ECC_Visibility
+			);
+
+		// 적중 결과에 따른 총알 궤적 파티클 위치 변경
+		FVector BeamEnd = End;
+		if (OutHit.bBlockingHit)
+		{
+			BeamEnd = OutHit.ImpactPoint;
+		}
+		
+		// 총알 궤적 파티클
+		if (BeamParticles)
+		{
+			UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+				World,
+				BeamParticles,
+				TraceStart,
+				FRotator::ZeroRotator,
+				true
 				);
-			
-			// 충돌과 관계 없이 궤적 파티클 생성을 위한 벡터
-			FVector BeamEnd = End;
-			if (FireHit.bBlockingHit)
+			if (Beam)
 			{
-				// 충돌이 있는 경우 해당 위치로 바꿔줌
-				BeamEnd = FireHit.ImpactPoint;
-
-				// 충돌 시 로직, 데미지와 Impact 파티클
-				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
-				AController* InstigatorController = OwnerPawn->GetController();
-				if (BlasterCharacter && InstigatorController && HasAuthority())
-				{
-					UGameplayStatics::ApplyDamage(
-					BlasterCharacter,
-					Damage,
-					InstigatorController,
-					this,
-					UDamageType::StaticClass()
-					);
-				}
-				if (ImpactParticles)
-				{
-					UGameplayStatics::SpawnEmitterAtLocation(
-						World,
-						ImpactParticles,
-						FireHit.ImpactPoint,
-						FireHit.ImpactNormal.Rotation()
-						);
-				}
-				if (HitSound)
-				{
-					UGameplayStatics::PlaySoundAtLocation(
-						this,
-						HitSound,
-						FireHit.ImpactPoint
-						);
-				}
-			}
-
-			// 총알 궤적 파티클
-			if (BeamParticles)
-			{
-				UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
-					World,
-					BeamParticles,
-					SocketTransform
-					);
-				if (Beam)
-				{
-					Beam->SetVectorParameter(FName("Target"), BeamEnd);
-				}
-			}
-			if (MuzzleFlash)
-			{
-				UGameplayStatics::SpawnEmitterAtLocation(
-					World,
-					MuzzleFlash,
-					SocketTransform
-					);
-			}
-			if (FireSound)
-			{
-				UGameplayStatics::PlaySoundAtLocation(
-					this,
-					FireSound,
-					GetActorLocation()
-					);
+				Beam->SetVectorParameter(FName("Target"), BeamEnd);
 			}
 		}
 	}
@@ -121,16 +97,47 @@ FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVe
 	FVector EndLoc = SphereCenter + RandVec;
 	FVector ToEndLoc = EndLoc - TraceStart;
 
-	DrawDebugSphere(GetWorld(), SphereCenter, SphereRadius, 12, FColor::Red, true);
-	DrawDebugSphere(GetWorld(), EndLoc, 4.f, 12, FColor::Orange, true);
-
 	// 총구로부터 랜덤으로 찍힌 점을 향한 80000길이의 벡터 계산
 	constexpr float TraceLength = TRACE_LENGTH;
-	DrawDebugLine(GetWorld(),
-		TraceStart,
-		FVector(TraceStart + ToEndLoc * TraceLength / ToEndLoc.Size()),
-		FColor::Cyan,
-		true);
-
 	return FVector(TraceStart + ToEndLoc * TraceLength / ToEndLoc.Size());
+}
+
+void AHitScanWeapon::PlayFX(const FHitResult& FireHit, const FTransform& SocketTransform)
+{
+	// 적중한 액터와 관계 없이 FX 재생
+	if (ImpactParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			ImpactParticles,
+			FireHit.ImpactPoint,
+			FireHit.ImpactNormal.Rotation()
+			);
+	}
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			HitSound,
+			FireHit.ImpactPoint
+			);
+	}
+
+	// 총기의 애니메이션 에셋이 없는 경우 따로 FX를 재생
+	if (MuzzleFlash)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			MuzzleFlash,
+			SocketTransform
+			);
+	}
+	if (FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			FireSound,
+			GetActorLocation()
+			);
+	}
 }
