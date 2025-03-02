@@ -156,6 +156,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
+
+	UPROPERTY(EditAnywhere)
+	bool bNeedPhysicsSimulate = false;
 	
 public:
 	void SetWeaponState(EWeaponState State);
