@@ -277,6 +277,7 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				HUDPackage.CrosshairsRight = EquippedWeapon->CrosshairsRight;
 				HUDPackage.CrosshairsTop = EquippedWeapon->CrosshairsTop;
 				HUDPackage.CrosshairsBottom = EquippedWeapon->CrosshairsBottom;
+				HUDPackage.CrosshairSpread = 0.f;
 			}
 			else
 			{
@@ -285,6 +286,13 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				HUDPackage.CrosshairsRight = nullptr;
 				HUDPackage.CrosshairsTop = nullptr;
 				HUDPackage.CrosshairsBottom = nullptr;
+				HUDPackage.CrosshairSpread = 0.f;
+			}
+			
+			if (!EquippedWeapon || !EquippedWeapon->bUseScatter)
+			{
+				HUD->SetHUDPackage(HUDPackage);
+				return;
 			}
 			
 			// 이동속도에 대한 크로스헤어 스프레드 (현재 이동속도를 0 ~ 1 사이로 Clamp)
@@ -325,11 +333,8 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			HUD->SetHUDPackage(HUDPackage);
 
 			// 크로스헤어 스프레드 정도에 따라 탄퍼짐도 추가
-			if (EquippedWeapon && EquippedWeapon->bUseScatter)
-			{
-				EquippedWeapon->AddSphereRadius = CrosshairSpreadResult;
-				EquippedWeapon->AddSphereRadius = FMath::FInterpTo(EquippedWeapon->AddSphereRadius, 0.f, DeltaTime, ShootingInterpSpeed);
-			}
+			EquippedWeapon->AddSphereRadius = CrosshairSpreadResult;
+			EquippedWeapon->AddSphereRadius = FMath::FInterpTo(EquippedWeapon->AddSphereRadius, 0.f, DeltaTime, ShootingInterpSpeed);
 		}
 	}
 }
