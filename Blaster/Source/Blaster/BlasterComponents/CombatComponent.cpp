@@ -320,22 +320,23 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			const float ShootingInterpSpeed = bAiming ? 20.f : 10.f;
 			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
 
-			// 최종 스프레드 수치 계산
-			const float CrosshairSpreadResult =
-				EquippedWeapon->DefaultSpreadFactor / 10.f	// 장착 무기의 기본 스프레드 수치
-				+ CrosshairVelocityFactor					// 이동 속도에 비례해 +
-				+ CrosshairInAirFactor						// 체공 중 +
-				+ CrosshairShootingFactor					// 사격 시 +
-				- CrosshairAimFactor;						// 조준 시 -
+			// 최종 추가 탄퍼짐 계산
+			float CrosshairSpreadResult =
+				+ CrosshairVelocityFactor		// 이동 속도에 비례해 +
+				+ CrosshairInAirFactor			// 체공 중 +
+				+ CrosshairShootingFactor		// 사격 시 +
+				- CrosshairAimFactor;			// 조준 시 -
+			
+			EquippedWeapon->SpreadFactor = CrosshairSpreadResult;
+			EquippedWeapon->SpreadFactor = FMath::FInterpTo(EquippedWeapon->SpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+
+			// 최종 크로스헤어 스프레드 수치 계산
+			CrosshairSpreadResult += EquippedWeapon->DefaultSpreadFactor / 50.f;
 
 			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지
 			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
 			
 			HUD->SetHUDPackage(HUDPackage);
-
-			// 크로스헤어 스프레드 정도에 따라 탄퍼짐도 추가
-			EquippedWeapon->SpreadFactor = CrosshairSpreadResult;
-			EquippedWeapon->SpreadFactor = FMath::FInterpTo(EquippedWeapon->SpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
 		}
 	}
 }
@@ -470,6 +471,23 @@ void UCombatComponent::Reload()
 	}
 }
 
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}	
+
+	// 상태 변경 후 애니메이션 재생 함수 호출
+	CombatState = ECombatState::ECS_Reloading;
+	HandleReload();
+}
+
+void UCombatComponent::HandleReload()
+{
+	Character->PlayReloadMontage();
+}
+
 void UCombatComponent::FinishReloading()
 {
 	if (Character == nullptr)
@@ -510,39 +528,6 @@ void UCombatComponent::UpdateAmmoValues()
 	EquippedWeapon->AddAmmo(-ReloadAmount);
 }
 
-void UCombatComponent::ServerReload_Implementation()
-{
-	if (Character == nullptr || EquippedWeapon == nullptr)
-	{
-		return;
-	}	
-
-	// 상태 변경 후 애니메이션 재생 함수 호출
-	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
-}
-
-void UCombatComponent::OnRep_CombatState()
-{
-	switch (CombatState)
-	{
-	case ECombatState::ECS_Unoccupied:
-		if (bFireButtonPressed)
-		{
-			Fire();
-		}
-		break;
-	case ECombatState::ECS_Reloading:
-		HandleReload();
-		break;
-	}
-}
-
-void UCombatComponent::HandleReload()
-{
-	Character->PlayReloadMontage();
-}
-
 int32 UCombatComponent::AmountToReload()
 {
 	if (EquippedWeapon == nullptr)
@@ -560,6 +545,31 @@ int32 UCombatComponent::AmountToReload()
 	}
 	
 	return int32();
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{	
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Unoccupied:
+		if (bFireButtonPressed)
+		{
+			Fire();
+		}
+		break;
+	case ECombatState::ECS_Reloading:
+		HandleReload();
+		break;
+	}
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -594,15 +604,6 @@ bool UCombatComponent::CanFire()
 	}
 
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
-}
-
-void UCombatComponent::OnRep_CarriedAmmo()
-{	
-	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
-	if (Controller)
-	{
-		Controller->SetHUDCarriedAmmo(CarriedAmmo);
-	}
 }
 
 void UCombatComponent::InitializeCarriedAmmo()

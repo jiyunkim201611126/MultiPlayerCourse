@@ -27,12 +27,12 @@ struct BLASTER_API FWeaponTypes
 	FWeaponTypes()
 	{
 		WeaponName.Add(EWeaponType::EWT_AssaultRifle, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_RocketLauncher, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_Pistol, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_SubmachineGun, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_Shotgun, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_SniperRifle, TEXT("Rifle"));
-		WeaponName.Add(EWeaponType::EWT_GrenadeLauncher, TEXT("Rifle"));
+		WeaponName.Add(EWeaponType::EWT_RocketLauncher, TEXT("RocketLauncher"));
+		WeaponName.Add(EWeaponType::EWT_Pistol, TEXT("Pistol"));
+		WeaponName.Add(EWeaponType::EWT_SubmachineGun, TEXT("Pistol"));
+		WeaponName.Add(EWeaponType::EWT_Shotgun, TEXT("Shotgun"));
+		WeaponName.Add(EWeaponType::EWT_SniperRifle, TEXT("SniperRifle"));
+		WeaponName.Add(EWeaponType::EWT_GrenadeLauncher, TEXT("GrenadeLauncher"));
 	}
 
 	static const FWeaponTypes& GetWeaponTypeInstance()

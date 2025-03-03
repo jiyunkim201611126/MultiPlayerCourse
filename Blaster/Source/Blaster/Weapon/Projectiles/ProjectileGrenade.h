@@ -15,8 +15,15 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	
 	UFUNCTION()
 	void OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity);
+
+	FTimerHandle BounceSoundTimer;
+
+	UPROPERTY(EditAnywhere)
+	float BounceSoundTime = 0.5f;
+	bool bCanPlaySound = true;
 
 private:
 	UPROPERTY(EditAnywhere)

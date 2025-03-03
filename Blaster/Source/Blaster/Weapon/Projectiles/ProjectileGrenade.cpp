@@ -31,13 +31,22 @@ void AProjectileGrenade::BeginPlay()
 
 void AProjectileGrenade::OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity)
 {
-	if (BounceSound)
+	if (BounceSound && bCanPlaySound)
 	{
+		bCanPlaySound = false;
+		
 		UGameplayStatics::PlaySoundAtLocation(
 			this,
 			BounceSound,
 			GetActorLocation()
 			);
+		
+		GetWorldTimerManager().SetTimer(
+		BounceSoundTimer,
+		[this]() { bCanPlaySound = true; },
+		BounceSoundTime,
+		false
+		);
 	}
 }
 
