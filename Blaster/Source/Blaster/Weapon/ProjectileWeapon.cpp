@@ -22,7 +22,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	{
 		// LineTrace 시작 Transform(== 총구쪽 Socket의 Transform)
 		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-		// 총구에서 HitTarget으로의 방향 계산. 탄퍼짐 있는 경우 AddSphereRadius에 비례해 랜덤 Rotator로 사격
+		// 총구에서 HitTarget으로의 방향 계산. 탄퍼짐 있는 경우 SphereRadius에 비례해 랜덤 Rotator로 사격
 		float AddFloat = DefaultSpreadFactor + SpreadFactor;
 		AddFloat = FMath::Clamp(AddFloat, 0.0f, 100.0f);
 		const FRotator RandomRotator = FRotator(FMath::FRandRange(-AddFloat, AddFloat),

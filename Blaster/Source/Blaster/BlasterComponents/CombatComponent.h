@@ -145,6 +145,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 StartingShotgunAmmo = 0;
 
+	UPROPERTY(EditAnywhere)
+	int32 StartingSniperAmmo = 0;
+
 	// CarriedAmmoMap 초기화
 	void InitializeCarriedAmmo();
 

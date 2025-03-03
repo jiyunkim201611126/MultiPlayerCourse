@@ -93,7 +93,9 @@ FVector AHitScanWeapon::TraceEndWithScatter(const FVector& TraceStart, const FVe
 	// 해당 구체 안에서 랜덤한 점을 찍어 총구로부터 해당 점까지의 벡터를 계산
 	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
 	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, DefaultSpreadFactor + SpreadFactor * 50.f);
+	float ResultSpreadFactor = DefaultSpreadFactor + SpreadFactor * 50.f;
+	ResultSpreadFactor = FMath::Clamp(ResultSpreadFactor, 0.f, 100.f);
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, ResultSpreadFactor);
 	FVector EndLoc = SphereCenter + RandVec;
 	FVector ToEndLoc = EndLoc - TraceStart;
 
