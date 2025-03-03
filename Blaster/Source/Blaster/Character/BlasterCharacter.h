@@ -6,6 +6,7 @@
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
 #include "Blaster/BlasterTypes/CombatState.h"
+#include "Camera/CameraComponent.h"
 #include "BlasterCharacter.generated.h"
 
 class UInputMappingContext;
@@ -46,6 +47,9 @@ public:
 	void PlayReloadMontage();
 	void PlayHitReactMontage();
 	void PlayElimMontage();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
 
 protected:
 	virtual void BeginPlay() override;
@@ -208,4 +212,5 @@ public:
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	ECombatState GetCombatState() const;
+	FORCEINLINE float GetCameraFOV() const { return FollowCamera->FieldOfView; }
 };

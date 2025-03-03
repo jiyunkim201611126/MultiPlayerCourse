@@ -509,8 +509,13 @@ void ABlasterPlayerController::Look(const FInputActionValue& InputActionValue)
 {
 	FVector2D LookAxisVector = InputActionValue.Get<FVector2D>();
 
-	AddYawInput(LookAxisVector.X);
-	AddPitchInput(-LookAxisVector.Y);
+	constexpr float DefaultFOV = 90.f;
+	float CurrentFOV = PlayerCameraManager ? PlayerCameraManager->GetFOVAngle() : DefaultFOV;
+
+	float SensitivityScale = CurrentFOV / DefaultFOV;
+
+	AddYawInput(LookAxisVector.X * SensitivityScale);
+	AddPitchInput(-LookAxisVector.Y * SensitivityScale);
 }
 
 void ABlasterPlayerController::Jump()

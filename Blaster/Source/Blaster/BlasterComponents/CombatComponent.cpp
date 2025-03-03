@@ -375,6 +375,11 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}
+	
 	// 일단 바로 변경, 아직 다른 클라이언트는 반영되지 않음
 	bAiming = bIsAiming;
 
@@ -384,6 +389,10 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	if (Character)
 	{
 		Character->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
+	}
+	if (Character->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		Character->ShowSniperScopeWidget(bIsAiming);
 	}
 }
 
