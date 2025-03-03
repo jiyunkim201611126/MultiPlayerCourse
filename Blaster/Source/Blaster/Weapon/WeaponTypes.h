@@ -14,6 +14,7 @@ enum class EWeaponType : uint8
 	EWT_SubmachineGun UMETA(DisplayName = "SubmachineGun"),
 	EWT_Shotgun UMETA(DisplayName = "Shotgun"),
 	EWT_SniperRifle UMETA(DisplayName = "Sniper Rifle"),
+	EWT_GrenadeLauncher UMETA(DisplayName = "Grenade Launcher"),
 	
 	EWT_MAX UMETA(DisplayName = "DefualtMax"),
 };
@@ -31,6 +32,7 @@ struct BLASTER_API FWeaponTypes
 		WeaponName.Add(EWeaponType::EWT_SubmachineGun, TEXT("Rifle"));
 		WeaponName.Add(EWeaponType::EWT_Shotgun, TEXT("Rifle"));
 		WeaponName.Add(EWeaponType::EWT_SniperRifle, TEXT("Rifle"));
+		WeaponName.Add(EWeaponType::EWT_GrenadeLauncher, TEXT("Rifle"));
 	}
 
 	static const FWeaponTypes& GetWeaponTypeInstance()

@@ -19,10 +19,25 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	void StartDestroyTimer();
+	void DestroyTimerFinished();
+	void SpawnTrailSystem();
+	void ExplodeDamage();
 
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* CollisionBox;
 
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+	
+	// 발사체 움직임 관련 클래스
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
+	// 파티클들
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* DefaultImpactParticle;
 	
@@ -31,13 +46,17 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* ImpactSound;
-	
+
 	UPROPERTY(EditAnywhere)
-	class UBoxComponent* CollisionBox;
-	
-	// 발사체 움직임 관련 클래스
-	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
+	class UNiagaraSystem* TrailSystem;
+
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
+
+	UPROPERTY(EditAnywhere)
+	float DamageInnerRadius = 200.f;
+	UPROPERTY(EditAnywhere)
+	float DamageOuterRadius = 500.f;
 	
 private:
 	UPROPERTY(EditAnywhere)
@@ -45,4 +64,9 @@ private:
 	
 	UPROPERTY()
 	UParticleSystemComponent* TracerComponent;
+	
+	FTimerHandle DestroyTimer;
+
+	UPROPERTY(EditAnywhere)
+	float DestroyTime = 3.f;
 };
