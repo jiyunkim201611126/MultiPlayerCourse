@@ -313,9 +313,9 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 
 void ABlasterCharacter::OnRep_OverlappingWeapons(TArray<AWeapon*> LastWeapons)
 {
-	for (const auto& Weapon : LastWeapons)
+	if (!LastWeapons.IsEmpty() && LastWeapons.Top())
 	{
-		Weapon->ShowPickupWidget(false);
+		LastWeapons.Top()->ShowPickupWidget(false);
 	}
 	
 	if (!OverlappingWeapons.IsEmpty() && OverlappingWeapons.Top())
