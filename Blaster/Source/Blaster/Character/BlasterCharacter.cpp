@@ -89,7 +89,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapons, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
 }
 
@@ -256,36 +256,80 @@ void ABlasterCharacter::BeginPlay()
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 {
-	// 서버는 OnRep_OverlappingWeapon를 호출할 수 없기 때문에 따로 Hide 과정을 거침
-	if (OverlappingWeapon)
-	{
-		OverlappingWeapon->ShowPickupWidget(false);
-	}
-
-	// COND_OwnerOnly로 설정해놨기 때문에 Overlap 이벤트를 유발한 클라이언트에만 변경 사항이 반영됨
-	OverlappingWeapon = Weapon;
-	
-	// 마찬가지로 Show 과정을 거침
 	if (IsLocallyControlled())
 	{
-		if (OverlappingWeapon)
+		// 추가되는 경우
+		if (!OverlappingWeapons.Contains(Weapon))
 		{
-			OverlappingWeapon->ShowPickupWidget(true);
+			if (OverlappingWeapons.IsEmpty())
+			{
+				// 비어있는 상태에서 추가되는 경우
+				OverlappingWeapons.Emplace(Weapon);
+				Weapon->ShowPickupWidget(true);
+			}
+			else
+			{
+				// 비어있지 않은 상태에서 추가되는 경우
+				if (OverlappingWeapons.Top())
+				{
+					OverlappingWeapons.Top()->ShowPickupWidget(false);
+				}
+				OverlappingWeapons.Emplace(Weapon);
+				Weapon->ShowPickupWidget(true);
+			}
+		}
+		// 제외되는 경우
+		else
+		{
+			if (OverlappingWeapons.Num() == 1)
+			{
+				// 1개인 상태에서 제외되는 경우
+				Weapon->ShowPickupWidget(false);
+				OverlappingWeapons.Empty();
+			}
+			else
+			{
+				// 2개 이상인 상태에서 제외되는 경우
+				if (OverlappingWeapons.Top())
+				{
+					OverlappingWeapons.Top()->ShowPickupWidget(false);
+				}
+				OverlappingWeapons.Remove(Weapon);
+				if (OverlappingWeapons.Top())
+				{
+					OverlappingWeapons.Top()->ShowPickupWidget(true);
+				}
+			}
+		}
+	}
+	else
+	{
+		// 추가되는 경우
+		if (!OverlappingWeapons.Contains(Weapon))
+		{
+			OverlappingWeapons.Emplace(Weapon);
+		}
+		// 제외되는 경우
+		else
+		{
+			OverlappingWeapons.Remove(Weapon);
 		}
 	}
 }
 
-void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
+void ABlasterCharacter::OnRep_OverlappingWeapons(TArray<AWeapon*> LastWeapons)
 {
-	if (OverlappingWeapon)
+	for (const auto& Weapon : LastWeapons)
 	{
-		OverlappingWeapon->ShowPickupWidget(true);
+		Weapon->ShowPickupWidget(false);
 	}
 	
-	// 직전 AWeapon을 매개변수로 받아와 위젯 비활성화
-	if (LastWeapon)
+	if (!OverlappingWeapons.IsEmpty())
 	{
-		LastWeapon->ShowPickupWidget(false);
+		if (OverlappingWeapons.Top())
+		{
+			OverlappingWeapons.Top()->ShowPickupWidget(true);
+		}
 	}
 }
 
@@ -580,10 +624,13 @@ void ABlasterCharacter::EquipButtonPressed()
 {
 	if (Combat)
 	{
-		if (HasAuthority())
+		if (HasAuthority() && !OverlappingWeapons.IsEmpty())
 		{
 			// 서버가 EquipWeapon을 호출한 경우 바로 착용
-			Combat->EquipWeapon(OverlappingWeapon);
+			if (OverlappingWeapons.Top())
+			{
+				Combat->EquipWeapon(OverlappingWeapons.Top());
+			}
 		}
 		else
 		{
@@ -595,9 +642,12 @@ void ABlasterCharacter::EquipButtonPressed()
 
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
-	if (Combat)
+	if (Combat && !OverlappingWeapons.IsEmpty())
 	{
-		Combat->EquipWeapon(OverlappingWeapon);
+		if (OverlappingWeapons.Top())
+		{
+			Combat->EquipWeapon(OverlappingWeapons.Top());
+		}
 	}
 }
 

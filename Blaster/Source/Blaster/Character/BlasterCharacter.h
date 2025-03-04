@@ -51,6 +51,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
 
+	// Overlap될 때 변수 자체는 서버와 클라이언트 모두가 변경되지만, 콜백 함수는 겹친 클라이언트의 인스턴스에서만 호출.
+	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapons)
+	TArray<class AWeapon*> OverlappingWeapons;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -70,13 +74,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
-	// Overlap될 때 변수 자체는 서버와 클라이언트 모두가 변경되지만, 콜백 함수는 겹친 클라이언트의 인스턴스에서만 호출.
-	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapon)
-	class AWeapon* OverlappingWeapon;
-
 	// Overlap될 때 클라이언트가 호출하는 콜백 함수
 	UFUNCTION()
-	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
+	void OnRep_OverlappingWeapons(TArray<AWeapon*> LastWeapons);
 
 	// 클라이언트가 서버에 요청하는 함수, 패킷 손실돼도 다시 전송해 호출을 반드시 보장함.
 	UFUNCTION(Server, Reliable)
