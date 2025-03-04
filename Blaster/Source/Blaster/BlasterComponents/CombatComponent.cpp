@@ -11,6 +11,7 @@
 #include "Camera/CameraComponent.h"
 #include "TimerManager.h"
 #include "Sound/SoundCue.h"
+#include "Blaster/Character/BlasterAnimInstance.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -156,7 +157,18 @@ void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 	
 	if (Character && Character->IsLocallyControlled() && CombatState == ECombatState::ECS_Unoccupied)
 	{
-		// Projectile에 대한 권한은 서버에게 있어야 하므로 스폰 없이 애니메이션만 재생
+		// 실제 사격에 대한 권한은 서버에게 있어야 하므로 애니메이션만 재생
+		Character->PlayFireMontage(bAiming);
+		EquippedWeapon->PlayFireMontage();
+		
+		// 서버에 사격 요청
+		ServerFire(TraceHitTarget);
+		return;
+	}
+
+	// 샷건인 경우 장전 중에도 예외로 사격 가능
+	if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
 		Character->PlayFireMontage(bAiming);
 		EquippedWeapon->PlayFireMontage();
 		
@@ -175,17 +187,33 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 {
 	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
 	
-	if (EquippedWeapon == nullptr || Character == nullptr || CombatState != ECombatState::ECS_Unoccupied)
+	if (EquippedWeapon == nullptr || Character == nullptr)
 	{
 		return;
 	}
 
-	// 자신의 캐릭터는 이미 애니메이션을 재생했으므로 아닌 경우만 호출
+	// 로컬에선 이미 애니메이션을 재생했으므로, 내가 아닌 캐릭터만 애니메이션 재생
 	if (!Character->IsLocallyControlled())
 	{
-		// 애니메이션만 재생
-		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->PlayFireMontage();
+		// 기본 상태거나, 장전 중이더라도 샷건인 경우 발사 가능
+		if (CombatState == ECombatState::ECS_Unoccupied)
+		{
+			Character->PlayFireMontage(bAiming);
+			EquippedWeapon->PlayFireMontage();
+		}
+		else if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+		{
+			Character->PlayFireMontage(bAiming);
+			EquippedWeapon->PlayFireMontage();
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
+	}
+	else
+	{
+		if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+		{
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
 	}
 
 	// 장착한 무기에 따라 다른 Fire 함수 호출
@@ -528,6 +556,53 @@ void UCombatComponent::UpdateAmmoValues()
 	EquippedWeapon->AddAmmo(-ReloadAmount);
 }
 
+void UCombatComponent::ShotgunShellReload()
+{
+	if (Character && Character->HasAuthority())
+	{
+		UpdateShotgunAmmoValues();
+	}
+}
+
+void UCombatComponent::UpdateShotgunAmmoValues()
+{
+	if (Character == nullptr || EquippedWeapon == nullptr)
+	{
+		return;
+	}
+
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= 1;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->Controller) : Controller;
+	if (Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
+	EquippedWeapon->AddAmmo(-1);
+
+	bool bNeedMoreReload = !EquippedWeapon->IsFull() && CarriedAmmo > 0;
+	JumpToShotgunMoreReload(bNeedMoreReload);
+}
+
+void UCombatComponent::JumpToShotgunMoreReload(bool bNeedMoreReload)
+{
+	UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Character->GetReloadMontage())
+	{
+		if (bNeedMoreReload)
+		{
+			AnimInstance->Montage_JumpToSection(FName("ShotgunStart"));
+		}
+		else
+		{
+			AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+		}
+	}
+}
+
 int32 UCombatComponent::AmountToReload()
 {
 	if (EquippedWeapon == nullptr)
@@ -554,6 +629,11 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
+	bool bJumpToShotgunEnd = CombatState == ECombatState::ECS_Reloading
+		&& EquippedWeapon != nullptr
+		&& EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun
+		&& (CarriedAmmo == 0 || EquippedWeapon->IsEmpty());
+	JumpToShotgunMoreReload(!bJumpToShotgunEnd);
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -601,6 +681,12 @@ bool UCombatComponent::CanFire()
 	if (EquippedWeapon == nullptr)
 	{
 		return false;
+	}
+
+	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		// 샷건 장전 중엔 예외로 사격 가능
+		return true;
 	}
 
 	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;

@@ -24,11 +24,14 @@ public:
 	// 애니메이션 재생 중 ReloadFinished 노티파이를 만나면 호출되는 함수
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
-	
-	// 장전 완료에 따른 탄알 수 조정
-	void UpdateAmmoValues();
 
 	void FireButtonPressed(bool bPressed);
+
+	// 샷건 재장전 애니메이션 재생 중 Shell 노티파이를 만나면 호출되는 함수
+	UFUNCTION(BlueprintCallable)
+	void ShotgunShellReload();
+
+	void JumpToShotgunMoreReload(bool bNeedMoreReload);
 
 protected:
 	virtual void BeginPlay() override;
@@ -159,4 +162,8 @@ private:
 
 	UFUNCTION()
 	void OnRep_CombatState();
+	
+	// 장전 완료에 따른 탄알 수 조정
+	void UpdateAmmoValues();
+	void UpdateShotgunAmmoValues();
 };
