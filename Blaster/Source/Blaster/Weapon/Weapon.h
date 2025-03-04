@@ -106,8 +106,12 @@ public:
 	 */
 
 	void EnableCustomDepth(bool bEnable);
+
+	UPROPERTY(EditAnywhere)
+	EWeaponGrade WeaponGrade = EWeaponGrade::EWG_Common;
 	
 protected:
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 
 	UFUNCTION()

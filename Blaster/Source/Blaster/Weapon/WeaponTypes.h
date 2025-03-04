@@ -4,9 +4,9 @@
 #include "WeaponTypes.generated.h"
 
 #define TRACE_LENGTH 80000.f;
-#define CUSTOM_DEPTH_PURPLE 250
-#define CUSTOM_DEPTH_BLUE 251
-#define CUSTOM_DEPTH_TAN 252
+#define CUSTOM_DEPTH_WHITE 0
+#define CUSTOM_DEPTH_BLUE 1
+#define CUSTOM_DEPTH_PURPLE 2
 
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
@@ -20,6 +20,17 @@ enum class EWeaponType : uint8
 	EWT_GrenadeLauncher UMETA(DisplayName = "Grenade Launcher"),
 	
 	EWT_MAX UMETA(DisplayName = "DefualtMax"),
+};
+
+
+UENUM(BlueprintType)
+enum class EWeaponGrade : uint8
+{
+	EWG_Common = CUSTOM_DEPTH_WHITE			UMETA(DisplayName = "Common"),
+	EWG_Rare = CUSTOM_DEPTH_BLUE			UMETA(DisplayName = "Rare"),
+	EWG_Legendary = CUSTOM_DEPTH_PURPLE		UMETA(DisplayName = "Legendary"),
+
+	EWG_MAX UMETA(DisplayName = "DefualtMax"),
 };
 
 USTRUCT()

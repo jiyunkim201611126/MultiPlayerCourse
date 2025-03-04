@@ -261,22 +261,14 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 		// 추가되는 경우
 		if (!OverlappingWeapons.Contains(Weapon))
 		{
-			if (OverlappingWeapons.IsEmpty())
+			if (!OverlappingWeapons.IsEmpty() && OverlappingWeapons.Top())
 			{
-				// 비어있는 상태에서 추가되는 경우
-				OverlappingWeapons.Emplace(Weapon);
-				Weapon->ShowPickupWidget(true);
+				// 비어있지 않으면 위젯이 활성화된 Weapon 비활성화
+				OverlappingWeapons.Top()->ShowPickupWidget(false);
 			}
-			else
-			{
-				// 비어있지 않은 상태에서 추가되는 경우
-				if (OverlappingWeapons.Top())
-				{
-					OverlappingWeapons.Top()->ShowPickupWidget(false);
-				}
-				OverlappingWeapons.Emplace(Weapon);
-				Weapon->ShowPickupWidget(true);
-			}
+			// Overlap된 Weapon 추가 후 위젯 활성화
+			OverlappingWeapons.Emplace(Weapon);
+			Weapon->ShowPickupWidget(true);
 		}
 		// 제외되는 경우
 		else
@@ -287,18 +279,20 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 				Weapon->ShowPickupWidget(false);
 				OverlappingWeapons.Empty();
 			}
-			else
+			else if (OverlappingWeapons.Top() == Weapon)
 			{
-				// 2개 이상인 상태에서 제외되는 경우
-				if (OverlappingWeapons.Top())
-				{
-					OverlappingWeapons.Top()->ShowPickupWidget(false);
-				}
-				OverlappingWeapons.Remove(Weapon);
-				if (OverlappingWeapons.Top())
+				// 2개 이상인 상태에서 제외되는 Weapon이 현재 위젯이 활성화된 Weapon인 경우
+				Weapon->ShowPickupWidget(false);
+				OverlappingWeapons.RemoveAt(OverlappingWeapons.Num() - 1);
+				if (!OverlappingWeapons.IsEmpty() && OverlappingWeapons.Top())
 				{
 					OverlappingWeapons.Top()->ShowPickupWidget(true);
 				}
+			}
+			else
+			{
+				// 활성화된 Weapon이 아닌 경우 단순 제거
+				OverlappingWeapons.Remove(Weapon);
 			}
 		}
 	}
@@ -324,12 +318,9 @@ void ABlasterCharacter::OnRep_OverlappingWeapons(TArray<AWeapon*> LastWeapons)
 		Weapon->ShowPickupWidget(false);
 	}
 	
-	if (!OverlappingWeapons.IsEmpty())
+	if (!OverlappingWeapons.IsEmpty() && OverlappingWeapons.Top())
 	{
-		if (OverlappingWeapons.Top())
-		{
-			OverlappingWeapons.Top()->ShowPickupWidget(true);
-		}
+		OverlappingWeapons.Top()->ShowPickupWidget(true);
 	}
 }
 
