@@ -487,6 +487,7 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ThisClass::FireButtonPressed);
 	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::FireButtonReleased);
 	EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ThisClass::ReloadButtonPressed);
+	EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &ThisClass::ThrowGrenadeButtonPressed);
 }
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -628,6 +629,22 @@ void ABlasterPlayerController::ReloadButtonPressed()
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->ReloadButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::ThrowGrenadeButtonPressed()
+{
+	if (bDisableGameplay)
+	{
+		return;
+	}
+	
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
+		{
+			BlasterCharacter->GrenadeButtonPressed();
 		}
 	}
 }

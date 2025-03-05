@@ -33,6 +33,9 @@ public:
 
 	void JumpToShotgunMoreReload(bool bNeedMoreReload);
 
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeFinished();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -63,6 +66,11 @@ protected:
 	void HandleReload();
 	// 장전해야 하는 Ammo의 수를 구하는 함수
 	int32 AmountToReload();
+
+	void ThrowGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
 
 private:
 	UPROPERTY()
