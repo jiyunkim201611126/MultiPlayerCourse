@@ -26,6 +26,8 @@ protected:
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* LoopingSoundAttenuation;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere)
 	class URocketMovementComponent* RocketMovementComponent;
+
+	virtual void AddVelocity(FVector Velocity) override;
 };

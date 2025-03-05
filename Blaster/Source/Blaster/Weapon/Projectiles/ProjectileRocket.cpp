@@ -51,6 +51,14 @@ void AProjectileRocket::BeginPlay()
 	}
 }
 
+void AProjectileRocket::AddVelocity(FVector Velocity)
+{
+	if (RocketMovementComponent)
+	{
+		RocketMovementComponent->Velocity += Velocity;
+	}
+}
+
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                               FVector NormalImpulse, const FHitResult& Hit)
 {

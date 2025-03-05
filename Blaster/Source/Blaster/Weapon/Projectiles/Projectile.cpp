@@ -6,6 +6,7 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Blaster.h"
 #include "NiagaraFunctionLibrary.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -72,6 +73,14 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComp,
 	}
 
 	Destroy();
+}
+
+void AProjectile::AddVelocity(FVector Velocity)
+{
+	if (ProjectileMovementComponent)
+	{
+		ProjectileMovementComponent->Velocity += Velocity;
+	}
 }
 
 void AProjectile::SpawnTrailSystem()

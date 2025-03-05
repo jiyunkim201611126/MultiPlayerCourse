@@ -57,6 +57,9 @@ protected:
 	float DamageInnerRadius = 200.f;
 	UPROPERTY(EditAnywhere)
 	float DamageOuterRadius = 500.f;
+
+	UFUNCTION(BlueprintCallable)
+	virtual void AddVelocity(FVector Velocity);
 	
 private:
 	UPROPERTY(EditAnywhere)
