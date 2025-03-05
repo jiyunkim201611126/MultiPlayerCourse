@@ -155,7 +155,7 @@ void AWeapon::OnRep_WeaponState()
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 		WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
-		WeaponMesh->SetCustomDepthStencilValue(CUSTOM_DEPTH_PURPLE);
+		WeaponMesh->SetCustomDepthStencilValue(static_cast<uint8>(WeaponGrade));
 		WeaponMesh->MarkRenderStateDirty();
 		EnableCustomDepth(true);
 		break;
