@@ -1,6 +1,7 @@
 #include "BlasterPlayerController.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Blaster/HUD/BlasterHUD.h"
 #include "Blaster/HUD/CharacterOverlay.h"
@@ -108,6 +109,11 @@ void ABlasterPlayerController::PollInit()
 				SetHUDHealth(HUDHealth, HUDMaxHealth);
 				SetHUDScore(HUDScore);
 				SetHUDDefeats(HUDDefeats);
+				ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(GetPawn());
+				if (BlasterCharacter && BlasterCharacter->GetCombat())
+				{
+					SetHUDGrenades(BlasterCharacter->GetCombat()->GetGrenades());
+				}
 			}
 		}
 	}
@@ -348,6 +354,25 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(int32 CountdownTime)
 		
 		FString CountdownText = FString::Printf(TEXT("%02d : %02d"), Minutes, Seconds);
 		BlasterHUD->Announcement->UpdateWarmupTimeText(CountdownText);
+	}
+}
+
+void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	const bool bHUDValid = BlasterHUD
+		&& BlasterHUD->CharacterOverlay
+		&& BlasterHUD->CharacterOverlay->GrenadesText;
+
+	if (bHUDValid)
+	{
+		FString GrenadeText = FString::Printf(TEXT("%d"), Grenades);
+		BlasterHUD->CharacterOverlay->UpdateGrenadesAmount(GrenadeText);
+	}
+	else
+	{
+		HUDGrenades = Grenades;
 	}
 }
 

@@ -24,6 +24,7 @@ public:
 	void SetHUDCarriedAmmo(int32 Ammo);
 	void SetHUDMatchCountdown(int32 CountdownTime);
 	void SetHUDAnnouncementCountdown(int32 CountdownTime);
+	void SetHUDGrenades(int32 Grenades);
 	virtual void OnPossess(APawn* InPawn) override;
 
 	virtual float GetServerTime();
@@ -99,6 +100,7 @@ private:
 	float HUDMaxHealth;
 	float HUDScore;
 	int32 HUDDefeats;
+	int32 HUDGrenades;
 
 	/**
 	 * 플레이어 인풋 관련 세팅

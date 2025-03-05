@@ -59,6 +59,14 @@ void UCharacterOverlay::UpdateMatchCountdownText(const FString& InString) const
 	}
 }
 
+void UCharacterOverlay::UpdateGrenadesAmount(const FString& InString) const
+{
+	if (GrenadesText)
+	{
+		GrenadesText->SetText(FText::FromString(InString));
+	}
+}
+
 void UCharacterOverlay::LerpMatchCountdownTextColor()
 {
 	// 첫 진입 시(바인딩 상태로 체크) 업데이트 함수 바인딩

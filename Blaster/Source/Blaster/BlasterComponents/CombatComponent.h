@@ -74,11 +74,10 @@ protected:
 	int32 AmountToReload();
 
 	void ThrowGrenade();
+	void ShowAttachedGrenade(bool bShowGrenade);
 
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
-
-	void ShowAttachedGrenade(bool bShowGrenade);
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProjectile> GrenadeClass;
@@ -183,7 +182,7 @@ private:
 	// CarriedAmmoMap 초기화
 	void InitializeCarriedAmmo();
 
-	UPROPERTY(ReplicatedUsing=OnRep_CombatState)
+	UPROPERTY(ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState = ECombatState::ECS_Unoccupied;
 
 	UFUNCTION()
@@ -192,4 +191,18 @@ private:
 	// 장전 완료에 따른 탄알 수 조정
 	void UpdateAmmoValues();
 	void UpdateShotgunAmmoValues();
+
+	UPROPERTY(ReplicatedUsing = OnRep_Grenades)
+	int32 Grenades = 4;
+
+	UFUNCTION()
+	void OnRep_Grenades();
+	
+	UPROPERTY(EditAnywhere)
+	int32 MaxGrenades = 4;
+
+	void UpdateHUDGrenades();
+
+public:
+	FORCEINLINE int32 GetGrenades() const { return Grenades; }
 };

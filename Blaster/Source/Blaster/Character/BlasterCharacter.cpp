@@ -489,6 +489,11 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
                                       AController* InstigatorController,
                                       AActor* DamageCauser)
 {
+	if (bElimmed)
+	{
+		return;
+	}
+	
 	// 서버에서 실행되는 함수 (서버가 권한을 가진 액터에서 ApplyDamage를 호출하는 것도 있지만, 애초에 서버에서만 바인딩했음)
 	// Health는 클라이언트에 복제되어 OnRep_Health를 호출
 	Health = FMath::Clamp(Health - Damage, -0.f, MaxHealth);
@@ -521,12 +526,18 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	}
 	
 	// 서버가 보는 애니메이션 재생
-	PlayHitReactMontage();
+	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void ABlasterCharacter::OnRep_Health()
 {
-	PlayHitReactMontage();
+	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
+	{
+		PlayHitReactMontage();
+	}
 	UpdateHUDHealth();
 }
 

@@ -31,6 +31,9 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* GrenadesText;
 
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
@@ -39,6 +42,7 @@ public:
 	void UpdateWeaponAmmoAmount(const FString& InString) const;
 	void UpdateCarriedAmmoAmount(const FString& InString) const;
 	void UpdateMatchCountdownText(const FString& InString) const;
+	void UpdateGrenadesAmount(const FString& InString) const;
 
 	/**
 	 * 매치 카운트다운 빨간색으로 점멸
