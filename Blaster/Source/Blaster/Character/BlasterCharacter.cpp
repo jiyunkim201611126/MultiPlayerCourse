@@ -68,6 +68,10 @@ ABlasterCharacter::ABlasterCharacter()
 	MinNetUpdateFrequency = 33.f;
 
 	DissolveTimeline = CreateDefaultSubobject<UTimelineComponent>(TEXT("DissolveTimelineComponent"));
+
+	AttachedGrenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("AttachedGrenade"));
+	AttachedGrenade->SetupAttachment(GetMesh(), FName(TEXT("GrenadeSocket")));
+	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
@@ -118,7 +122,27 @@ void ABlasterCharacter::UpdatePlayerName() const
 		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
 		{
 			Widget->SetPlayerName(GetPlayerState()->GetPlayerName());
+			OverheadWidget->SetVisibility(false);
 		}
+	}
+}
+
+void ABlasterCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	UpdateHUDHealth();
+	
+	if (HasAuthority())
+	{
+		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
+	}
+	
+	PollInit();
+
+	if (AttachedGrenade)
+	{
+		AttachedGrenade->SetVisibility(false);
 	}
 }
 
@@ -238,20 +262,6 @@ void ABlasterCharacter::Destroyed()
 	{
 		Combat->EquippedWeapon->Destroy();
 	}
-}
-
-void ABlasterCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	UpdateHUDHealth();
-	
-	if (HasAuthority())
-	{
-		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
-	}
-	
-	PollInit();
 }
 
 void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)

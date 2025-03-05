@@ -540,7 +540,11 @@ void UCombatComponent::ReloadEmptyWeapon()
 
 void UCombatComponent::Reload()
 {
-	if (EquippedWeapon && EquippedWeapon->GetMagCapacity() > EquippedWeapon->GetAmmo() && CarriedAmmo > 0 && CombatState == ECombatState::ECS_Unoccupied)
+	if (EquippedWeapon
+		&& EquippedWeapon->GetMagCapacity() > EquippedWeapon->GetAmmo()
+		&& CarriedAmmo > 0
+		&& CombatState == ECombatState::ECS_Unoccupied
+		&& !EquippedWeapon->IsFull())
 	{
 		ServerReload();
 	}
@@ -681,6 +685,7 @@ void UCombatComponent::ThrowGrenade()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
 	if (Character && !Character->HasAuthority())
 	{
@@ -695,13 +700,27 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	{
 		Character->PlayThrowGrenadeMontage();
 		AttachActorToLeftHand(EquippedWeapon);
+		ShowAttachedGrenade(true);
 	}
+}
+
+void UCombatComponent::LaunchGrenade()
+{
+	ShowAttachedGrenade(false);
 }
 
 void UCombatComponent::ThrowGrenadeFinished()
 {
 	CombatState = ECombatState::ECS_Unoccupied;
 	AttachActorToRightHand(EquippedWeapon);
+}
+
+void UCombatComponent::ShowAttachedGrenade(bool bShowGrenade)
+{
+	if (Character && Character->GetAttachedGrenade())
+	{
+		Character->GetAttachedGrenade()->SetVisibility(bShowGrenade);
+	}
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()
@@ -736,6 +755,7 @@ void UCombatComponent::OnRep_CombatState()
 		{
 			Character->PlayThrowGrenadeMontage();
 			AttachActorToLeftHand(EquippedWeapon);
+			ShowAttachedGrenade(true);
 		}
 	}
 }

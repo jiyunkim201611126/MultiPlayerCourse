@@ -36,6 +36,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeFinished();
 
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenade();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -71,6 +74,8 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	void ShowAttachedGrenade(bool bShowGrenade);
 
 	void DropEquippedWeapon();
 	void AttachActorToRightHand(AActor* ActorToAttach);
