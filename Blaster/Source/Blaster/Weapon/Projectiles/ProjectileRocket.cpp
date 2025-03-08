@@ -1,22 +1,16 @@
 ﻿#include "ProjectileRocket.h"
 #include "Kismet/GameplayStatics.h"
-#include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystemInstanceController.h"
 #include "Components/BoxComponent.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
-#include "RocketMovementComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RocketMesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("RocketMovementComponent"));
-	RocketMovementComponent->bRotationFollowsVelocity = true;
-	RocketMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectileRocket::BeginPlay()
@@ -51,32 +45,32 @@ void AProjectileRocket::BeginPlay()
 	}
 }
 
-void AProjectileRocket::AddVelocity(FVector Velocity)
-{
-	if (RocketMovementComponent)
-	{
-		RocketMovementComponent->Velocity += Velocity;
-	}
-}
-
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
                               FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor == GetInstigator())
-	{
-		return;
-	}
-
 	ExplodeDamage();
 
 	StartDestroyTimer();
-
-	// 즉시 Destroy되면 안 되기 때문에 Super::OnHit을 호출할 수 없음
-	// 따라서 파티클과 사운드를 재생하는 함수들을 여기서 호출
+	
 	if (OtherActor->IsA(APawn::StaticClass()) && DefaultImpactParticle && HitCharacterImpactParticle)
 	{
 		DefaultImpactParticle = HitCharacterImpactParticle;
 	}
+	if (HasAuthority())
+	{
+		MulticastPlayFX();
+	}
+}
+
+void AProjectileRocket::Destroyed()
+{
+	Super::Super::Destroyed();
+}
+
+void AProjectileRocket::MulticastPlayFX_Implementation()
+{
+	// 즉시 Destroy되면 안 되기 때문에 Super::OnHit을 호출할 수 없음
+	// 따라서 파티클과 사운드를 재생하는 함수들을 여기서 호출
 	if (DefaultImpactParticle)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DefaultImpactParticle, GetActorTransform());
@@ -104,9 +98,4 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, 
 	{
 		ProjectileLoopComponent->Stop();
 	}
-}
-
-void AProjectileRocket::Destroyed()
-{
-	Super::Super::Destroyed();
 }

@@ -21,6 +21,10 @@ AProjectile::AProjectile()
 	CollisionBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECR_Block);
+
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->SetIsReplicated(true);
 }
 
 void AProjectile::BeginPlay()
@@ -38,6 +42,8 @@ void AProjectile::BeginPlay()
 			EAttachLocation::KeepWorldPosition
 		);
 	}
+
+	StartBlockTimer();
 
 	if (HasAuthority())
 	{
@@ -80,6 +86,32 @@ void AProjectile::AddVelocity(FVector Velocity)
 	if (ProjectileMovementComponent)
 	{
 		ProjectileMovementComponent->Velocity += Velocity;
+	}
+}
+
+void AProjectile::StartBlockTimer()
+{
+	// 발사한 폰과 충돌하지 않기 위한 Ignore 설정
+	if (AActor* MyInstigator = GetInstigator())
+	{
+		CollisionBox->IgnoreActorWhenMoving(MyInstigator, true);
+	}
+	
+	// BlockTime 이후 발사한 폰과 충돌할 수 있도록 타이머 지정
+	GetWorldTimerManager().SetTimer(
+		BlockTimer,
+		this,
+		&ThisClass::BlockTimerFinished,
+		BlockTime
+		);
+}
+
+void AProjectile::BlockTimerFinished()
+{
+	// 지정된 시간 이후 해당 투사체는 발사한 폰과 다시 충돌할 수 있게 됨
+	if (AActor* MyInstigator = GetInstigator())
+	{
+		CollisionBox->IgnoreActorWhenMoving(MyInstigator, false);
 	}
 }
 
@@ -142,6 +174,11 @@ void AProjectile::Destroyed()
 {
 	Super::Destroyed();
 	
+	MulticastPlayFX();
+}
+
+void AProjectile::MulticastPlayFX_Implementation()
+{
 	if (DefaultImpactParticle)
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), DefaultImpactParticle, GetActorTransform());
@@ -151,4 +188,3 @@ void AProjectile::Destroyed()
 		UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation());
 	}
 }
-

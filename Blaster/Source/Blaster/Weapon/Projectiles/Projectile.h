@@ -26,6 +26,9 @@ protected:
 
 	UFUNCTION()
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayFX();
 	
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
@@ -72,4 +75,12 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float DestroyTime = 3.f;
+
+	// 발사 직후 충돌하지 않으나, 1초 후엔 충돌하기 위해 Timer 설정
+	FTimerHandle BlockTimer;
+	
+	float BlockTime = 1.f;
+
+	void StartBlockTimer();
+	void BlockTimerFinished();
 };

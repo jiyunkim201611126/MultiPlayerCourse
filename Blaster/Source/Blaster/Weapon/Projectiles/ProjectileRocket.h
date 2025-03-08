@@ -17,6 +17,8 @@ protected:
 	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 	virtual void BeginPlay() override;
 
+	virtual void MulticastPlayFX_Implementation() override;
+	
 	UPROPERTY(EditAnywhere)
 	USoundCue* ProjectileLoop;
 
@@ -25,9 +27,4 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	USoundAttenuation* LoopingSoundAttenuation;
-
-	UPROPERTY(VisibleAnywhere)
-	class URocketMovementComponent* RocketMovementComponent;
-
-	virtual void AddVelocity(FVector Velocity) override;
 };

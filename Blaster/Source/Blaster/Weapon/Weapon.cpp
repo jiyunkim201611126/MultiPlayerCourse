@@ -29,6 +29,8 @@ AWeapon::AWeapon()
 
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PickupWidget"));
 	PickupWidget->SetupAttachment(RootComponent);
+	PickupWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	PickupWidget->SetDrawAtDesiredSize(true);
 }
 
 void AWeapon::EnableCustomDepth(bool bEnable)
