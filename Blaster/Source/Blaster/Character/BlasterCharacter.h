@@ -77,6 +77,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
 
+	UPROPERTY(VisibleAnywhere)
+	class UBuffComponent* Buff;
+
 	// Overlap될 때 클라이언트가 호출하는 콜백 함수
 	UFUNCTION()
 	void OnRep_OverlappingWeapons(TArray<AWeapon*> LastWeapons);

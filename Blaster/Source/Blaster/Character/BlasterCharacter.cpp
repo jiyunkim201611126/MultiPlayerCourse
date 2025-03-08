@@ -10,13 +10,13 @@
 #include "Blaster/GameMode/BlasterGameMode.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 
+// Replicate
+#include "Net/UnrealNetwork.h"
+
 // Show Username
 #include "GameFramework/PlayerState.h"
 #include "Components/WidgetComponent.h"
 #include "Blaster/HUD/OverheadWidget.h"
-
-// Replicate
-#include "Net/UnrealNetwork.h"
 
 // Combat
 #include "Blaster/Weapon/Weapon.h"
@@ -28,6 +28,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "Sound/SoundCue.h"
 #include "Blaster/Weapon/WeaponTypes.h"
+#include "Blaster/BlasterComponents/BuffComponent.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -55,6 +56,9 @@ ABlasterCharacter::ABlasterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("CombatComponent"));
 	Combat->SetIsReplicated(true);
 
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("BuffComponent"));
+	Buff->SetIsReplicated(true);
+
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
@@ -81,6 +85,10 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->Character = this;
+	}
+	if (Buff)
+	{
+		Buff->Character = this;
 	}
 }
 

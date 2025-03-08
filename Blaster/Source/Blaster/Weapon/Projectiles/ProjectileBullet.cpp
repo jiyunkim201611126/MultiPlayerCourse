@@ -4,10 +4,6 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
-AProjectileBullet::AProjectileBullet()
-{
-}
-
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
                               AActor* OtherActor,
                               UPrimitiveComponent* OtherComp,
