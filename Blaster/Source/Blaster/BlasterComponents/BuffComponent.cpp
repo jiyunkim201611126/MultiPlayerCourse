@@ -18,6 +18,7 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	HealRampUp(DeltaTime);
+	ShieldRampUp(DeltaTime);
 }
 
 void UBuffComponent::Heal(float HealAmount, float HealingTime)
@@ -29,6 +30,13 @@ void UBuffComponent::Heal(float HealAmount, float HealingTime)
 
 	// 잔여 회복량 계산
 	AmountToHeal += HealAmount;
+}
+
+void UBuffComponent::ReplenishShield(float ShieldAmount, float ReplenishTime)
+{
+	bReplenishingShield = true;
+	ShieldReplenishRate = ShieldAmount / ReplenishTime;
+	ShieldReplenishAmount += ShieldAmount;
 }
 
 void UBuffComponent::HealRampUp(float DeltaTime)
@@ -55,6 +63,33 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 	{
 		bHealing = false;
 		AmountToHeal = 0.f;
+	}
+}
+
+void UBuffComponent::ShieldRampUp(float DeltaTime)
+{
+	if (!bReplenishingShield || Character == nullptr || Character->IsElimmed())
+	{
+		return;
+	}
+
+	// 회복 속도에 따른 이번 프레임에 대한 회복량 계산
+	float ReplenishShieldThisFrame = FMath::Min(ShieldReplenishRate * DeltaTime, ShieldReplenishAmount);
+	ShieldReplenishAmount -= ReplenishShieldThisFrame;
+	
+	// 의도치 않게 오버힐되는 경우를 방지하는 계산
+	if (ShieldReplenishAmount <= 0.f)
+	{
+		ReplenishShieldThisFrame += ShieldReplenishAmount;
+	}
+	
+	Character->SetShield(FMath::Clamp(Character->GetShield() + ReplenishShieldThisFrame, 0, Character->GetMaxShield()));
+	Character->UpdateHUDShield();
+
+	if (ShieldReplenishAmount <= 0 || Character->GetShield() >= Character->GetMaxShield())
+	{
+		bReplenishingShield = false;
+		ShieldReplenishAmount = 0.f;
 	}
 }
 
