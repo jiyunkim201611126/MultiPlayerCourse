@@ -29,6 +29,7 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Weapon/WeaponTypes.h"
 #include "Blaster/BlasterComponents/BuffComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
