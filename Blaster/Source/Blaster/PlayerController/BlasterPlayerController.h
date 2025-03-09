@@ -95,15 +95,18 @@ private:
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 
-	bool bInitializeCharacterOverlay = false;
-
 	float HUDHealth;
 	float HUDMaxHealth;
+	bool bInitializeHealth = false;
 	float HUDShield;
 	float HUDMaxShield;
+	bool bInitializeShield = false;
 	float HUDScore;
+	bool bInitializeScore = false;
 	int32 HUDDefeats;
+	bool bInitializeDefeats = false;
 	int32 HUDGrenades;
+	bool bInitializeGrenades = false;
 
 	/**
 	 * 플레이어 인풋 관련 세팅

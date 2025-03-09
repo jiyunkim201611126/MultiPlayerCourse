@@ -143,6 +143,7 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	UpdateHUDHealth();
+	UpdateHUDShield();
 	
 	if (HasAuthority())
 	{
@@ -504,10 +505,26 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	{
 		return;
 	}
+
+	
+	float DamageToHealth = Damage;
+	if (Shield > 0.f)
+	{
+		if (Shield >= Damage)
+		{
+			Shield = FMath::Clamp(Shield - Damage, 0.f, MaxShield);
+			DamageToHealth = 0.f;
+		}
+		else
+		{
+			DamageToHealth = FMath::Clamp(Damage - Shield, 0.f, Damage);
+			Shield = 0.f;
+		}
+	}
 	
 	// 서버에서 실행되는 함수 (서버가 권한을 가진 액터에서 ApplyDamage를 호출하는 것도 있지만, 애초에 서버에서만 바인딩했음)
 	// Health는 클라이언트에 복제되어 OnRep_Health를 호출
-	Health = FMath::Clamp(Health - Damage, -0.f, MaxHealth);
+	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 
 	// DamageType에 의한 추가 효과
 	if (UDamageType* MutableDamageType = const_cast<UDamageType*>(DamageType))
@@ -522,6 +539,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	if (IsLocallyControlled())
 	{
 		UpdateHUDHealth();
+		UpdateHUDShield();
 	}
 
 	// HP가 0에 도달할 경우 GameMode에게 사망했다고 알림
