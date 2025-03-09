@@ -540,13 +540,13 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	}
 }
 
-void ABlasterCharacter::OnRep_Health()
+void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
-	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
+	UpdateHUDHealth();
+	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) && Health < LastHealth)
 	{
 		PlayHitReactMontage();
 	}
-	UpdateHUDHealth();
 }
 
 void ABlasterCharacter::UpdateHUDHealth()
