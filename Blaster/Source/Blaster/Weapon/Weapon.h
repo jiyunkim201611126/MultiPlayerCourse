@@ -37,65 +37,66 @@ public:
 	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어 지원할 수 있게 EditAnywhere
 	 */
 
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties | Crosshairs")
 	UTexture2D* CrosshairsCenter;
 	
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties | Crosshairs")
 	UTexture2D* CrosshairsLeft;
 	
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties | Crosshairs")
 	UTexture2D* CrosshairsRight;
 	
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties | Crosshairs")
 	UTexture2D* CrosshairsTop;
 	
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties | Crosshairs")
 	UTexture2D* CrosshairsBottom;
 
 	/**
 	 * Zoomed FOV while aiming
 	 */
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Combat | Zoom")
 	float ZoomedFOV = 30.f;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Combat | Zoom")
 	float ZoomInterpSpeed = 20.f;
 
 	/**
 	 * 크로스헤어 스프레드, 탄퍼짐 관련 변수
 	 */
+	
+	// 탄퍼짐 사용 여부를 결정하는 bool.
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	bool bUseScatter = false;
+	
 	// 조준 사격 정확도, 높을수록 이동하거나 점프 도중에도 정확도가 상승
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter", meta = (editcondition = "bUseScatter"))
 	float ZoomAccurate = 0.6f;
 
 	// 비조준 사격 시 하락하는 정확도, 높을수록 크게 빗나감
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter", meta = (editcondition = "bUseScatter"))
 	float HipFireAccurateSubtract = 0.75f;
 	
 	// 비조준 사격 시 하락하는 정확도의 최대치
-	UPROPERTY(EditAnywhere, Category = "Crosshairs")
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter", meta = (editcondition = "bUseScatter"))
 	float HipFireAccurateMaxSubtract = 3.f;
-
-	// 탄퍼짐 사용 여부를 결정하는 bool.
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
-	bool bUseScatter = false;
 
 	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 정도
 	// Projectile은 RandomRotator, HitScan은 구체의 반지름으로 적용
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Scatter")
+	UPROPERTY(VisibleAnywhere, Category = "Combat | Weapon Scatter")
 	float SpreadFactor = 0.f;
 	
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
 	float DefaultSpreadFactor = 0.f;
 
 	/**
 	 * Automatic fire
 	 */
-	UPROPERTY(EditAnywhere, Category = "Combat")
+	UPROPERTY(EditAnywhere, Category = "Combat | Combat")
 	float FireDelay = 0.15f;
 
-	UPROPERTY(EditAnywhere, Category = "Combat")
+	UPROPERTY(EditAnywhere, Category = "Combat | Combat")
 	bool bAutomatic = true;
 
 	UPROPERTY(EditAnywhere)
@@ -136,24 +137,24 @@ protected:
 	float Damage = 0.f;
 	
 private:
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties | Weapon Properties")
 	USkeletalMeshComponent* WeaponMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties | Weapon Properties")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(ReplicatedUsing = OnRep_WeaponState, VisibleAnywhere, Category = "Weapon Properties | Weapon Properties")
 	EWeaponState WeaponState;
 
 	// WeaponState가 바뀌면 호출되는 콜백 함수
 	UFUNCTION()
 	void OnRep_WeaponState();
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties")
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties | Weapon Properties")
 	class UWidgetComponent* PickupWidget;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	class UAnimationAsset* FireAnimation;
+	UPROPERTY(EditAnywhere)
+	UAnimationAsset* FireAnimation;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
@@ -178,7 +179,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
 
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	UPROPERTY(EditAnywhere)
 	bool bNeedPhysicsSimulate = false;
 	
 public:

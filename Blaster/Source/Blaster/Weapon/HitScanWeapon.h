@@ -40,6 +40,6 @@ private:
 	 * Trace end with scatter
 	 */
 	// 탄퍼짐의 기준이 되는 구체의 거리. 클수록 탄퍼짐이 좁아짐
-	UPROPERTY(EditAnywhere, Category = "Weapon Scatter")
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
 	float DistanceToSphere = 800.f;
 };
