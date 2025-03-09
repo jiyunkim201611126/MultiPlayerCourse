@@ -59,6 +59,7 @@ public:
 	TArray<class AWeapon*> OverlappingWeapons;
 	
 	void UpdateHUDHealth();
+	void UpdateHUDShield();
 
 protected:
 	virtual void BeginPlay() override;
