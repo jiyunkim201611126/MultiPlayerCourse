@@ -523,7 +523,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 		UpdateHUDHealth();
 	}
 
-	// HP가 0에 도달할 경우 GameMode에게 자신이 사망했다고 알림
+	// HP가 0에 도달할 경우 GameMode에게 사망했다고 알림
 	if (Health == 0.f)
 	{
 		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())

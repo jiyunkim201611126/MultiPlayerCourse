@@ -19,6 +19,22 @@ void UCharacterOverlay::UpdateHealthText(const FString& InString) const
 	}
 }
 
+void UCharacterOverlay::UpdateShieldBar(const float BarPercent) const
+{
+	if (ShieldBar)
+	{
+		ShieldBar->SetPercent(BarPercent);
+	}
+}
+
+void UCharacterOverlay::UpdateShieldText(const FString& InString) const
+{
+	if (ShieldTextBlock)
+	{
+		ShieldTextBlock->SetText(FText::FromString(InString));
+	}
+}
+
 void UCharacterOverlay::UpdateScoreAmount(const FString& InString) const
 {
 	if (ScoreAmount)

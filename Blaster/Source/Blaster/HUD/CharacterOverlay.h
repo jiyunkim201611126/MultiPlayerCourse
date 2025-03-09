@@ -18,6 +18,12 @@ public:
 	class UTextBlock* HealthTextBlock;
 	
 	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* ShieldBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* ShieldTextBlock;
+	
+	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ScoreAmount;
 	
 	UPROPERTY(meta = (BindWidget))
@@ -37,6 +43,8 @@ public:
 
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
+	void UpdateShieldBar(const float BarPercent) const;
+	void UpdateShieldText(const FString& InString) const;
 	void UpdateScoreAmount(const FString& InString) const;
 	void UpdateDefeatsAmount(const FString& InString) const;
 	void UpdateWeaponAmmoAmount(const FString& InString) const;
