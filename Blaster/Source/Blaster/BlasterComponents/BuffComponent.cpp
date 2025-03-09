@@ -23,7 +23,11 @@ void UBuffComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 void UBuffComponent::Heal(float HealAmount, float HealingTime)
 {
 	bHealing = true;
+
+	// 회복 속도 계산
 	HealingRate = HealAmount / HealingTime;
+
+	// 잔여 회복량 계산
 	AmountToHeal += HealAmount;
 }
 
@@ -34,11 +38,18 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 		return;
 	}
 
-	float HealThisFrame = HealingRate * DeltaTime;
-	HealThisFrame = FMath::Min(HealThisFrame, AmountToHeal);
+	// 회복 속도에 따른 이번 프레임에 대한 회복량 계산
+	float HealThisFrame = FMath::Min(HealingRate * DeltaTime, AmountToHeal);
+	AmountToHeal -= HealThisFrame;
+	
+	// 의도치 않게 오버힐되는 경우를 방지하는 계산
+	if (AmountToHeal <= 0.f)
+	{
+		HealThisFrame += AmountToHeal;
+	}
+	
 	Character->SetHealth(FMath::Clamp(Character->GetHealth() + HealThisFrame, 0, Character->GetMaxHealth()));
 	Character->UpdateHUDHealth();
-	AmountToHeal -= HealThisFrame;
 
 	if (AmountToHeal <= 0 || Character->GetHealth() >= Character->GetMaxHealth())
 	{
