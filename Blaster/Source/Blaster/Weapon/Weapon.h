@@ -110,6 +110,8 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	EWeaponGrade WeaponGrade = EWeaponGrade::EWG_Common;
+
+	bool bDestroyWeapon = false;
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;

@@ -115,6 +115,8 @@ void ABlasterCharacter::PossessedBy(AController* NewController)
 
 	// Server Update
 	UpdatePlayerName();
+
+	UpdateHUDAmmo();
 }
 
 void ABlasterCharacter::OnRep_PlayerState()
@@ -123,6 +125,8 @@ void ABlasterCharacter::OnRep_PlayerState()
 
 	// Client Update
 	UpdatePlayerName();
+
+	UpdateHUDAmmo();
 }
 
 void ABlasterCharacter::UpdatePlayerName() const
@@ -142,7 +146,10 @@ void ABlasterCharacter::UpdatePlayerName() const
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+                       
+	SpawnDefaultWeapon();
 
+	UpdateHUDAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
 	
@@ -159,13 +166,35 @@ void ABlasterCharacter::BeginPlay()
 	}
 }
 
+void ABlasterCharacter::SpawnDefaultWeapon()
+{
+	ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(UGameplayStatics::GetGameMode(this));
+	UWorld* World = GetWorld();
+	if (BlasterGameMode && World && !bElimmed && DefaultWeapon)
+	{
+		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeapon);
+		StartingWeapon->bDestroyWeapon = true;
+		if (Combat)
+		{
+			Combat->EquipWeapon(StartingWeapon);
+		}
+	}
+}
+
 void ABlasterCharacter::Elim()
 {
 	// GameMode에 의해 실행됨
 	if (Combat && Combat->EquippedWeapon)
 	{
 		// 무기 드랍
-		Combat->EquippedWeapon->Dropped();
+		if (Combat->EquippedWeapon->bDestroyWeapon)
+		{
+			Combat->EquippedWeapon->Destroy();
+		}
+		else
+		{
+			Combat->EquippedWeapon->Dropped();
+		}
 	}
 
 	// 클라이언트들에게 알림
@@ -595,6 +624,16 @@ void ABlasterCharacter::UpdateHUDShield()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDShield(Shield, MaxShield);
+	}
+}
+
+void ABlasterCharacter::UpdateHUDAmmo()
+{
+	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
+	if (BlasterPlayerController && Combat && Combat->EquippedWeapon)
+	{
+		BlasterPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
+		BlasterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
 	}
 }
 

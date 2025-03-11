@@ -60,12 +60,22 @@ public:
 	
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
+	void UpdateHUDAmmo();
+
+	void SpawnDefaultWeapon();
 
 protected:
 	virtual void BeginPlay() override;
 	
 	void AimOffset(float DeltaTime);
 	void SimProxiesTurn();
+	void RotateInPlace(float DeltaTime);
+	
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
+	
+	// 시작 시 우상단 Score를 Refresh하기 위한 함수
+	void PollInit();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
@@ -218,14 +228,13 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* AttachedGrenade;
-	
-protected:
-	
-	UFUNCTION()
-	void ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, class AController* InstigatorController, AActor* DamageCauser);
-	// 시작 시 우상단 Score를 Refresh하기 위한 함수
-	void PollInit();
-	void RotateInPlace(float DeltaTime);
+
+	/**
+	 * Default weapon
+	 */
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AWeapon> DefaultWeapon;
 	
 public:
 	// Getter, Setter

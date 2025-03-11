@@ -66,8 +66,7 @@ void ABlasterGameMode::OnMatchStateSet()
 	// 모든 플레이어에게 MatchState의 변경 사항에 대해 알림
 	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
 	{
-		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get());
-		if (BlasterPlayer)
+		if (ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get()))
 		{
 			BlasterPlayer->OnMatchStateSet(MatchState);
 		}
@@ -120,7 +119,7 @@ void ABlasterGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController*
 			APlayerController* PlayerController = It->Get();
 			if (PlayerController && PlayerController != ElimmedController && PlayerController->GetPawn())
 			{
-				PlayerLocations.Add(PlayerController->GetPawn()->GetActorLocation());
+				PlayerLocations.Add(PlayerController->GetFocalLocation());
 			}
 		}
 
