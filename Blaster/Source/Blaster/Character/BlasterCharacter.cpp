@@ -732,19 +732,8 @@ void ABlasterCharacter::EquipButtonPressed()
 {
 	if (Combat)
 	{
-		if (HasAuthority() && !OverlappingWeapons.IsEmpty())
-		{
-			// 서버가 EquipWeapon을 호출한 경우 바로 착용
-			if (OverlappingWeapons.Top())
-			{
-				Combat->EquipWeapon(OverlappingWeapons.Top());
-			}
-		}
-		else
-		{
-			// 클라이언트가 EquipWeapon을 호출한 경우 서버에게 착용을 요청
-			ServerEquipButtonPressed();
-		}
+		// 클라이언트가 Equip버튼을 누른 경우 서버에게 착용을 요청
+		ServerEquipButtonPressed();
 	}
 }
 
