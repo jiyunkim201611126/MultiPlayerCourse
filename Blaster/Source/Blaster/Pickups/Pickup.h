@@ -44,7 +44,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* PickupEffect;
-
-public:
 	
+	/**
+	 * Prevents it from being destroyed as soon as it is spawned.
+	 */
+	FTimerHandle BindOverlapTimer;
+	float BindOverlapTime = 0.25f;
 };

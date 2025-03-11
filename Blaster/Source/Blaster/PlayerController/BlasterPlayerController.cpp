@@ -186,8 +186,22 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	if (bHUDValid)
 	{
 		const float HealthPercent = Health / MaxHealth;
+		float VisibleHealth;
+		if (0.f < Health && Health <= 1.f)
+		{
+			VisibleHealth = 1.f;
+		}
+		else if (Health <= 0.f)
+		{
+			VisibleHealth = 0.f;
+		}
+		else
+		{
+			VisibleHealth = Health;
+		}
+		VisibleHealth = FMath::Clamp(VisibleHealth, 0.f, MaxHealth);
 		BlasterHUD->CharacterOverlay->UpdateHealthBar(HealthPercent);
-		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
+		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::RoundToInt(VisibleHealth), FMath::RoundToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->UpdateHealthText(HealthText);
 	}
 	else
@@ -210,8 +224,22 @@ void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
 	if (bHUDValid)
 	{
 		const float ShieldPercent = Shield / MaxShield;
+		float VisibleShield;
+		if (0.f < Shield && Shield <= 1.f)
+		{
+			VisibleShield = 1.f;
+		}
+		else if (Shield <= 0.f)
+		{
+			VisibleShield = 0.f;
+		}
+		else
+		{
+			VisibleShield = Shield;
+		}
+		VisibleShield = FMath::Clamp(VisibleShield, 0.f, MaxShield);
 		BlasterHUD->CharacterOverlay->UpdateShieldBar(ShieldPercent);
-		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::CeilToInt(Shield), FMath::CeilToInt(MaxShield));
+		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::RoundToInt(VisibleShield), FMath::RoundToInt(MaxShield));
 		BlasterHUD->CharacterOverlay->UpdateShieldText(ShieldText);
 	}
 	else
@@ -232,7 +260,7 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 
 	if (bHUDValid)
 	{
-		FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Score));
+		FString ScoreText = FString::Printf(TEXT("%d"), FMath::RoundToInt(Score));
 		BlasterHUD->CharacterOverlay->UpdateScoreAmount(ScoreText);
 	}
 	else
@@ -312,7 +340,7 @@ void ABlasterPlayerController::SetHUDTime()
 	}
 	
 	// 매치 시간에서 유추한 서버 시간을 빼는 것으로 남은 시간 계산
-	uint32 SecondsLeft = FMath::CeilToInt(TimeLeft);
+	uint32 SecondsLeft = FMath::FloorToInt(TimeLeft);
 
 	// 실질적으로 시간이 바뀌었을 때만 업데이트를 호출해 최적화
 	if (CountdownInt != SecondsLeft)

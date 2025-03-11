@@ -18,9 +18,11 @@ APickup::APickup()
 	OverlapSphere->SetupAttachment(RootComponent);
 	OverlapSphere->SetRelativeLocation(FVector(0.f, 0.f, 50.f));
 	OverlapSphere->SetSphereRadius(64.f);
+
+	// Prevent destroy if it overlaps with Character immediately after spawned.
+	// So it doesn't have CollisionResponse in construction time
 	OverlapSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	OverlapSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
-	OverlapSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh"));
 	PickupMesh->SetupAttachment(OverlapSphere);
@@ -36,10 +38,19 @@ APickup::APickup()
 void APickup::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if (HasAuthority())
 	{
+		// Overlap function bind.
 		OverlapSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereOverlap);
+
+		// Enable Collisions after specified time
+		GetWorldTimerManager().SetTimer(
+		BindOverlapTimer,
+		[this]() { OverlapSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap); },
+		BindOverlapTime,
+		false
+		);
 	}
 }
 
@@ -54,7 +65,7 @@ void APickup::Tick(float DeltaTime)
 
 	if (PickupMesh)
 	{
-		PickupMesh->AddLocalRotation(FRotator(0.f, BaseTurnRate * DeltaTime, 0.f));
+		PickupMesh->AddWorldRotation(FRotator(0.f, BaseTurnRate * DeltaTime, 0.f));
 	}
 }
 

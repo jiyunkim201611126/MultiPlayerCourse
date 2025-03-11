@@ -61,6 +61,7 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 
 	if (AmountToHeal <= 0 || Character->GetHealth() >= Character->GetMaxHealth())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%f"), Character->GetHealth());
 		bHealing = false;
 		AmountToHeal = 0.f;
 	}
@@ -88,6 +89,7 @@ void UBuffComponent::ShieldRampUp(float DeltaTime)
 
 	if (ShieldReplenishAmount <= 0 || Character->GetShield() >= Character->GetMaxShield())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("%f"), Character->GetShield());
 		bReplenishingShield = false;
 		ShieldReplenishAmount = 0.f;
 	}
