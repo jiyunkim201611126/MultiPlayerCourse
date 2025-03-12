@@ -36,6 +36,7 @@ public:
 	void CalculateAO_Pitch();
 
 	void EquipButtonPressed();
+	void SwapButtonPressed();
 	void CrouchButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
@@ -100,6 +101,9 @@ private:
 	// 클라이언트가 서버에 요청하는 함수, 패킷 손실돼도 다시 전송해 호출을 반드시 보장함.
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
+	
+	UFUNCTION(Server, Reliable)
+	void ServerSwapButtonPressed();
 
 	// AimOffset values
 	float AO_Yaw;

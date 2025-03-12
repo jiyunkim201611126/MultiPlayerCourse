@@ -273,6 +273,28 @@ void AWeapon::Fire(const FVector& HitTarget)
 	SpendRound();
 }
 
+void AWeapon::StartFireTimer()
+{
+	GetWorldTimerManager().SetTimer(
+		FireTimer,					// 해당 타이머를 추적하는 변수
+		this,
+		&AWeapon::FireTimerFinished,	// 시간 경과 후 호출될 함수
+		FireDelay						// 해당 시간
+		);
+}
+
+void AWeapon::FireTimerFinished()
+{	
+	// FireDelay만큼의 시간 이후 사격 가능 상태로 변경
+	// 이로 인해 단발 무기는 꾹 누르고 있어도 발사가 안 됨
+	bCanFire = true;
+
+	if (OnFireTimerFinished.IsBound())
+	{
+		OnFireTimerFinished.Execute();
+	}
+}
+
 void AWeapon::Dropped()
 {
 	SetWeaponState(EWeaponState::EWS_Dropped);

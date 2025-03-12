@@ -116,6 +116,8 @@ void ABlasterCharacter::PossessedBy(AController* NewController)
 	// Server Update
 	UpdatePlayerName();
 
+	UpdateHUDHealth();
+	UpdateHUDShield();
 	UpdateHUDAmmo();
 }
 
@@ -126,6 +128,8 @@ void ABlasterCharacter::OnRep_PlayerState()
 	// Client Update
 	UpdatePlayerName();
 
+	UpdateHUDHealth();
+	UpdateHUDShield();
 	UpdateHUDAmmo();
 }
 
@@ -149,9 +153,9 @@ void ABlasterCharacter::BeginPlay()
                        
 	SpawnDefaultWeapon();
 
-	UpdateHUDAmmo();
 	UpdateHUDHealth();
 	UpdateHUDShield();
+	UpdateHUDAmmo();
 	
 	if (HasAuthority())
 	{
@@ -603,7 +607,7 @@ void ABlasterCharacter::OnRep_Health(float LastHealth)
 void ABlasterCharacter::OnRep_Shield(float LastShield)
 {
 	UpdateHUDShield();
-	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) && Shield < MaxShield)
+	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) && Shield < LastShield)
 	{
 		PlayHitReactMontage();
 	}
@@ -630,10 +634,17 @@ void ABlasterCharacter::UpdateHUDShield()
 void ABlasterCharacter::UpdateHUDAmmo()
 {
 	BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
-	if (BlasterPlayerController && Combat && Combat->EquippedWeapon)
+	if (BlasterPlayerController && Combat)
 	{
 		BlasterPlayerController->SetHUDCarriedAmmo(Combat->CarriedAmmo);
-		BlasterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+		if (Combat->EquippedWeapon)
+		{
+			BlasterPlayerController->SetHUDWeaponAmmo(Combat->EquippedWeapon->GetAmmo());
+		}
+		else
+		{
+			BlasterPlayerController->SetHUDWeaponAmmo(0);
+		}
 	}
 }
 
@@ -745,6 +756,23 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 		{
 			Combat->EquipWeapon(OverlappingWeapons.Top());
 		}
+	}
+}
+
+void ABlasterCharacter::SwapButtonPressed()
+{
+	if (Combat)
+	{
+		// 클라이언트가 Swap버튼을 누른 경우 서버에게 착용을 요청
+		ServerSwapButtonPressed();
+	}
+}
+
+void ABlasterCharacter::ServerSwapButtonPressed_Implementation()
+{
+	if (Combat && Combat->ShouldSwapWeapons())
+	{
+		Combat->SwapWeapons();
 	}
 }
 

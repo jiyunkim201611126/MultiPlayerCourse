@@ -94,7 +94,7 @@ void UCombatComponent::Fire()
 {
 	if (CanFire())
 	{
-		bCanFire = false;
+		EquippedWeapon->bCanFire = false;
 		
 		// 사격 시작
 		FHitResult HitResult;
@@ -106,45 +106,16 @@ void UCombatComponent::Fire()
 			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
 			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, EquippedWeapon->GetHipFireAccurateMaxSubtract());
 		}
-	
+
+		// 타이머가 바인드되지 않은 경우 다시 바인드
+		if (!EquippedWeapon->OnFireTimerFinished.IsBound())
+		{
+			MulticastBindFireTimer(EquippedWeapon, true);
+		}
+		
 		// 일정 시간 후 다시 발사되도록 타이머 시작
-		StartFireTimer();
+		EquippedWeapon->StartFireTimer();
 	}
-}
-
-void UCombatComponent::StartFireTimer()
-{
-	if (EquippedWeapon == nullptr || Character == nullptr)
-	{
-		return;
-	}
-	
-	Character->GetWorldTimerManager().SetTimer(
-		FireTimer,							// 해당 타이머를 추적하는 변수
-		this,
-		&UCombatComponent::FireTimerFinished,	// 시간 경과 후 호출될 함수
-		EquippedWeapon->FireDelay				// 해당 시간
-		);
-}
-
-void UCombatComponent::FireTimerFinished()
-{
-	if (EquippedWeapon == nullptr)
-	{
-		return;
-	}
-	
-	// FireDelay만큼의 시간 이후 사격 가능 상태로 변경
-	// 이로 인해 단발 무기는 꾹 누르고 있어도 발사가 안 됨
-	bCanFire = true;
-	
-	// FireDelay만큼의 시간 후, 아직 마우스를 누르고 있으면서 연사 무기인 경우 다시 Fire가 실행
-	if (bFireButtonPressed && EquippedWeapon->bAutomatic)
-	{
-		Fire();
-	}
-
-	ReloadEmptyWeapon();
 }
 
 void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
@@ -450,10 +421,37 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		EquipPrimaryWeapon(WeaponToEquip);
 	}
-
 	
 	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 	Character->bUseControllerRotationYaw = true;
+}
+
+void UCombatComponent::SwapWeapons()
+{
+	// 샷건 장전 도중 SwapWeapons 진입 시 장전 애니메이션을 멈추는 용도
+	if (CombatState == ECombatState::ECS_Reloading)
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+		if (Character && Character->GetMesh() && Character->GetMesh()->GetAnimInstance())
+		{
+			const FName SectionName("ReloadEnd");
+			Character->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName);
+		}
+	}
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	PlayEquipWeaponSound(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	MulticastBindFireTimer(EquippedWeapon, true);
+	
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryWeapon);
+	MulticastBindFireTimer(SecondaryWeapon, false);
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
@@ -475,6 +473,8 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
 	ReloadEmptyWeapon();
+
+	MulticastBindFireTimer(EquippedWeapon, true);
 }
 
 void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
@@ -491,11 +491,23 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
 	PlayEquipWeaponSound(SecondaryWeapon);
 	SecondaryWeapon->SetOwner(Character);
 
-	if (EquippedWeapon == nullptr)
+	MulticastBindFireTimer(SecondaryWeapon, false);
+}
+
+void UCombatComponent::MulticastBindFireTimer_Implementation(AWeapon* WeaponToBind, bool bShouldBind)
+{
+	if (WeaponToBind == nullptr)
 	{
 		return;
 	}
-	EquippedWeapon->SetOwner(Character);
+	if (bShouldBind)
+	{
+		WeaponToBind->OnFireTimerFinished.BindUObject(this, &UCombatComponent::HandleFireTimerFinished);
+	}
+	else
+	{
+		WeaponToBind->OnFireTimerFinished.Unbind();
+	}
 }
 
 void UCombatComponent::DropEquippedWeapon()
@@ -859,6 +871,12 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Unoccupied:
+		// 샷건 장전 도중 SwapWeapons 진입 시 장전 애니메이션을 멈추는 용도
+		if (Character && Character->GetMesh() && Character->GetMesh()->GetAnimInstance())
+		{
+			const FName SectionName("ReloadEnd");
+			Character->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName);
+		}
 		if (bFireButtonPressed)
 		{
 			Fire();
@@ -887,6 +905,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 		
 		Character->GetCharacterMovement()->bOrientRotationToMovement = false;
 		Character->bUseControllerRotationYaw = true;
+		EquippedWeapon->SetHUDAmmo();
 	}
 }
 
@@ -907,13 +926,24 @@ bool UCombatComponent::CanFire()
 		return false;
 	}
 
-	if (!EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	if (!EquippedWeapon->IsEmpty() && EquippedWeapon->bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
 	{
 		// 샷건 장전 중엔 예외로 사격 가능
 		return true;
 	}
 
-	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState == ECombatState::ECS_Unoccupied;
+	return !EquippedWeapon->IsEmpty() && EquippedWeapon->bCanFire && CombatState == ECombatState::ECS_Unoccupied;
+}
+
+void UCombatComponent::HandleFireTimerFinished()
+{
+	// FireDelay만큼의 시간 후, 아직 마우스를 누르고 있으면서 연사 무기인 경우 다시 Fire가 실행
+	if (bFireButtonPressed && EquippedWeapon->bAutomatic)
+	{
+		Fire();
+	}
+
+	ReloadEmptyWeapon();
 }
 
 void UCombatComponent::InitializeCarriedAmmo()
@@ -925,4 +955,19 @@ void UCombatComponent::InitializeCarriedAmmo()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, StartingShotgunAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, StartingSniperAmmo);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, StartingGrenadeLauncherAmmo);
+}
+
+bool UCombatComponent::ShouldSwapWeapons()
+{
+	return (
+		// 샷건은 예외로 장전 중에도 변경 가능
+		(EquippedWeapon != nullptr
+		&& SecondaryWeapon != nullptr
+		&& CombatState == ECombatState::ECS_Unoccupied)
+		||
+		(EquippedWeapon != nullptr
+		&& SecondaryWeapon != nullptr
+		&& CombatState != ECombatState::ECS_ThrowingGrenade
+		&& EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+		);
 }

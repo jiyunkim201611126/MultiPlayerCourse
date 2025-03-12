@@ -185,23 +185,26 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 		&& BlasterHUD->CharacterOverlay->HealthBar
 		&& BlasterHUD->CharacterOverlay->HealthTextBlock;
 	
+	const float HealthPercent = Health / MaxHealth;
+	float VisibleHealth;
+	if (0.f < Health && Health <= 1.f)
+	{
+		VisibleHealth = 1.f;
+	}
+	else if (Health <= 0.f)
+	{
+		VisibleHealth = 0.f;
+	}
+	else
+	{
+		VisibleHealth = Health;
+	}
+	VisibleHealth = FMath::Clamp(VisibleHealth, 0.f, MaxHealth);
+	
 	if (bHUDValid)
 	{
-		const float HealthPercent = Health / MaxHealth;
-		float VisibleHealth;
-		if (0.f < Health && Health <= 1.f)
-		{
-			VisibleHealth = 1.f;
-		}
-		else if (Health <= 0.f)
-		{
-			VisibleHealth = 0.f;
-		}
-		else
-		{
-			VisibleHealth = Health;
-		}
-		VisibleHealth = FMath::Clamp(VisibleHealth, 0.f, MaxHealth);
+		HUDHealth = VisibleHealth;
+		HUDMaxHealth = MaxHealth;
 		BlasterHUD->CharacterOverlay->UpdateHealthBar(HealthPercent);
 		FString HealthText = FString::Printf(TEXT("%d/%d"), FMath::RoundToInt(VisibleHealth), FMath::RoundToInt(MaxHealth));
 		BlasterHUD->CharacterOverlay->UpdateHealthText(HealthText);
@@ -209,7 +212,7 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	else
 	{
 		bInitializeHealth = true;
-		HUDHealth = Health;
+		HUDHealth = VisibleHealth;
 		HUDMaxHealth = MaxHealth;
 	}
 }
@@ -222,24 +225,27 @@ void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
 		&& BlasterHUD->CharacterOverlay
 		&& BlasterHUD->CharacterOverlay->ShieldBar
 		&& BlasterHUD->CharacterOverlay->ShieldTextBlock;
+
+	const float ShieldPercent = Shield / MaxShield;
+	float VisibleShield;
+	if (0.f < Shield && Shield <= 1.f)
+	{
+		VisibleShield = 1.f;
+	}
+	else if (Shield <= 0.f)
+	{
+		VisibleShield = 0.f;
+	}
+	else
+	{
+		VisibleShield = Shield;
+	}
+	VisibleShield = FMath::Clamp(VisibleShield, 0.f, MaxShield);
 	
 	if (bHUDValid)
 	{
-		const float ShieldPercent = Shield / MaxShield;
-		float VisibleShield;
-		if (0.f < Shield && Shield <= 1.f)
-		{
-			VisibleShield = 1.f;
-		}
-		else if (Shield <= 0.f)
-		{
-			VisibleShield = 0.f;
-		}
-		else
-		{
-			VisibleShield = Shield;
-		}
-		VisibleShield = FMath::Clamp(VisibleShield, 0.f, MaxShield);
+		HUDShield = VisibleShield;
+		HUDMaxShield = MaxShield;
 		BlasterHUD->CharacterOverlay->UpdateShieldBar(ShieldPercent);
 		FString ShieldText = FString::Printf(TEXT("%d/%d"), FMath::RoundToInt(VisibleShield), FMath::RoundToInt(MaxShield));
 		BlasterHUD->CharacterOverlay->UpdateShieldText(ShieldText);
@@ -247,7 +253,7 @@ void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
 	else
 	{
 		bInitializeShield = true;
-		HUDShield = Shield;
+		HUDShield = VisibleShield;
 		HUDMaxShield = MaxShield;
 	}
 }
@@ -262,6 +268,7 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 
 	if (bHUDValid)
 	{
+		HUDScore = Score;
 		FString ScoreText = FString::Printf(TEXT("%d"), FMath::RoundToInt(Score));
 		BlasterHUD->CharacterOverlay->UpdateScoreAmount(ScoreText);
 	}
@@ -282,6 +289,7 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 
 	if (bHUDValid)
 	{
+		HUDDefeats = Defeats;
 		FString DefeatsText = FString::Printf(TEXT("%d"), Defeats);
 		BlasterHUD->CharacterOverlay->UpdateDefeatsAmount(DefeatsText);
 	}
@@ -302,6 +310,7 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 
 	if (bHUDValid)
 	{
+		HUDWeaponAmmo = Ammo;
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->UpdateWeaponAmmoAmount(AmmoText);
 	}
@@ -322,6 +331,7 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 
 	if (bHUDValid)
 	{
+		HUDCarriedAmmo = Ammo;
 		FString AmmoText = FString::Printf(TEXT("%d"), Ammo);
 		BlasterHUD->CharacterOverlay->UpdateCarriedAmmoAmount(AmmoText);
 	}
@@ -572,6 +582,7 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
 	
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ThisClass::EquipButtonPressed);
+	EnhancedInputComponent->BindAction(SwapAction, ETriggerEvent::Started, this, &ThisClass::SwapButtonPressed);
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::CrouchButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Started, this, &ThisClass::AimButtonPressed);
 	EnhancedInputComponent->BindAction(AimAction, ETriggerEvent::Completed, this, &ThisClass::AimButtonReleased);
@@ -639,6 +650,17 @@ void ABlasterPlayerController::EquipButtonPressed()
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->EquipButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::SwapButtonPressed()
+{
+	if (ACharacter* ControlledPawn = GetCharacter())
+	{
+		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
+		{
+			BlasterCharacter->SwapButtonPressed();
 		}
 	}
 }

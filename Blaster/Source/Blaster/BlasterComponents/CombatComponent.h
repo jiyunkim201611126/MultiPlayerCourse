@@ -19,6 +19,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	void SwapWeapons();
 	void Reload();
 
 	// 애니메이션 재생 중 ReloadFinished 노티파이를 만나면 호출되는 함수
@@ -150,14 +151,16 @@ private:
 	/**
 	 * Automatic fire
 	 */
-	// 타이머 추적용
-	FTimerHandle FireTimer;
-	bool bCanFire = true;
-
-	void StartFireTimer();
-	void FireTimerFinished();
 
 	bool CanFire();
+
+	// 타이머에 바인드될 자동사격 함수
+	UFUNCTION()
+	void HandleFireTimerFinished();
+
+	// 사격이 서버에서 호출되므로 클라이언트에도 자동사격을 바인드하기 위한 Multicast 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastBindFireTimer(AWeapon* WeaponToBind, bool bShouldBind);
 
 	// 현재 총기 종류에 해당하는 남은 탄 수
 	UPROPERTY(ReplicatedUsing=OnRep_CarriedAmmo)
@@ -219,4 +222,5 @@ private:
 
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }
+	bool ShouldSwapWeapons();
 };

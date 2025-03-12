@@ -5,6 +5,8 @@
 #include "WeaponTypes.h"
 #include "Weapon.generated.h"
 
+DECLARE_DELEGATE(FOnFireTimerFinished);
+
 UENUM(BlueprintType)
 enum class EWeaponState : uint8
 {
@@ -31,6 +33,7 @@ public:
 	void ShowPickupWidget(const bool bShowWidget);
 	void PlayFireMontage() const;
 	virtual void Fire(const FVector& HitTarget);
+	bool bCanFire = true;
 	void Dropped();
 	void AddAmmo(int32 AmmoToAdd);
 
@@ -99,6 +102,14 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Combat | Combat")
 	bool bAutomatic = true;
+	
+	// 타이머 추적용
+	FTimerHandle FireTimer;
+
+	void StartFireTimer();
+	void FireTimerFinished();
+
+	FOnFireTimerFinished OnFireTimerFinished;
 
 	UPROPERTY(EditAnywhere)
 	class USoundCue* EquipSound;
