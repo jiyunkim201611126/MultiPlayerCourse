@@ -185,21 +185,10 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 	}
 }
 
+// GameMode에 의해 실행됨
 void ABlasterCharacter::Elim()
 {
-	// GameMode에 의해 실행됨
-	if (Combat && Combat->EquippedWeapon)
-	{
-		// 무기 드랍
-		if (Combat->EquippedWeapon->bDestroyWeapon)
-		{
-			Combat->EquippedWeapon->Destroy();
-		}
-		else
-		{
-			Combat->EquippedWeapon->Dropped();
-		}
-	}
+	DropOrDestroyWeapons();
 
 	// 클라이언트들에게 알림
 	MulticastElim();
@@ -209,6 +198,39 @@ void ABlasterCharacter::Elim()
 		&ThisClass::ElimTimerFinished,
 		ElimDelay
 		);
+}
+
+void ABlasterCharacter::DropOrDestroyWeapons()
+{
+	if (Combat)
+	{
+		if (Combat->EquippedWeapon)
+		{
+			DropOrDestroyWeapon(Combat->EquippedWeapon);
+		}
+		if (Combat->SecondaryWeapon)
+		{
+			DropOrDestroyWeapon(Combat->SecondaryWeapon);
+		}
+	}
+}
+
+void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
+{
+	if (Weapon == nullptr)
+	{
+		return;
+	}
+	
+	// 무기 드랍
+	if (Weapon->bDestroyWeapon)
+	{
+		Weapon->Destroy();
+	}
+	else
+	{
+		Weapon->Dropped();
+	}
 }
 
 void ABlasterCharacter::MulticastElim_Implementation()

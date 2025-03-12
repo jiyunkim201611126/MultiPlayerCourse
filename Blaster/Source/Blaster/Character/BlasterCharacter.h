@@ -25,6 +25,8 @@ public:
 	virtual void OnRep_PlayerState() override;
 	void UpdatePlayerName() const;
 	void Elim();
+	void DropOrDestroyWeapon(class AWeapon* Weapon);
+	void DropOrDestroyWeapons();
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 	virtual void Destroyed() override;
@@ -57,7 +59,7 @@ public:
 
 	// Overlap될 때 변수 자체는 서버와 클라이언트 모두가 변경되지만, 콜백 함수는 겹친 클라이언트의 인스턴스에서만 호출.
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapons)
-	TArray<class AWeapon*> OverlappingWeapons;
+	TArray<AWeapon*> OverlappingWeapons;
 	
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
