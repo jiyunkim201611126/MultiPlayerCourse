@@ -462,17 +462,18 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	{
 		return;
 	}
+	
 	DropEquippedWeapon();
 	
-	// 무기 장착, EquippedWeapon의 UPROPERTY로 인해 OnRep_EquippedWeapon이 자동 실행
-	// 하지만 서버에선 자동으로 실행되지 않으므로 서버에서도 알 수 있게 아래에서 한 번 실행
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	AttachActorToRightHand(EquippedWeapon);
+	
+	PlayEquipWeaponSound(EquippedWeapon);
 	EquippedWeapon->SetOwner(Character);
+	
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
-	PlayEquipWeaponSound(EquippedWeapon);
 	ReloadEmptyWeapon();
 }
 
@@ -482,11 +483,19 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
 	{
 		return;
 	}
+	
 	SecondaryWeapon = WeaponToEquip;
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	AttachActorToBackpack(WeaponToEquip);
+	
 	PlayEquipWeaponSound(SecondaryWeapon);
 	SecondaryWeapon->SetOwner(Character);
+
+	if (EquippedWeapon == nullptr)
+	{
+		return;
+	}
+	EquippedWeapon->SetOwner(Character);
 }
 
 void UCombatComponent::DropEquippedWeapon()
@@ -885,7 +894,7 @@ void UCombatComponent::OnRep_SecondaryWeapon()
 {
 	if (Character && SecondaryWeapon)
 	{
-		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+		SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 		AttachActorToBackpack(SecondaryWeapon);
 		PlayEquipWeaponSound(SecondaryWeapon);
 	}
