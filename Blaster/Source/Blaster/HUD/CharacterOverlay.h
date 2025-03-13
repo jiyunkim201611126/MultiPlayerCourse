@@ -37,6 +37,9 @@ public:
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* MatchCountdownText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* HighPingImage;
 	
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* GrenadesText;
@@ -51,6 +54,9 @@ public:
 	void UpdateCarriedAmmoAmount(const FString& InString) const;
 	void UpdateMatchCountdownText(const FString& InString) const;
 	void UpdateGrenadesAmount(const FString& InString) const;
+	
+	void StartHighPingAnimation();
+	void StopHighPingAnimation();
 
 	/**
 	 * 매치 카운트다운 빨간색으로 점멸
@@ -66,6 +72,13 @@ public:
 
 	UFUNCTION()
 	void UpdateColorLerp(const FLinearColor Color);
+
+	/**
+	 * 핑 높을 시 이미지 점멸
+	 */
+
+	UPROPERTY(meta = (BindWidgetAnim), Transient)
+	UWidgetAnimation* HighPingAnimation;
 
 protected:
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;

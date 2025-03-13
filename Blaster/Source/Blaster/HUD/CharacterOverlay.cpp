@@ -1,5 +1,6 @@
 #include "CharacterOverlay.h"
 
+#include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
@@ -80,6 +81,29 @@ void UCharacterOverlay::UpdateGrenadesAmount(const FString& InString) const
 	if (GrenadesText)
 	{
 		GrenadesText->SetText(FText::FromString(InString));
+	}
+}
+
+void UCharacterOverlay::StartHighPingAnimation()
+{
+	if (HighPingImage && HighPingAnimation)
+	{
+		HighPingImage->SetOpacity(1.f);
+		PlayAnimation(HighPingAnimation,
+			0.f,
+			5);
+	}
+}
+
+void UCharacterOverlay::StopHighPingAnimation()
+{
+	if (HighPingImage && HighPingAnimation)
+	{
+		HighPingImage->SetOpacity(0.f);
+		if (IsAnimationPlaying(HighPingAnimation))
+		{
+			StopAnimation(HighPingAnimation);
+		}
 	}
 }
 

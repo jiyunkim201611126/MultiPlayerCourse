@@ -49,6 +49,43 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 	CheckTimeSync(DeltaTime);
 	
 	PollInit();
+	
+	CheckPing(DeltaTime);
+}
+
+void ABlasterPlayerController::CheckPing(float DeltaTime)
+{
+	// 쓰로틀링. 20초(CheckPingFrequency)에 1번 애니메이션 재생
+	HighPingRunningTime += DeltaTime;
+	
+	if (HighPingRunningTime >= CheckPingFrequency)
+	{
+		PlayerState = PlayerState == nullptr ? GetPlayerState<APlayerState>() : PlayerState;
+		if (PlayerState)
+		{
+			if (PlayerState->GetPingInMilliseconds() > HighPingThreshold)
+			{
+				HighPingWarning();
+				PingAnimationRunningTime = 0.f;
+			}
+		}
+		HighPingRunningTime = 0.f;
+	}
+
+	bool bHighPingAnimationPlaying = BlasterHUD
+		&& BlasterHUD->CharacterOverlay
+		&& BlasterHUD->CharacterOverlay->HighPingAnimation
+		&& BlasterHUD->CharacterOverlay->IsAnimationPlaying(BlasterHUD->CharacterOverlay->HighPingAnimation);
+
+	// 5초(HighPingDuration)간 재생 후 애니메이션 종료
+	if (bHighPingAnimationPlaying)
+	{
+		PingAnimationRunningTime += DeltaTime;
+		if (PingAnimationRunningTime > HighPingDuration)
+		{
+			StopHighPingWarning();
+		}
+	}
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
@@ -60,6 +97,32 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
 		// 서버에게 현재 시간을 보냄
 		ServerRequestServerTime(GetWorld()->GetTimeSeconds());
 		TimeSyncRunningTime = 0.f;
+	}
+}
+
+void ABlasterPlayerController::HighPingWarning()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	const bool bHUDValid = BlasterHUD
+		&& BlasterHUD->CharacterOverlay;
+	
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->StartHighPingAnimation();
+	}
+}
+
+void ABlasterPlayerController::StopHighPingWarning()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+
+	const bool bHUDValid = BlasterHUD
+		&& BlasterHUD->CharacterOverlay;
+	
+	if (bHUDValid)
+	{
+		BlasterHUD->CharacterOverlay->StopHighPingAnimation();
 	}
 }
 
@@ -133,7 +196,7 @@ void ABlasterPlayerController::ServerRequestServerTime_Implementation(float Time
 void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeOfClientRequest,
 	float TimeServerReceivedClientRequest)
 {
-	// 현재 시간에서 처음 서버에게 요청한 시간을 빼는 것으로, 패킷이 돌아오는 데까지 걸린 시간을 계산
+	// 현재 시간에서 처음 서버에게 요청한 시간을 빼는 것으로, 패킷이 돌아오는 데까지 걸린 시간을 계산, 즉 ping이다.
 	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
 	// 위 시간의 절반을 서버가 패킷을 보내줄 때의 시간에 더해서 현재 서버의 시간을 유추
 	float CurrentServerTime = TimeServerReceivedClientRequest + (0.5f * RoundTripTime);
@@ -181,9 +244,7 @@ void ABlasterPlayerController::SetHUDHealth(float Health, float MaxHealth)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->HealthBar
-		&& BlasterHUD->CharacterOverlay->HealthTextBlock;
+		&& BlasterHUD->CharacterOverlay;
 	
 	const float HealthPercent = Health / MaxHealth;
 	float VisibleHealth;
@@ -222,9 +283,7 @@ void ABlasterPlayerController::SetHUDShield(float Shield, float MaxShield)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->ShieldBar
-		&& BlasterHUD->CharacterOverlay->ShieldTextBlock;
+		&& BlasterHUD->CharacterOverlay;
 
 	const float ShieldPercent = Shield / MaxShield;
 	float VisibleShield;
@@ -263,8 +322,7 @@ void ABlasterPlayerController::SetHUDScore(float Score)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->ScoreAmount;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
@@ -284,8 +342,7 @@ void ABlasterPlayerController::SetHUDDefeats(int32 Defeats)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->DefeatsAmount;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
@@ -305,8 +362,7 @@ void ABlasterPlayerController::SetHUDWeaponAmmo(int32 Ammo)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->WeaponAmmoAmount;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
@@ -326,8 +382,7 @@ void ABlasterPlayerController::SetHUDCarriedAmmo(int32 Ammo)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->CarriedAmmoAmount;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
@@ -384,8 +439,7 @@ void ABlasterPlayerController::SetHUDMatchCountdown(int32 CountdownTime)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->MatchCountdownText;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
@@ -413,8 +467,7 @@ void ABlasterPlayerController::SetHUDAnnouncementCountdown(int32 CountdownTime)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->Announcement
-		&& BlasterHUD->Announcement->WarmupTimeText;
+		&& BlasterHUD->Announcement;
 
 	if (bHUDValid)
 	{
@@ -437,8 +490,7 @@ void ABlasterPlayerController::SetHUDGrenades(int32 Grenades)
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 
 	const bool bHUDValid = BlasterHUD
-		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->GrenadesText;
+		&& BlasterHUD->CharacterOverlay;
 
 	if (bHUDValid)
 	{
