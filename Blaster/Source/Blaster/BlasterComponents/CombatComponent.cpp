@@ -97,8 +97,10 @@ void UCombatComponent::Fire()
 		EquippedWeapon->bCanFire = false;
 		
 		// 사격 시작
-		FHitResult HitResult;
-		LocalFire(TraceUnderCrosshairs(HitResult));
+		LocalFire(HitTarget);
+		
+		// 서버에 사격 요청
+		ServerFire(HitTarget);
 
 		if (EquippedWeapon && EquippedWeapon->bUseScatter)
 		{
@@ -120,31 +122,24 @@ void UCombatComponent::Fire()
 
 void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
 {
-	// 착용 중인 무기가 없는 경우 바로 리턴
-	if (EquippedWeapon == nullptr)
+	if (Character == nullptr || EquippedWeapon == nullptr)
 	{
 		return;
 	}
 	
-	if (Character && Character->IsLocallyControlled() && CombatState == ECombatState::ECS_Unoccupied)
+	if (Character && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// 실제 사격에 대한 권한은 서버에게 있어야 하므로 애니메이션만 재생
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->PlayFireMontage();
-		
-		// 서버에 사격 요청
-		ServerFire(TraceHitTarget);
-		return;
+		EquippedWeapon->Fire(TraceHitTarget);
 	}
 
 	// 샷건인 경우 장전 중에도 예외로 사격 가능
-	if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	if (Character && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
 	{
 		Character->PlayFireMontage(bAiming);
-		EquippedWeapon->PlayFireMontage();
-		
-		// 서버에 사격 요청
-		ServerFire(TraceHitTarget);
+		EquippedWeapon->Fire(TraceHitTarget);
+		CombatState = ECombatState::ECS_Unoccupied;
 	}
 }
 
@@ -156,41 +151,16 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	// 서버가 클라이언트들에게 함수를 원격 호출해주는 함수
-	
-	if (EquippedWeapon == nullptr || Character == nullptr)
+	// 자신의 캐릭터는 이미 Local에서 애니메이션 재생과 Fire를 마쳤으므로 바로 return
+	if (Character && Character->IsLocallyControlled())
 	{
 		return;
 	}
-
-	// 로컬에선 이미 애니메이션을 재생했으므로, 내가 아닌 캐릭터만 애니메이션 재생
-	if (!Character->IsLocallyControlled())
+	
+	if (Character->HasAuthority())
 	{
-		// 기본 상태거나, 장전 중이더라도 샷건인 경우 발사 가능
-		if (CombatState == ECombatState::ECS_Unoccupied)
-		{
-			Character->PlayFireMontage(bAiming);
-			EquippedWeapon->PlayFireMontage();
-		}
-		else if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
-		{
-			Character->PlayFireMontage(bAiming);
-			EquippedWeapon->PlayFireMontage();
-			CombatState = ECombatState::ECS_Unoccupied;
-		}
+		LocalFire(TraceHitTarget);
 	}
-	else
-	{
-		if (CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
-		{
-			CombatState = ECombatState::ECS_Unoccupied;
-		}
-	}
-
-	// 장착한 무기에 따라 다른 Fire 함수 호출
-	// 서버의 Projectile 스폰, Replicates가 true인 액터이므로 모두에게 스폰
-	// HitScan은 라인 트레이스 시작
-	EquippedWeapon->Fire(TraceHitTarget);
 }
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)

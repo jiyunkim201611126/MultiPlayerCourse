@@ -270,6 +270,8 @@ void AWeapon::PlayFireMontage() const
 
 void AWeapon::Fire(const FVector& HitTarget)
 {
+	PlayFireMontage();
+	
 	if (HasAuthority())
 	{
 		SpendRound();
