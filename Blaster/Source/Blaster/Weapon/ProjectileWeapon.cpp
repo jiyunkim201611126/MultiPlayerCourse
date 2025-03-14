@@ -1,7 +1,6 @@
 #include "ProjectileWeapon.h"
 
 #include "Engine/SkeletalMeshSocket.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Projectiles/Projectile.h"
 
 void AProjectileWeapon::Fire(const FVector& HitTarget)
@@ -22,15 +21,9 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	{
 		// LineTrace 시작 Transform(== 총구쪽 Socket의 Transform)
 		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-		// 총구에서 HitTarget으로의 방향 계산. 탄퍼짐 있는 경우 SphereRadius에 비례해 랜덤 Rotator로 사격
-		float AddFloat = DefaultSpreadFactor + SpreadFactor;
-		AddFloat = FMath::Clamp(AddFloat, 0.0f, 100.0f);
-		const FRotator RandomRotator = FRotator(FMath::FRandRange(-AddFloat, AddFloat),
-			FMath::FRandRange(-AddFloat, AddFloat),
-			FMath::FRandRange(-AddFloat, AddFloat));
 		
 		const FVector ToTarget = HitTarget - SocketTransform.GetLocation();
-		const FRotator TargetRotation = bUseScatter ? ToTarget.Rotation() + RandomRotator : ToTarget.Rotation();
+		const FRotator TargetRotation = ToTarget.Rotation();
 		if (ProjectileClass && InstigatorPawn)
 		{
 			// ProjectileClass를 기반으로 한 액터 스폰

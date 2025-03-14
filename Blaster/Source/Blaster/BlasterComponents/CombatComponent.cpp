@@ -95,14 +95,21 @@ void UCombatComponent::Fire()
 	if (CanFire())
 	{
 		EquippedWeapon->bCanFire = false;
-		
-		// 사격 시작
-		LocalFire(HitTarget);
-		
-		// 서버에 사격 요청
-		ServerFire(HitTarget);
 
-		if (EquippedWeapon && EquippedWeapon->bUseScatter)
+		switch (EquippedWeapon->FireType)
+		{
+		case EFireType::EFT_Projectile:
+			FireProjectileWeapon();
+			break;
+		case EFireType::EFT_HitScan:
+			FireHitScanWeapon();
+			break;
+		case EFireType::EFT_Shotgun:
+			FireShotgun();
+			break;
+		}
+
+		if (EquippedWeapon->bUseScatter)
 		{
 			// 비조준 사격 시 탄퍼짐 수치 계산
 			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
@@ -118,6 +125,30 @@ void UCombatComponent::Fire()
 		// 일정 시간 후 다시 발사되도록 타이머 시작
 		EquippedWeapon->StartFireTimer();
 	}
+}
+
+void UCombatComponent::FireProjectileWeapon()
+{
+	if (EquippedWeapon)
+	{
+		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
+		LocalFire(HitTarget);
+		ServerFire(HitTarget);
+	}
+}
+
+void UCombatComponent::FireHitScanWeapon()
+{
+	if (EquippedWeapon)
+	{
+		HitTarget = EquippedWeapon->bUseScatter ? EquippedWeapon->TraceEndWithScatter(HitTarget) : HitTarget;
+		LocalFire(HitTarget);
+		ServerFire(HitTarget);
+	}
+}
+
+void UCombatComponent::FireShotgun()
+{
 }
 
 void UCombatComponent::LocalFire(const FVector_NetQuantize& TraceHitTarget)
@@ -157,10 +188,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 		return;
 	}
 	
-	if (Character->HasAuthority())
-	{
-		LocalFire(TraceHitTarget);
-	}
+	LocalFire(TraceHitTarget);
 }
 
 FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitResult)
@@ -296,10 +324,10 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				+ CrosshairShootingFactor		// 사격 시 +
 				- CrosshairAimFactor;			// 조준 시 -
 			
-			EquippedWeapon->SpreadFactor = CrosshairSpreadResult;
-			EquippedWeapon->SpreadFactor = FMath::FInterpTo(EquippedWeapon->SpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+			EquippedWeapon->AddSpreadFactor = CrosshairSpreadResult;
+			EquippedWeapon->AddSpreadFactor = FMath::FInterpTo(EquippedWeapon->AddSpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
 
-			// 최종 크로스헤어 스프레드 수치 계산
+			// 최종 크로스헤어 스프레드 수치 계산 (기본 탄퍼짐 + 추가 탄퍼짐)
 			CrosshairSpreadResult += EquippedWeapon->DefaultSpreadFactor / 50.f;
 
 			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지

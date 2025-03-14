@@ -8,6 +8,7 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AWeapon::AWeapon()
 {
@@ -298,6 +299,32 @@ void AWeapon::FireTimerFinished()
 	{
 		OnFireTimerFinished.Execute();
 	}
+}
+
+FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
+{
+	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
+	if (MuzzleFlashSocket == nullptr)
+	{
+		return FVector::ZeroVector;
+	}
+	
+	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	FVector TraceStart = SocketTransform.GetLocation();
+	
+	// 총구에서 DistanceToSphere만큼 떨어진 SphereRadius를 반지름으로 하는 가상의 구체 생성
+	// 해당 구체 안에서 랜덤한 점을 찍어 총구로부터 해당 점까지의 벡터를 계산
+	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+	float ResultSpreadFactor = DefaultSpreadFactor + AddSpreadFactor * 50.f;
+	ResultSpreadFactor = FMath::Clamp(ResultSpreadFactor, 0.f, 100.f);
+	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, ResultSpreadFactor);
+	FVector EndLoc = SphereCenter + RandVec;
+	FVector ToEndLoc = EndLoc - TraceStart;
+
+	// 총구로부터 랜덤으로 찍힌 점을 향한 80000길이의 벡터 계산
+	constexpr float TraceLength = TRACE_LENGTH;
+	return FVector(TraceStart + ToEndLoc * TraceLength / ToEndLoc.Size());
 }
 
 void AWeapon::Dropped()

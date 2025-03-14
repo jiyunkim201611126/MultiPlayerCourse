@@ -18,6 +18,16 @@ enum class EWeaponState : uint8
 	EWS_MAX UMETA(DisplayName = "DefaultMAX"),
 };
 
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	EFT_HitScan UMETA(DisplayName = "Hit Scan Weapon"),
+	EFT_Projectile UMETA(DisplayName = "Projectile Weapon"),
+	EFT_Shotgun UMETA(DisplayName = "Shotgun Weapon"),
+	
+	EFT_MAX UMETA(DisplayName = "DefaultMAX"),
+};
+
 UCLASS()
 class BLASTER_API AWeapon : public AActor
 {
@@ -36,6 +46,9 @@ public:
 	bool bCanFire = true;
 	void Dropped();
 	void AddAmmo(int32 AmmoToAdd);
+	
+	// 탄퍼짐을 적용한 수치로 라인 트레이스의 End 벡터를 계산하는 함수
+	FVector TraceEndWithScatter(const FVector& HitTarget);
 
 	/**
 	 * Textures for the weapon crosshairs, 무기마다 다른 크로스헤어 지원할 수 있게 EditAnywhere
@@ -88,11 +101,15 @@ public:
 
 	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 정도
 	// Projectile은 RandomRotator, HitScan은 구체의 반지름으로 적용
-	UPROPERTY(VisibleAnywhere, Category = "Combat | Weapon Scatter")
-	float SpreadFactor = 0.f;
-	
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
 	float DefaultSpreadFactor = 0.f;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Combat | Weapon Scatter")
+	float AddSpreadFactor = 0.f;
+	
+	// 탄퍼짐의 기준이 되는 구체의 거리. 클수록 탄퍼짐이 좁아짐
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	float DistanceToSphere = 800.f;
 
 	/**
 	 * Automatic fire
@@ -124,6 +141,9 @@ public:
 	EWeaponGrade WeaponGrade = EWeaponGrade::EWG_Common;
 
 	bool bDestroyWeapon = false;
+
+	UPROPERTY(EditAnywhere)
+	EFireType FireType;
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
