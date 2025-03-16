@@ -4,6 +4,7 @@
 #include "WeaponTypes.generated.h"
 
 #define TRACE_LENGTH 80000.f;
+#define TRACE_SHOTGUN_LENGTH 3000.f;
 #define CUSTOM_DEPTH_WHITE 0
 #define CUSTOM_DEPTH_BLUE 1
 #define CUSTOM_DEPTH_PURPLE 2

@@ -309,22 +309,24 @@ FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
 		return FVector::ZeroVector;
 	}
 	
-	FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-	FVector TraceStart = SocketTransform.GetLocation();
+	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
+	const FVector TraceStart = SocketTransform.GetLocation();
 	
 	// 총구에서 DistanceToSphere만큼 떨어진 SphereRadius를 반지름으로 하는 가상의 구체 생성
 	// 해당 구체 안에서 랜덤한 점을 찍어 총구로부터 해당 점까지의 벡터를 계산
-	FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
-	FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
+	const FVector ToTargetNormalized = (HitTarget - TraceStart).GetSafeNormal();
+	const FVector SphereCenter = TraceStart + ToTargetNormalized * DistanceToSphere;
 	float ResultSpreadFactor = DefaultSpreadFactor + AddSpreadFactor * 50.f;
 	ResultSpreadFactor = FMath::Clamp(ResultSpreadFactor, 0.f, 100.f);
-	FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, ResultSpreadFactor);
-	FVector EndLoc = SphereCenter + RandVec;
+	const FVector RandVec = UKismetMathLibrary::RandomUnitVector() * FMath::FRandRange(0.f, ResultSpreadFactor);
+	const FVector EndLoc = SphereCenter + RandVec;
 	FVector ToEndLoc = EndLoc - TraceStart;
-
+	
 	// 총구로부터 랜덤으로 찍힌 점을 향한 80000길이의 벡터 계산
 	constexpr float TraceLength = TRACE_LENGTH;
-	return FVector(TraceStart + ToEndLoc * TraceLength / ToEndLoc.Size());
+	ToEndLoc = TraceStart + ToEndLoc * TraceLength / ToEndLoc.Size();
+
+	return FVector(ToEndLoc);
 }
 
 void AWeapon::Dropped()
