@@ -650,6 +650,8 @@ void UCombatComponent::Reload()
 		&& !EquippedWeapon->IsFull())
 	{
 		ServerReload();
+		HandleReload();
+		bLocallyReloading = true;
 	}
 }
 
@@ -662,12 +664,18 @@ void UCombatComponent::ServerReload_Implementation()
 
 	// 상태 변경 후 애니메이션 재생 함수 호출
 	CombatState = ECombatState::ECS_Reloading;
-	HandleReload();
+	if (!Character->IsLocallyControlled())
+	{
+		HandleReload();
+	}
 }
 
 void UCombatComponent::HandleReload()
 {
-	Character->PlayReloadMontage();
+	if (Character)
+	{	
+		Character->PlayReloadMontage();
+	}
 }
 
 void UCombatComponent::FinishReloading()
@@ -676,6 +684,9 @@ void UCombatComponent::FinishReloading()
 	{
 		return;
 	}
+
+	bLocallyReloading = false;
+	
 	if (Character->HasAuthority())
 	{
 		CombatState = ECombatState::ECS_Unoccupied;
@@ -923,7 +934,11 @@ void UCombatComponent::OnRep_CombatState()
 		}
 		break;
 	case ECombatState::ECS_Reloading:
-		HandleReload();
+		if (Character && !Character->IsLocallyControlled())
+		{
+			// 패킷을 보낼 때 이미 재생하므로, 여기선 자신의 캐릭터가 아닌 경우만 재생한다.
+			HandleReload();
+		}
 		break;
 	case ECombatState::ECS_ThrowingGrenade:
 		if (Character && !Character->IsLocallyControlled())
@@ -962,6 +977,11 @@ void UCombatComponent::OnRep_SecondaryWeapon()
 bool UCombatComponent::CanFire()
 {
 	if (EquippedWeapon == nullptr)
+	{
+		return false;
+	}
+
+	if (bLocallyReloading)
 	{
 		return false;
 	}
