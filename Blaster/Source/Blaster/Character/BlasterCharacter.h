@@ -108,10 +108,10 @@ public:
 	UBoxComponent* blanket;
 
 	UPROPERTY(EditAnywhere)
-	UBoxComponent* thig_l;
+	UBoxComponent* thigh_l;
 
 	UPROPERTY(EditAnywhere)
-	UBoxComponent* thig_r;
+	UBoxComponent* thigh_r;
 
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* calf_l;
