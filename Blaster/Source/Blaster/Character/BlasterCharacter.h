@@ -67,6 +67,64 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	/**
+	 * Server-side rewind를 위한 히트 박스
+	 */
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* backpack;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* blanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thig_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thig_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_r;
+
 protected:
 	virtual void BeginPlay() override;
 	
