@@ -981,15 +981,16 @@ bool UCombatComponent::CanFire()
 		return false;
 	}
 
-	if (bLocallyReloading)
-	{
-		return false;
-	}
-
 	if (!EquippedWeapon->IsEmpty() && EquippedWeapon->bCanFire && CombatState == ECombatState::ECS_Reloading && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
 	{
 		// 샷건 장전 중엔 예외로 사격 가능
+		bLocallyReloading = false;
 		return true;
+	}
+
+	if (bLocallyReloading)
+	{
+		return false;
 	}
 
 	return !EquippedWeapon->IsEmpty() && EquippedWeapon->bCanFire && CombatState == ECombatState::ECS_Unoccupied;

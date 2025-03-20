@@ -21,7 +21,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		const FVector Start = SocketTransform.GetLocation();
 		AController* InstigatorController = OwnerPawn->GetController();
 
-		// Key는 적중 캐릭터, Value는 적중 회수
+		// Key는 적중 캐릭터, Value는 적중 횟수
 		TMap<ABlasterCharacter*, int32> HitMap;
 
 		for (FVector_NetQuantize HitTarget : HitTargets)
@@ -46,20 +46,19 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 				// 적중 액터과 관계 없이 FX 재생
 				PlayFX(FireHit, SocketTransform);
 			}
-
-			// 적중 결과를 순회하며 펠릿 개수만큼 데미지 적용
-			for (auto HitPair : HitMap)
+		}
+		// 적중 결과를 순회하며 펠릿 개수만큼 데미지 적용
+		for (auto HitPair : HitMap)
+		{
+			if (HitPair.Key && InstigatorController && HasAuthority())
 			{
-				if (HitPair.Key && InstigatorController && HasAuthority())
-				{
-					UGameplayStatics::ApplyDamage(
-					HitPair.Key,
-					Damage * HitPair.Value,
-					InstigatorController,
-					this,
-					UDamageType::StaticClass()
-					);
-				}
+				UGameplayStatics::ApplyDamage(
+				HitPair.Key,
+				Damage * HitPair.Value,
+				InstigatorController,
+				this,
+				UDamageType::StaticClass()
+				);
 			}
 		}
 	}

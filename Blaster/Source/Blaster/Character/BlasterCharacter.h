@@ -125,6 +125,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	UBoxComponent* foot_r;
 
+	UPROPERTY()
+	TMap<FName, UBoxComponent*> HitCollisionBoxes;
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -153,6 +156,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	class UBuffComponent* Buff;
+
+	UPROPERTY(VisibleAnywhere)
+	class ULagCompensationComponent* LagCompensation;
 
 	// Overlap될 때 클라이언트가 호출하는 콜백 함수
 	UFUNCTION()
