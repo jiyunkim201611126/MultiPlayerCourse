@@ -692,10 +692,7 @@ void ABlasterPlayerController::StopJumping()
 
 void ABlasterPlayerController::EquipButtonPressed()
 {
-	if (bDisableGameplay)
-	{
-		return;
-	}
+	if (bDisableGameplay) return;
 	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
@@ -730,10 +727,7 @@ void ABlasterPlayerController::CrouchButtonPressed()
 
 void ABlasterPlayerController::AimButtonPressed()
 {
-	if (bDisableGameplay)
-	{
-		return;
-	}
+	if (bDisableGameplay) return;
 	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
@@ -757,10 +751,7 @@ void ABlasterPlayerController::AimButtonReleased()
 
 void ABlasterPlayerController::FireButtonPressed()
 {
-	if (bDisableGameplay)
-	{
-		return;
-	}
+	if (bDisableGameplay) return;
 	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
@@ -784,10 +775,7 @@ void ABlasterPlayerController::FireButtonReleased()
 
 void ABlasterPlayerController::ReloadButtonPressed()
 {
-	if (bDisableGameplay)
-	{
-		return;
-	}
+	if (bDisableGameplay) return;
 	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
@@ -800,10 +788,7 @@ void ABlasterPlayerController::ReloadButtonPressed()
 
 void ABlasterPlayerController::ThrowGrenadeButtonPressed()
 {
-	if (bDisableGameplay)
-	{
-		return;
-	}
+	if (bDisableGameplay) return;
 	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{

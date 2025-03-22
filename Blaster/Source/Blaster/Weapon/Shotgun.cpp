@@ -10,10 +10,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 	AWeapon::Fire(FVector::ZeroVector);
 	
 	APawn* OwnerPawn = Cast<APawn>(GetOwner());
-	if (OwnerPawn == nullptr)
-	{
-		return;
-	}
+	if (OwnerPawn == nullptr) return;
 	
 	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash"))
 	{
@@ -68,10 +65,7 @@ void AShotgun::ShotgunTraceEndWithScatter(const FVector& HitTarget, TArray<FVect
 {
 	// TraceEndWithScatter를 반복문으로 호출해도 되지만, 아래 수많은 지역변수들이 계속해서 재선언되므로 성능을 위해 재작성
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	if (MuzzleFlashSocket == nullptr)
-	{
-		return;
-	}
+	if (MuzzleFlashSocket == nullptr) return;
 	
 	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 	const FVector TraceStart = SocketTransform.GetLocation();

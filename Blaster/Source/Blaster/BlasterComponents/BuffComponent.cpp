@@ -41,10 +41,7 @@ void UBuffComponent::ReplenishShield(float ShieldAmount, float ReplenishTime)
 
 void UBuffComponent::HealRampUp(float DeltaTime)
 {
-	if (!bHealing || Character == nullptr || Character->IsElimmed())
-	{
-		return;
-	}
+	if (!bHealing || Character == nullptr || Character->IsElimmed()) return;
 
 	// 회복 속도에 따른 이번 프레임에 대한 회복량 계산
 	float HealThisFrame = FMath::Min(HealingRate * DeltaTime, AmountToHeal);
@@ -69,10 +66,7 @@ void UBuffComponent::HealRampUp(float DeltaTime)
 
 void UBuffComponent::ShieldRampUp(float DeltaTime)
 {
-	if (!bReplenishingShield || Character == nullptr || Character->IsElimmed())
-	{
-		return;
-	}
+	if (!bReplenishingShield || Character == nullptr || Character->IsElimmed()) return;
 
 	// 회복 속도에 따른 이번 프레임에 대한 회복량 계산
 	float ReplenishShieldThisFrame = FMath::Min(ShieldReplenishRate * DeltaTime, ShieldReplenishAmount);
@@ -108,10 +102,7 @@ void UBuffComponent::SetInitialJumpVelocity(float Velocity)
 
 void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float BuffTime)
 {
-	if (Character == nullptr)
-	{
-		return;
-	}
+	if (Character == nullptr) return;
 	
 	Character->GetWorldTimerManager().SetTimer(
 		SpeedBuffTimer,
@@ -130,10 +121,7 @@ void UBuffComponent::BuffSpeed(float BuffBaseSpeed, float BuffCrouchSpeed, float
 
 void UBuffComponent::ResetSpeeds()
 {
-	if (Character == nullptr || Character->GetCharacterMovement() == nullptr)
-	{
-		return;
-	}
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
 
 	Character->GetCharacterMovement()->MaxWalkSpeed = InitialBaseSpeed;
 	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = InitialCrouchSpeed;
@@ -152,10 +140,7 @@ void UBuffComponent::MulticastSpeedBuff_Implementation(float BaseSpeed, float Cr
 
 void UBuffComponent::BuffJump(float BuffJumpVelocity, float BuffTime)
 {
-	if (Character == nullptr)
-	{
-		return;
-	}
+	if (Character == nullptr) return;
 	
 	Character->GetWorldTimerManager().SetTimer(
 		JumpBuffTimer,
@@ -174,10 +159,7 @@ void UBuffComponent::BuffJump(float BuffJumpVelocity, float BuffTime)
 
 void UBuffComponent::ResetJump()
 {
-	if (Character == nullptr || Character->GetCharacterMovement() == nullptr)
-	{
-		return;
-	}
+	if (Character == nullptr || Character->GetCharacterMovement() == nullptr) return;
 	
 	Character->GetCharacterMovement()->JumpZVelocity = InitialJumpVelocity;
 

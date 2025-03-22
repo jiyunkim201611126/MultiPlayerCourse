@@ -10,10 +10,8 @@ void ABlasterHUD::BeginPlay()
 
 void ABlasterHUD::AddCharacterOverlay()
 {
-	if (CharacterOverlay)
-	{
-		return;
-	}
+	if (CharacterOverlay) return;
+	
 	APlayerController* PlayerController = GetOwningPlayerController();
 	if (PlayerController && CharacterOverlayClass)
 	{
@@ -24,10 +22,8 @@ void ABlasterHUD::AddCharacterOverlay()
 
 void ABlasterHUD::AddAnnouncement()
 {
-	if (Announcement)
-	{
-		return;
-	}
+	if (Announcement) return;
+	
 	APlayerController* PlayerController = GetOwningPlayerController();
 	if (PlayerController && AnnouncementClass)
 	{

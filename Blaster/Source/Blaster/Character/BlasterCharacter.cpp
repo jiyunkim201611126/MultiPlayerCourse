@@ -310,10 +310,7 @@ void ABlasterCharacter::DropOrDestroyWeapons()
 
 void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 {
-	if (Weapon == nullptr)
-	{
-		return;
-	}
+	if (Weapon == nullptr) return;
 	
 	// 무기 드랍
 	if (Weapon->bDestroyWeapon)
@@ -539,10 +536,8 @@ float ABlasterCharacter::CalculateSpeed()
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
-	if (Combat && Combat->EquippedWeapon == nullptr)
-	{
-		return;
-	}
+	if (Combat && Combat->EquippedWeapon == nullptr) return;
+	
 	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 
@@ -585,10 +580,7 @@ void ABlasterCharacter::CalculateAO_Pitch()
 
 void ABlasterCharacter::SimProxiesTurn()
 {
-	if (Combat == nullptr || Combat->EquippedWeapon == nullptr)
-	{
-		return;
-	}
+	if (Combat == nullptr || Combat->EquippedWeapon == nullptr) return;
 
 	bRotateRootBone = false;
 
@@ -650,11 +642,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
                                       AController* InstigatorController,
                                       AActor* DamageCauser)
 {
-	if (bElimmed)
-	{
-		return;
-	}
-
+	if (bElimmed) return;
 	
 	float DamageToHealth = Damage;
 	if (Shield > 0.f)
@@ -831,10 +819,7 @@ void ABlasterCharacter::UpdateDissolveMaterial(float DissolveValue)
 
 void ABlasterCharacter::HideCameraIfCharacterClose()
 {
-	if (!IsLocallyControlled())
-	{
-		return;
-	}
+	if (!IsLocallyControlled()) return;
 
 	if ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold)
 	{
@@ -1004,36 +989,28 @@ bool ABlasterCharacter::IsAiming()
 
 AWeapon* ABlasterCharacter::GetEquippedWeapon()
 {
-	if (Combat == nullptr)
-	{
-		return nullptr;
-	}
+	if (Combat == nullptr) return nullptr;
+	
 	return Combat->EquippedWeapon;
 }
 
 FVector ABlasterCharacter::GetHitTarget() const
 {
-	if (Combat == nullptr)
-	{
-		return FVector();
-	}
+	if (Combat == nullptr) return FVector();
+
 	return Combat->HitTarget;
 }
 
 ECombatState ABlasterCharacter::GetCombatState() const
 {
-	if (Combat == nullptr)
-	{
-		return ECombatState::ECS_MAX;
-	}
+	if (Combat == nullptr) return ECombatState::ECS_MAX;
+	
 	return Combat->CombatState;
 }
 
 bool ABlasterCharacter::IsLocallyReloading()
 {
-	if (Combat == nullptr)
-	{
-		return false;
-	}
+	if (Combat == nullptr) return false;
+	
 	return Combat->bLocallyReloading;
 }

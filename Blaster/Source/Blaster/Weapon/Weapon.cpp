@@ -202,10 +202,7 @@ void AWeapon::SpendRound()
 
 void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 {
-	if (HasAuthority())
-	{
-		return;
-	}
+	if (HasAuthority()) return;
 	
 	Ammo = ServerAmmo;
 	--Sequence;
@@ -222,10 +219,7 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 
 void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 {
-	if (HasAuthority())
-	{
-		return;
-	}
+	if (HasAuthority()) return;
 	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
@@ -335,10 +329,7 @@ void AWeapon::FireTimerFinished()
 FVector AWeapon::TraceEndWithScatter(const FVector& HitTarget)
 {
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName("MuzzleFlash");
-	if (MuzzleFlashSocket == nullptr)
-	{
-		return FVector::ZeroVector;
-	}
+	if (MuzzleFlashSocket == nullptr) return FVector::ZeroVector;
 	
 	const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
 	const FVector TraceStart = SocketTransform.GetLocation();
