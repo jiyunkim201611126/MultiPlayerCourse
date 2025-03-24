@@ -947,8 +947,8 @@ void UCombatComponent::InitializeCarriedAmmo()
 
 bool UCombatComponent::ShouldSwapWeapons()
 {
+	// 샷건은 예외로 장전 중에도 변경 가능
 	return (
-		// 샷건은 예외로 장전 중에도 변경 가능
 		(EquippedWeapon != nullptr
 		&& SecondaryWeapon != nullptr
 		&& CombatState == ECombatState::ECS_Unoccupied)

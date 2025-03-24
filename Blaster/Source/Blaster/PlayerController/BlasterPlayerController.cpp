@@ -198,8 +198,10 @@ void ABlasterPlayerController::ClientReportServerTime_Implementation(float TimeO
 {
 	// 현재 시간에서 처음 서버에게 요청한 시간을 빼는 것으로, 패킷이 돌아오는 데까지 걸린 시간을 계산, 즉 ping이다.
 	float RoundTripTime = GetWorld()->GetTimeSeconds() - TimeOfClientRequest;
+	// 걸린 시간을 반으로 나눠 클라이언트에서 서버까지 걸리는 시간 유추
+	SingleTripTime = (0.5f * RoundTripTime);
 	// 위 시간의 절반을 서버가 패킷을 보내줄 때의 시간에 더해서 현재 서버의 시간을 유추
-	float CurrentServerTime = TimeServerReceivedClientRequest + (0.5f * RoundTripTime);
+	float CurrentServerTime = TimeServerReceivedClientRequest + SingleTripTime;
 	// 유추한 서버의 현재 시간과 클라이언트의 시간의 차이
 	ClientServerDelta = CurrentServerTime - GetWorld()->GetTimeSeconds();
 }

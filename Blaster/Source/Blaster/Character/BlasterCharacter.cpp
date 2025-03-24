@@ -861,7 +861,7 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 
 void ABlasterCharacter::SwapButtonPressed()
 {
-	if (Combat)
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->Sequence == 0)
 	{
 		// 클라이언트가 Swap버튼을 누른 경우 서버에게 착용을 요청
 		ServerSwapButtonPressed();

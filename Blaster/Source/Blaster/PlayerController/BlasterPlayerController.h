@@ -36,6 +36,9 @@ public:
 	void HandleMatchHasStarted();
 	void HandleCooldown();
 
+	// 클라이언트에서 서버까지 걸리는 시간
+	float SingleTripTime;
+
 protected:
 	virtual void BeginPlay() override;
 	

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/Character/BlasterCharacter.h"
 #include "Components/ActorComponent.h"
 #include "LagCompensationComponent.generated.h"
 
@@ -59,6 +60,14 @@ public:
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime);
+
+	UFUNCTION(Server, Reliable)
+	void ServerScoreRequest(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize& HitLocation,
+		float HitTime,
+		class AWeapon* DamageCauser);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -87,6 +96,9 @@ protected:
 	
 	// 캐릭터 Mesh의 CollisionEnabled를 조정하는 함수
 	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
+
+	// BoxComponent의 현 상태를 FrameHistory에 담는 함수, Tick에서 호출
+	void SaveFramePackage();
 	
 private:
 	UPROPERTY()

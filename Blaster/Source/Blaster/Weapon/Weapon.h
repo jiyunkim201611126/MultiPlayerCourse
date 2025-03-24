@@ -144,6 +144,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	EFireType FireType;
+
+	// Ammo 업데이트를 위해 서버에 요청한 패킷 카운트
+	int32 Sequence = 0;
+
+	UPROPERTY(EditAnywhere)
+	float Damage = 0.f;
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -172,7 +178,12 @@ protected:
 		);
 
 	UPROPERTY(EditAnywhere)
-	float Damage = 0.f;
+	bool bUseServerSideRewind = true;
+
+	UPROPERTY()
+	class ABlasterCharacter* BlasterOwnerCharacter;
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterOwnerController;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties | Weapon Properties")
@@ -212,14 +223,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
 
-	// Ammo 업데이트를 위해 서버에 요청한 패킷 카운트
-	int32 Sequence = 0;
-
-	UPROPERTY()
-	class ABlasterCharacter* BlasterOwnerCharacter;
-	UPROPERTY()
-	class ABlasterPlayerController* BlasterOwnerController;
-
 	UPROPERTY(EditAnywhere)
 	EWeaponType WeaponType;
 
@@ -240,4 +243,5 @@ public:
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
+	FORCEINLINE float GetDamage() const { return Damage; }
 };
