@@ -46,7 +46,7 @@ private:
 	class UNiagaraSystem* PickupEffect;
 	
 	/**
-	 * Prevents it from being destroyed as soon as it is spawned.
+	 * 스폰 후 Overlap 이벤트가 바인드되기까지의 시간
 	 */
 	FTimerHandle BindOverlapTimer;
 	float BindOverlapTime = 0.25f;

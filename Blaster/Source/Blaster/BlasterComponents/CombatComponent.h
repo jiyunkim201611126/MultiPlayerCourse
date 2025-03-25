@@ -32,6 +32,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellReload();
 
+	// 1발씩 장전하는 샷건의 특성상 필요, 더 장전이 필요하면 애니메이션을 특정 구간 반복시킴
 	void JumpToShotgunMoreReload(bool bNeedMoreReload);
 
 	UFUNCTION(BlueprintCallable)

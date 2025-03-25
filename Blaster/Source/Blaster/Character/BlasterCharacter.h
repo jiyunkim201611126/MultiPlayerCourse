@@ -204,7 +204,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CameraThreshold = 200.f;
 
-	// AimOffset values for simulated proxies
+	// Simulated proxies(내가 조작하지 않는 캐릭터)를 위한 AimOffset Value
 	bool bRotateRootBone;
 	float TurnThreshold = 0.5f;
 	FRotator ProxyRotationLastFrame;
