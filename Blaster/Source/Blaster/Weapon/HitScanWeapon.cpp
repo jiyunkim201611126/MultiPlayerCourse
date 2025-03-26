@@ -28,33 +28,37 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		FHitResult FireHit;
 		WeaponTraceHit(Start, HitTarget, FireHit);
 
-		// 맞은 액터가 캐릭터인 경우 데미지 적용
-		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
+		// 캐릭터에게 적중 시 데미지 프레임워크로 들어간다
+		ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 		AController* InstigatorController = OwnerPawn->GetController();
-		if (BlasterCharacter && InstigatorController)
+		if (HitCharacter && InstigatorController)
 		{
-			if (HasAuthority() && bUseServerSideRewind)
+			// 서버는 즉시 데미지를 적용하면 된다
+			if (HasAuthority())
 			{
 				UGameplayStatics::ApplyDamage(
-				BlasterCharacter,
+				HitCharacter,
 				Damage,
 				InstigatorController,
 				this,
 				UDamageType::StaticClass()
 				);
 			}
-			if (!HasAuthority() && bUseServerSideRewind)
+			// 클라이언트의 경우 아직은 적중이 확실하지 않으며, 적중했다고 주장하는 상태
+			// 따라서 서버에 검증을 요청한다
+			if (!HasAuthority())
 			{
-				BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterCharacter;
+				BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
 				BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
-				if (BlasterOwnerCharacter && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
+				if (BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled() && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
 				{
+					// 서버에 데미지를 요청
 					BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
-						BlasterCharacter,
-						Start,
-						HitTarget,
-						BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime,
-						this);
+						HitCharacter,		// 데미지를 받을 캐릭터
+						Start,			// 라인 트레이스 시작 지점
+						HitTarget,		// 라인 트레이스 종료 지점
+						BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime // 적중한 시간
+						);
 				}
 			}
 		}

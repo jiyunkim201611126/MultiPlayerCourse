@@ -4,6 +4,8 @@
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Blaster/BlasterComponents/LagCompensationComponent.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
 
 void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 {
@@ -44,18 +46,46 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 				PlayFX(FireHit, SocketTransform);
 			}
 		}
-		// 적중 결과를 순회하며 펠릿 개수만큼 데미지 적용
+		// 적중 결과를 순회
+		// 클라이언트의 경우 아직은 적중이 확실하지 않으며, 적중했다고 주장하는 상태
+		TArray<ABlasterCharacter*> HitCharacters;
 		for (auto HitPair : HitMap)
 		{
-			if (HitPair.Key && InstigatorController && HasAuthority())
+			if (HitPair.Key && InstigatorController)
 			{
-				UGameplayStatics::ApplyDamage(
-				HitPair.Key,
-				Damage * HitPair.Value,
-				InstigatorController,
-				this,
-				UDamageType::StaticClass()
-				);
+				// 서버는 바로 데미지를 주면 된다
+				if (HasAuthority())
+				{
+					UGameplayStatics::ApplyDamage(
+					HitPair.Key,
+					Damage * HitPair.Value,
+					InstigatorController,
+					this,
+					UDamageType::StaticClass()
+					);
+				}
+				// 클라이언트는 적중이 예상되는 캐릭터를 지역변수에 따로 기록한다
+				if (!HasAuthority())
+				{
+					HitCharacters.Add(HitPair.Key);
+				}
+			}
+		}
+		// 적중 예상 캐릭터를 따로 기록한 뒤, 해당 기록을 토대로 서버에 데미지를 요청한다
+		// 이 경우 서버가 다시 검증하므로 '몇 개의 펠릿이 맞았는가'는 별로 중요하지 않다
+		if (!HasAuthority())
+		{
+			// 클라이언트는 아래 두 변수의 null체크가 필요하므로 적중 예상 캐릭터를 따로 기록했다
+			BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+			BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
+			if (BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled() && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
+			{
+				BlasterOwnerCharacter->GetLagCompensation()->ShotgunServerScoreRequest(
+					HitCharacters,		// 데미지를 받을 캐릭터
+					Start,			// 라인 트레이스 시작 지점
+					HitTargets,			// 라인 트레이스 종료 지점
+					BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime // 적중한 시간
+					);
 			}
 		}
 	}

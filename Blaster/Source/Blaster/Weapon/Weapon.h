@@ -177,9 +177,6 @@ protected:
 		int32 OtherBodyIndex
 		);
 
-	UPROPERTY(EditAnywhere)
-	bool bUseServerSideRewind = true;
-
 	UPROPERTY()
 	class ABlasterCharacter* BlasterOwnerCharacter;
 	UPROPERTY()

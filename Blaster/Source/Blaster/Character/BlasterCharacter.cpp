@@ -722,6 +722,7 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
+		UE_LOG(LogTemp, Display, TEXT("HUD health: %f"), Health);
 	}
 }
 

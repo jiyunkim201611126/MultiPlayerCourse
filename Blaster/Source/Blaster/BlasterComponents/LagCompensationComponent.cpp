@@ -20,8 +20,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(
 	ABlasterCharacter* HitCharacter,
 	const FVector_NetQuantize& TraceStart,
 	const FVector_NetQuantize& HitLocation,
-	float HitTime,
-	AWeapon* DamageCauser)
+	float HitTime)
 {
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 
@@ -29,9 +28,41 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(
 	{
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
-			DamageCauser->GetDamage(),
+			Character->GetEquippedWeapon()->GetDamage(),
 			Character->GetController(),
-			DamageCauser,
+			Character->GetEquippedWeapon(),
+			UDamageType::StaticClass()
+			);
+	}
+}
+
+void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
+	const TArray<ABlasterCharacter*>& HitCharacters,
+	const FVector_NetQuantize& TraceStart,
+	const TArray<FVector_NetQuantize>& HitLocations,
+	float HitTime)
+{
+	FShotgunServerSideRewindResult Confirm = ShotgunServerSideRewind(HitCharacters, TraceStart, HitLocations, HitTime);
+
+	for (auto& HitCharacter : HitCharacters)
+	{
+		if (HitCharacter == nullptr || HitCharacter->GetEquippedWeapon() == nullptr || Character == nullptr) continue;
+		float TotalDamage = 0.f;
+		if (Confirm.HeadShots.Contains(HitCharacter))
+		{
+			float HeadShotDamage = Confirm.HeadShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += HeadShotDamage;
+		}
+		if (Confirm.BodyShots.Contains(HitCharacter))
+		{
+			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
+			TotalDamage += BodyShotDamage;
+		}
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			TotalDamage,
+			Character->GetController(),
+			HitCharacter->GetEquippedWeapon(),
 			UDamageType::StaticClass()
 			);
 	}
@@ -43,8 +74,8 @@ FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(
 	const FVector_NetQuantize& HitLocation,
 	float HitTime)
 {
-	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);
-	return ConfirmHit(FrameToCheck, HitCharacter, TraceStart, HitLocation);
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);	// HitTime에 HitCharacter의 히트박스에 대한 위치 정보
+	return ConfirmHit(FrameToCheck, TraceStart, HitLocation);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
 }
 
 FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewind(
@@ -129,6 +160,7 @@ FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitC
 		// 서버가 저장해둔 Time과 HitTime이 정확히 일치할 일은 거의 없으므로 보통 Interpolate해야 함
 		FrameToCheck = InterpBetweenFrames(Older->GetValue(), Younger->GetValue(), HitTime);
 	}
+	FrameToCheck.Character = HitCharacter;
 	return FrameToCheck;
 }
 
@@ -165,23 +197,23 @@ FFramePackage ULagCompensationComponent::InterpBetweenFrames(
 }
 
 FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
-	const FFramePackage& Package,			// Interpolate된 FramePackage
+	const FFramePackage& Package,			// HitTime에 캐릭터의 히트박스가 어디에 있었는지에 대한 정보를 가진 FramePackage
 	const FVector_NetQuantize& TraceStart,	// LineTrace 시작 지점
 	const FVector_NetQuantize& HitLocation)	// LineTrace 끝 지점(조금 더 나아가야 함)
 {
-	if (HitCharacter == nullptr) return FServerSideRewindResult();
+	if (Package.Character == nullptr) return FServerSideRewindResult();
 
 	// 현재 캐릭터의 BoxComponent 위치를 캐싱
 	FFramePackage CurrentFrame;
-	CacheBoxPositions(HitCharacter, CurrentFrame);
+	CacheBoxPositions(Package.Character, CurrentFrame);
 
 	// 캐릭터의 BoxComponent 위치를 Interpolate된 FramePackage 위치로 옮겨줌
-	MoveBoxes(HitCharacter, Package);
+	MoveBoxes(Package.Character, Package);
 	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
-	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::NoCollision);
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
 
-	// 헤드샷 판정 먼저
-	UBoxComponent* HeadBox = HitCharacter->HitCollisionBoxes[FName("head")];
+	// 머리 히트박스 활성화
+	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
 	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 
@@ -199,14 +231,15 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 		if (ConfirmHitResult.bBlockingHit)
 		{
 			// 헤드샷이면 바로 return
-			ResetHitBoxes(HitCharacter, CurrentFrame);
-			EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+			ResetHitBoxes(Package.Character, CurrentFrame);
+			EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, true };
 		}
-		else // 헤드샷이 아닌 경우 들어오는 분기, 나머지 HitBox들도 체크
+		else // 헤드샷이 아닌 경우 들어오는 분기, 나머지 히트박스들도 체크
 		{
-			for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+			for (auto& HitBoxPair : Package.Character->HitCollisionBoxes)
 			{
+				// 나머지 히트박스 활성화
 				if (HitBoxPair.Value != nullptr)
 				{
 					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -221,16 +254,17 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 				);
 			if (ConfirmHitResult.bBlockingHit)
 			{
-				ResetHitBoxes(HitCharacter, CurrentFrame);
-				EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+				// 적중 결과 있는 경우 바디샷 판정으로 return
+				ResetHitBoxes(Package.Character, CurrentFrame);
+				EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };
 			}
 		}
 	}
 
 	// 아무것도 적중하지 못 한 경우
-	ResetHitBoxes(HitCharacter, CurrentFrame);
-	EnableCharacterMeshCollision(HitCharacter, ECollisionEnabled::QueryAndPhysics);
+	ResetHitBoxes(Package.Character, CurrentFrame);
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 	return FServerSideRewindResult{ false, false };
 }
 
@@ -246,11 +280,11 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 	
 	FShotgunServerSideRewindResult ShotgunResult;
 	TArray<FFramePackage> CurrentFrames;
+	TArray<FVector_NetQuantize> HeadShotPellets;
 	for (auto& Frame : FramePackages)
 	{
 		// 캐릭터의 BoxComponent 위치를 FramePackage 위치로 옮겨줌
 		FFramePackage CurrentFrame;
-		CurrentFrame.Character = Frame.Character;
 		CacheBoxPositions(Frame.Character, CurrentFrame);
 		MoveBoxes(Frame.Character, Frame);
 		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
@@ -258,11 +292,12 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 	}
 	for (auto& Frame : FramePackages)
 	{
-		// 헤드샷 판정 먼저
+		// 머리 히트박스 활성화
 		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
 		HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	}
+	// 머리 히트박스만 활성화한 상태로 라인 트레이스 검증 시작
 	UWorld* World = GetWorld();
 	for (auto& HitLocation : HitLocations)
 	{
@@ -276,6 +311,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				TraceEnd,
 				ECC_Visibility
 				);
+			// 적중 결과에 따라 TMap에 값 추가
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
 			{
@@ -287,6 +323,8 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				{
 					ShotgunResult.HeadShots.Emplace(BlasterCharacter, 1);
 				}
+				// 검증 결과 적중한 펠릿이므로, 바디샷에서 또 다시 적중 결과를 뱉지 않도록 기록
+				HeadShotPellets.Add(HitLocation);
 			}
 		}
 	}
@@ -301,7 +339,11 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 			}
 		}
+		// 머리 히트박스는 비활성화
+		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
+		HeadBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	// 바디샷 라인 트레이스 검증 시작
 	for (auto& HitLocation : HitLocations)
 	{
 		const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
@@ -314,8 +356,9 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				TraceEnd,
 				ECC_Visibility
 				);
+			// 적중 시 이미 HeadShot 판정을 받은 펠릿인지도 체크
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
-			if (BlasterCharacter)
+			if (BlasterCharacter && !HeadShotPellets.Contains(HitLocation))
 			{
 				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
 				{
@@ -341,6 +384,7 @@ void ULagCompensationComponent::CacheBoxPositions(ABlasterCharacter* HitCharacte
 {
 	if (HitCharacter == nullptr) return;
 
+	OutFramePackage.Character = HitCharacter;
 	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
 	{
 		if (HitBoxPair.Value != nullptr)

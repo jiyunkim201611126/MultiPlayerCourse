@@ -703,6 +703,7 @@ void UCombatComponent::JumpToShotgunMoreReload(bool bNeedMoreReload)
 		else
 		{
 			AnimInstance->Montage_JumpToSection(FName("ShotgunEnd"));
+			bLocallyReloading = false;
 		}
 	}
 }
