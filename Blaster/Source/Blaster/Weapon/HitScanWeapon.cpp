@@ -31,7 +31,8 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		// 캐릭터에게 적중 시 데미지 프레임워크로 들어간다
 		ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 		AController* InstigatorController = OwnerPawn->GetController();
-		if (HitCharacter && InstigatorController)
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
+		if (HitCharacter && InstigatorController && BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled())
 		{
 			// 서버는 즉시 데미지를 적용하면 된다
 			if (HasAuthority())
@@ -48,9 +49,8 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 			// 따라서 서버에 검증을 요청한다
 			if (!HasAuthority())
 			{
-				BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
 				BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
-				if (BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled() && BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
+				if (BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
 				{
 					// 서버에 데미지를 요청
 					BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
