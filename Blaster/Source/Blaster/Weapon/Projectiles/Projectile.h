@@ -17,6 +17,16 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Damage = 20.f;
 
+	/**
+	 * SSR 구현을 위한 변수
+	 */
+
+	FVector_NetQuantize TraceStart;
+	FVector_NetQuantize100 InitialVelocity;
+
+	UPROPERTY(EditAnywhere)
+	float InitialSpeed = 15000.f;
+
 protected:
 	virtual void BeginPlay() override;
 	void StartDestroyTimer();

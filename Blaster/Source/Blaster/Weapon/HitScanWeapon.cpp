@@ -55,8 +55,8 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 					// 서버에 데미지를 요청
 					BlasterOwnerCharacter->GetLagCompensation()->ServerScoreRequest(
 						HitCharacter,		// 데미지를 받을 캐릭터
-						Start,			// 라인 트레이스 시작 지점
-						HitTarget,		// 라인 트레이스 종료 지점
+						Start,				// 라인 트레이스 시작 지점
+						HitTarget,			// 라인 트레이스 종료 지점
 						BlasterOwnerController->GetServerTime() - BlasterOwnerController->SingleTripTime // 적중한 시간
 						);
 				}
