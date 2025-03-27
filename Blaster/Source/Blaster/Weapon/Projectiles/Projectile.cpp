@@ -6,6 +6,7 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Blaster.h"
 #include "NiagaraFunctionLibrary.h"
+#include "ProjectileBullet.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 AProjectile::AProjectile()
@@ -26,6 +27,24 @@ AProjectile::AProjectile()
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->SetIsReplicated(true);
 }
+
+#if WITH_EDITOR
+void AProjectile::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	// 값이 변경된 변수가 멤버 변수 InitialSpeed인지 확인하고, 그 값을 ProjectileMovementComponent에 반영
+	FName PropertyName = PropertyChangedEvent.Property != nullptr ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(AProjectile, InitialSpeed))
+	{
+		if (ProjectileMovementComponent)
+		{
+			ProjectileMovementComponent->InitialSpeed = InitialSpeed;
+			ProjectileMovementComponent->MaxSpeed = InitialSpeed;
+		}
+	}
+}
+#endif
 
 void AProjectile::BeginPlay()
 {
