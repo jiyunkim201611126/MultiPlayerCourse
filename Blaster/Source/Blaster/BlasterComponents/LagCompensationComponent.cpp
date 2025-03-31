@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "DrawDebugHelpers.h"
+#include "Blaster/Blaster.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -91,6 +92,14 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewin
 	}
 	
 	return ShotgunConfirmHit(FramesToCheck, TraceStart, HitLocations);
+}
+
+FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(
+	ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity, float HitTime)
+{
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);	// HitTime에 HitCharacter의 히트박스에 대한 위치 정보
+	return ProjectileConfirmHit(FrameToCheck, TraceStart, InitialVelocity, HitTime);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
 }
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
@@ -215,7 +224,7 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 	// 머리 히트박스 활성화
 	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
 	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 
 	// HitLocation은 메쉬에서 끝나버렸기 때문에 조금 더 나아간 위치까지 LineTrace
 	const FVector TraceEnd = TraceStart + (HitLocation - TraceStart) * 1.25f;
@@ -226,11 +235,10 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 			ConfirmHitResult,
 			TraceStart,
 			TraceEnd,
-			ECC_Visibility
+			ECC_HitBox
 			);
-		if (ConfirmHitResult.bBlockingHit)
+		if (ConfirmHitResult.bBlockingHit) // 헤드샷인 경우 들어오는 분기
 		{
-			// 헤드샷이면 바로 return
 			ResetHitBoxes(Package.Character, CurrentFrame);
 			EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 			return FServerSideRewindResult{ true, true };
@@ -243,18 +251,19 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 				if (HitBoxPair.Value != nullptr)
 				{
 					HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-					HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+					HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 				}
 			}
 			World->LineTraceSingleByChannel(
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
-				ECC_Visibility
+				ECC_HitBox
 				);
 			if (ConfirmHitResult.bBlockingHit)
 			{
 				// 적중 결과 있는 경우 바디샷 판정으로 return
+				
 				ResetHitBoxes(Package.Character, CurrentFrame);
 				EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 				return FServerSideRewindResult{ true, false };
@@ -295,7 +304,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 		// 머리 히트박스 활성화
 		UBoxComponent* HeadBox = Frame.Character->HitCollisionBoxes[FName("head")];
 		HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		HeadBox->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+		HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 	}
 	// 머리 히트박스만 활성화한 상태로 라인 트레이스 검증 시작
 	UWorld* World = GetWorld();
@@ -309,12 +318,12 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
-				ECC_Visibility
+				ECC_HitBox
 				);
 			// 적중 결과에 따라 TMap에 값 추가
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter)
-			{
+			{				
 				if (ShotgunResult.HeadShots.Contains(BlasterCharacter))
 				{
 					ShotgunResult.HeadShots[BlasterCharacter]++;
@@ -336,7 +345,7 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 			if (HitBoxPair.Value != nullptr)
 			{
 				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
 			}
 		}
 		// 머리 히트박스는 비활성화
@@ -354,12 +363,12 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 				ConfirmHitResult,
 				TraceStart,
 				TraceEnd,
-				ECC_Visibility
+				ECC_HitBox
 				);
 			// 적중 시 이미 HeadShot 판정을 받은 펠릿인지도 체크
 			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ConfirmHitResult.GetActor());
 			if (BlasterCharacter && !HeadShotPellets.Contains(HitLocation))
-			{
+			{				
 				if (ShotgunResult.BodyShots.Contains(BlasterCharacter))
 				{
 					ShotgunResult.BodyShots[BlasterCharacter]++;
@@ -378,6 +387,83 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 	}
 	
 	return ShotgunResult;
+}
+
+FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
+	const FFramePackage& Package,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity)
+{
+	if (Package.Character == nullptr) return FServerSideRewindResult();
+
+	// 현재 캐릭터의 BoxComponent 위치를 캐싱
+	FFramePackage CurrentFrame;
+	CacheBoxPositions(Package.Character, CurrentFrame);
+
+	// 캐릭터의 BoxComponent 위치를 Interpolate된 FramePackage 위치로 옮겨줌
+	MoveBoxes(Package.Character, Package);
+	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
+
+	// 머리 히트박스 활성화
+	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
+	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+
+	// 투사체 경로 예측 세팅
+	FPredictProjectilePathParams PathParams;
+	PathParams.bTraceWithCollision = true;
+	PathParams.MaxSimTime = MaxRecordTime;
+	PathParams.LaunchVelocity = InitialVelocity;
+	PathParams.StartLocation = TraceStart;
+	PathParams.SimFrequency = 15.f;
+	PathParams.ProjectileRadius = 5.f;
+	PathParams.TraceChannel = ECC_HitBox;
+	PathParams.ActorsToIgnore.Add(GetOwner());
+	PathParams.DrawDebugTime = 5.f;
+	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+
+	// 투사체 경로 예측 함수 호출
+	FPredictProjectilePathResult PathResult;
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+
+	if (PathResult.HitResult.bBlockingHit) // 헤드샷인 경우 들어오는 분기
+	{
+		if (PathResult.HitResult.Component.IsValid())
+		{
+			UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
+		}
+
+		ResetHitBoxes(Package.Character, CurrentFrame);
+		EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+		return FServerSideRewindResult{ true, true };
+	}
+	else // 헤드샷이 아닌 경우 들어우는 분기
+	{
+		for (auto& HitBoxPair : Package.Character->HitCollisionBoxes)
+		{
+			// 나머지 히트박스 활성화
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+			}
+		}
+		// 투사체 경로 예측 함수 호출
+		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+		
+		if (PathResult.HitResult.bBlockingHit) // 바디샷인 경우 들어오는 분기
+		{
+			ResetHitBoxes(Package.Character, CurrentFrame);
+			EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+			return FServerSideRewindResult{ true, false };
+		}
+	}
+
+	// 아무것도 적중하지 못 한 경우
+	ResetHitBoxes(Package.Character, CurrentFrame);
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+	return FServerSideRewindResult();
 }
 
 void ULagCompensationComponent::CacheBoxPositions(ABlasterCharacter* HitCharacter, FFramePackage& OutFramePackage)

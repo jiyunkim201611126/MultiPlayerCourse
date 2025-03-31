@@ -68,7 +68,8 @@ void AProjectile::BeginPlay()
 	{
 		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
 	}
-
+	
+	/*
 	// 투사체 경로 예측 세팅
 	FPredictProjectilePathParams PathParams;
 	PathParams.bTraceWithChannel = true;
@@ -86,6 +87,7 @@ void AProjectile::BeginPlay()
 	FPredictProjectilePathResult PathResults;
 	// 투사체 경로 예측 함수
 	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResults);
+	*/
 }
 
 void AProjectile::StartDestroyTimer()

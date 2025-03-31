@@ -74,7 +74,6 @@ public:
 	ULagCompensationComponent();
 	friend class ABlasterCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 	
 	/**
 	 * 클라이언트가 서버에 적중 사실 확인을 요청하는 함수
@@ -84,21 +83,21 @@ public:
 	 * @param HitLocation 적중이 발생했을 것으로 예상되는 지점
 	 * @param HitTime 적중이 발생했을 것으로 믿어지는 시점
 	 */
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable) // HitScan
 	void ServerScoreRequest(
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime);
 
-	// 위 함수와 같은 용도, 샷건용
+	// 위 함수와 같은 용도, Shotgun용
 	UFUNCTION(Server, Reliable)
 	void ShotgunServerScoreRequest(
 		const TArray<ABlasterCharacter*>& HitCharacters,
 		const FVector_NetQuantize& TraceStart,
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
-
+	
 	/**
 	 * 서버 상태를 되돌려 특정 시점에서 주어진 공격에 의해 캐릭터가 맞았는지 판단합니다
 	 * 이 함수는 저장된 프레임 패키지를 사용하여 히트박스의 위치를 보간하고 잠재적 충돌을 평가합니다
@@ -109,7 +108,7 @@ public:
 	 * @param HitTime 적중이 발생했을 것으로 믿어지는 시점
 	 * @return 적중 여부와 헤드샷 여부를 나타내는 결과를 반환
 	 */
-	FServerSideRewindResult ServerSideRewind(
+	FServerSideRewindResult ServerSideRewind( // HitScan
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
@@ -121,12 +120,25 @@ public:
 		const FVector_NetQuantize& TraceStart,
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
+
+	// 위 함수와 같은 용도, Projectile용
+	FServerSideRewindResult ProjectileServerSideRewind(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
 	
 protected:
 	virtual void BeginPlay() override;
 	
+	// BoxComponent의 현 상태를 FrameHistory에 담는 함수, Tick에서 호출
+	void SaveFramePackage();
+	
 	// 이 컴포넌트를 가진 Character의 HitBox 역할을 하는 BoxComponent들의 위치를 저장하는 함수
 	void SaveFramePackage(FFramePackage& Package);
+
+	// HitBox를 DebugBox로 보여주는 함수
+	void ShowFramePackage(const FFramePackage& Package, const FColor& Color);
 
 	// 아래 함수들을 거의 모두 호출하며, HitTime에 HitCharacter가 어디 있었는지 최종 반환하는 함수
 	FFramePackage GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime);
@@ -146,24 +158,23 @@ protected:
 	// 캐릭터 Mesh의 CollisionEnabled를 조정하는 함수
 	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
 
-	// SSR후 적중 결과를 반환하는 함수
+	// SSR후 적중 결과를 반환하는 함수, 히트스캔용
 	FServerSideRewindResult ConfirmHit(
 		const FFramePackage& Package,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation);
 
-	// BoxComponent의 현 상태를 FrameHistory에 담는 함수, Tick에서 호출
-	void SaveFramePackage();
-	
-	/**
-	 * Shotgun
-	 */
-
+	// SSR후 적중 결과를 반환하는 함수, 샷건용
 	FShotgunServerSideRewindResult ShotgunConfirmHit(
 		const TArray<FFramePackage>& FramePackages,
 		const FVector_NetQuantize& TraceStart,
-		const TArray<FVector_NetQuantize>& HitLocations
-		);
+		const TArray<FVector_NetQuantize>& HitLocations);
+
+	// SSR후 적중 결과를 반환하는 함수, 투사체용
+	FServerSideRewindResult ProjectileConfirmHit(
+		const FFramePackage& Package,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity);
 	
 private:
 	UPROPERTY()
