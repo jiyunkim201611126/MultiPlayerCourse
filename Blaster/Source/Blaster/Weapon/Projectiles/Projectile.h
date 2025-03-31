@@ -14,13 +14,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void Destroyed() override;
 	
-	UPROPERTY(EditAnywhere)
-	float Damage = 20.f;
+	float Damage = 0.f;
 
 	/**
 	 * SSR 구현을 위한 변수
 	 */
 
+	bool bUseServerSideRewind = false;
 	FVector_NetQuantize TraceStart;
 	FVector_NetQuantize100 InitialVelocity;
 
@@ -39,7 +39,12 @@ protected:
 	void ExplodeDamage();
 
 	UFUNCTION()
-	virtual void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	virtual void OnHit(
+		UPrimitiveComponent* HitComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		FVector NormalImpulse,
+		const FHitResult& Hit);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastPlayFX();

@@ -8,34 +8,65 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	// 탄환 소모
 	Super::Fire(HitTarget);
 
-	if (!HasAuthority()) return;
-
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 
 	// 총구쪽 Socket
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
-	if (MuzzleFlashSocket)
+	UWorld* World = GetWorld();
+	if (MuzzleFlashSocket && World)
 	{
 		// LineTrace 시작 Transform(== 총구쪽 Socket의 Transform)
 		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-		
 		const FVector ToTarget = HitTarget - SocketTransform.GetLocation();
 		const FRotator TargetRotation = ToTarget.Rotation();
-		if (ProjectileClass && InstigatorPawn)
+		
+		// ProjectileClass를 기반으로 한 액터 스폰
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = InstigatorPawn;
+		
+		AProjectile* SpawnedProjectile = nullptr;
+
+		if (bUseServerSideRewind)
 		{
-			// ProjectileClass를 기반으로 한 액터 스폰
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = InstigatorPawn;
-			if (UWorld* World = GetWorld())
+			if (InstigatorPawn->HasAuthority()) // 서버가 들어오는 분기
 			{
-				AProjectile* Projectile = World->SpawnActor<AProjectile>(
-					ProjectileClass,
-					SocketTransform.GetLocation(),
-					TargetRotation,
-					SpawnParams
-				);
-				Projectile->Damage = Damage;
+				if (InstigatorPawn->IsLocallyControlled()) // 서버가 발사 - Replicated Projectile 사용
+				{
+					SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+					SpawnedProjectile->Damage = Damage;
+					SpawnedProjectile->bUseServerSideRewind = false;
+				}
+				else // 클라이언트가 발사 - Non-Replicated Projectile 스폰, SSR 없음
+				{
+					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+					SpawnedProjectile->bUseServerSideRewind = false;
+				}
+			}
+			else // 클라이언트가 들어오는 분기, SSR 사용
+			{
+				if (InstigatorPawn->IsLocallyControlled()) // 클라이언트 자신이 발사, Non-Replicated Projectile 스폰, SSR 사용 
+				{
+					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+					SpawnedProjectile->Damage = Damage;
+					SpawnedProjectile->bUseServerSideRewind = true;
+					SpawnedProjectile->TraceStart = SocketTransform.GetLocation();
+					SpawnedProjectile->InitialVelocity = SpawnedProjectile->GetActorForwardVector() * SpawnedProjectile->InitialSpeed;
+				}
+				else // 다른 클라이언트가 발사, Non-Replicated Projectile 스폰, SSR 없음
+				{
+					SpawnedProjectile = World->SpawnActor<AProjectile>(ServerSideRewindProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+					SpawnedProjectile->bUseServerSideRewind = false;
+				}
+			}
+		}
+		else // 무기 자체가 SSR 사용 안 함
+		{
+			if (InstigatorPawn->HasAuthority())
+			{
+				SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+				SpawnedProjectile->Damage = Damage;
+				SpawnedProjectile->bUseServerSideRewind = false;
 			}
 		}
 	}
