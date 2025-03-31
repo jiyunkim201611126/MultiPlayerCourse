@@ -48,6 +48,10 @@ public:
 
 	bool bLocallyReloading = false;
 
+	// 샷건 장전 도중 무기를 swap하는 경우, bLocallyReloading이 false로 변경되지 않는 현상을 수정하기 위해 선언
+	UFUNCTION(Client, Reliable)
+	void ClientShouldChangeLocallyReloading();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);

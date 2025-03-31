@@ -97,6 +97,15 @@ public:
 		const FVector_NetQuantize& TraceStart,
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
+
+	// 위 함수와 같은 용도, Projectile용
+	UFUNCTION(Server, Reliable)
+	void ProjectileServerScoreRequest(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime,
+		float Damage);
 	
 	/**
 	 * 서버 상태를 되돌려 특정 시점에서 주어진 공격에 의해 캐릭터가 맞았는지 판단합니다

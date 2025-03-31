@@ -9,8 +9,6 @@ class BLASTER_API AProjectileBullet : public AProjectile
 {
 	GENERATED_BODY()
 	
-public:
-	
 protected:
 	virtual void OnHit(
 		UPrimitiveComponent* HitComp,

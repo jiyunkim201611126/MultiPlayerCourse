@@ -20,7 +20,6 @@ public:
 	 * SSR 구현을 위한 변수
 	 */
 
-	bool bUseServerSideRewind = false;
 	FVector_NetQuantize TraceStart;
 	FVector_NetQuantize100 InitialVelocity;
 

@@ -25,7 +25,7 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(
 {
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 
-	if (Character && HitCharacter && Confirm.bHitConfirmed)
+	if (Character && Character->GetController() && Character->GetEquippedWeapon() && HitCharacter && Confirm.bHitConfirmed)
 	{
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
@@ -69,6 +69,27 @@ void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
 	}
 }
 
+void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(
+	ABlasterCharacter* HitCharacter,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity,
+	float HitTime,
+	float Damage)
+{
+	FServerSideRewindResult Confirm = ProjectileServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
+	
+	if (Character && Character->GetController() && Character->GetEquippedWeapon() && HitCharacter && Confirm.bHitConfirmed)
+	{
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			Damage,
+			Character->GetController(),
+			Character->GetEquippedWeapon(),
+			UDamageType::StaticClass()
+			);
+	}
+}
+
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(
 	ABlasterCharacter* HitCharacter,
 	const FVector_NetQuantize& TraceStart,
@@ -99,7 +120,7 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(
 	const FVector_NetQuantize100& InitialVelocity, float HitTime)
 {
 	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);	// HitTime에 HitCharacter의 히트박스에 대한 위치 정보
-	return ProjectileConfirmHit(FrameToCheck, TraceStart, InitialVelocity, HitTime);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
+	return ProjectileConfirmHit(FrameToCheck, TraceStart, InitialVelocity);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
 }
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)

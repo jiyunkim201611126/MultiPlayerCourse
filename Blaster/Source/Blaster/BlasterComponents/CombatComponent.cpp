@@ -440,14 +440,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 void UCombatComponent::SwapWeapons()
 {
 	// 샷건 장전 도중 SwapWeapons 진입 시 장전 애니메이션을 멈추는 용도
-	if (CombatState == ECombatState::ECS_Reloading)
+	if (EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && CombatState == ECombatState::ECS_Reloading)
 	{
+		JumpToShotgunMoreReload(false);
+		ClientShouldChangeLocallyReloading();
 		CombatState = ECombatState::ECS_Unoccupied;
-		if (Character && Character->GetMesh() && Character->GetMesh()->GetAnimInstance())
-		{
-			const FName SectionName("ReloadEnd");
-			Character->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName);
-		}
 	}
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
@@ -463,6 +460,11 @@ void UCombatComponent::SwapWeapons()
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	AttachActorToBackpack(SecondaryWeapon);
 	MulticastBindFireTimer(SecondaryWeapon, false);
+}
+
+void UCombatComponent::ClientShouldChangeLocallyReloading_Implementation()
+{
+	bLocallyReloading = false;
 }
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)

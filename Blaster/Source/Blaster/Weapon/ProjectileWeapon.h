@@ -20,7 +20,4 @@ private:
 	// 복제되지 않는 Projectile 액터, Locally Fire에 사용됨
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AProjectile> ServerSideRewindProjectileClass;
-
-	UPROPERTY(EditAnywhere)
-	bool bUseServerSideRewind = false;
 };
