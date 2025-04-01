@@ -5,6 +5,8 @@
 #include "Components/ActorComponent.h"
 #include "LagCompensationComponent.generated.h"
 
+class AProjectile;
+
 USTRUCT(BlueprintType)
 struct FBoxInformation
 {
@@ -59,6 +61,21 @@ struct FShotgunServerSideRewindResult
 	TMap<ABlasterCharacter*, uint32> BodyShots;
 };
 
+USTRUCT(BlueprintType)
+struct FRocketServerSideRewindResult
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	bool bHitConfirmed;
+
+	UPROPERTY()
+	bool bHeadShot;
+
+	UPROPERTY()
+	FVector_NetQuantize HitLocation;
+};
+
 /**
  * 네트워크 환경에서 플레이어의 지연 보정을 처리하는 구성 요소를 나타냅니다.
  * 서버는 주어진 시간에 슈팅자의 시점에 맞게 위치를 되감아
@@ -76,21 +93,21 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	/**
-	 * 클라이언트가 서버에 적중 사실 확인을 요청하는 함수
+	 * 클라이언트가 서버에 적중 사실 확인과 함께 데미지를 요청하는 함수
 	 * 
 	 * @param HitCharacter 공격에 의해 잠재적으로 적중된 캐릭터
 	 * @param TraceStart 적중 여부를 판단하기 위해 사용될 라인 트레이스의 시작 지점
 	 * @param HitLocation 적중이 발생했을 것으로 예상되는 지점
 	 * @param HitTime 적중이 발생했을 것으로 믿어지는 시점
 	 */
-	UFUNCTION(Server, Reliable) // HitScan
+	UFUNCTION(Server, Reliable) // 히트스캔용
 	void ServerScoreRequest(
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
 		float HitTime);
 
-	// 위 함수와 같은 용도, Shotgun용
+	// 위 함수와 같은 용도, 샷건용
 	UFUNCTION(Server, Reliable)
 	void ShotgunServerScoreRequest(
 		const TArray<ABlasterCharacter*>& HitCharacters,
@@ -98,7 +115,7 @@ public:
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
 
-	// 위 함수와 같은 용도, Projectile용
+	// 위 함수와 같은 용도, 투사체용
 	UFUNCTION(Server, Reliable)
 	void ProjectileServerScoreRequest(
 		ABlasterCharacter* HitCharacter,
@@ -106,6 +123,15 @@ public:
 		const FVector_NetQuantize100& InitialVelocity,
 		float HitTime,
 		float Damage);
+
+	// 로켓용
+	UFUNCTION(Server, Reliable)
+	void RocketServerRequest(
+		AActor* HitActor,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime,
+		AProjectile* Rocket);
 	
 	/**
 	 * 서버 상태를 되돌려 특정 시점에서 주어진 공격에 의해 캐릭터가 맞았는지 판단합니다
@@ -117,7 +143,7 @@ public:
 	 * @param HitTime 적중이 발생했을 것으로 믿어지는 시점
 	 * @return 적중 여부와 헤드샷 여부를 나타내는 결과를 반환
 	 */
-	FServerSideRewindResult ServerSideRewind( // HitScan
+	FServerSideRewindResult ServerSideRewind( // 히트스캔용
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize& HitLocation,
@@ -130,8 +156,15 @@ public:
 		const TArray<FVector_NetQuantize>& HitLocations,
 		float HitTime);
 
-	// 위 함수와 같은 용도, Projectile용
+	// 위 함수와 같은 용도, 투사체용
 	FServerSideRewindResult ProjectileServerSideRewind(
+		ABlasterCharacter* HitCharacter,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity,
+		float HitTime);
+
+	// 위 함수와 같은 용도, 로켓용
+	FRocketServerSideRewindResult RocketServerSideRewind(
 		ABlasterCharacter* HitCharacter,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize100& InitialVelocity,
@@ -181,6 +214,12 @@ protected:
 
 	// SSR후 적중 결과를 반환하는 함수, 투사체용
 	FServerSideRewindResult ProjectileConfirmHit(
+		const FFramePackage& Package,
+		const FVector_NetQuantize& TraceStart,
+		const FVector_NetQuantize100& InitialVelocity);
+
+	// SSR후 적중 결과를 반환하는 함수, 로켓용
+	FRocketServerSideRewindResult RocketConfirmHit(
 		const FFramePackage& Package,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize100& InitialVelocity);

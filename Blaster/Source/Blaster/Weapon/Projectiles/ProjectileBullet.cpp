@@ -16,17 +16,16 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
 	{
 		if (ABlasterPlayerController* InstigatorController = Cast<ABlasterPlayerController>(InstigatorCharacter->Controller))
 		{
-			if (InstigatorCharacter->HasAuthority()) // 서버가 들어오는 분기
+			ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(OtherActor);
+			if (InstigatorCharacter->HasAuthority() && bServerBullet) // 서버가 들어오는 분기
 			{
 				// 즉시 데미지 적용 후 return
 				UGameplayStatics::ApplyDamage(OtherActor, Damage, InstigatorController, this, UBaseDamageType::StaticClass());
 				Super::OnHit(HitComp, OtherActor, OtherComp, NormalImpulse, Hit);
 				return;
 			}
-
 			// 클라이언트인 경우 서버에 데미지 요청
-			ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(OtherActor);
-			if (InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && HitCharacter)
+			if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && HitCharacter && !bServerBullet)
 			{
 				InstigatorCharacter->GetLagCompensation()->ProjectileServerScoreRequest(
 					HitCharacter,

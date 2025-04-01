@@ -16,9 +16,17 @@ public:
 	
 	float Damage = 0.f;
 
+	UPROPERTY(EditAnywhere)
+	float DamageInnerRadius = 200.f;
+	UPROPERTY(EditAnywhere)
+	float DamageOuterRadius = 500.f;
+
 	/**
 	 * SSR 구현을 위한 변수
 	 */
+
+	// 서버가 발사한 경우 true, 적중 시 클라이언트가 요청할 것인지 서버가 바로 데미지를 줄 것인지 구분하기 위해 사용
+	bool bServerBullet;
 
 	FVector_NetQuantize TraceStart;
 	FVector_NetQuantize100 InitialVelocity;
@@ -73,11 +81,6 @@ protected:
 
 	UPROPERTY()
 	class UNiagaraComponent* TrailSystemComponent;
-
-	UPROPERTY(EditAnywhere)
-	float DamageInnerRadius = 200.f;
-	UPROPERTY(EditAnywhere)
-	float DamageOuterRadius = 500.f;
 
 	UFUNCTION(BlueprintCallable)
 	virtual void AddVelocity(FVector Velocity);

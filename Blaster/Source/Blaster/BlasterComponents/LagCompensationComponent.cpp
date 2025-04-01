@@ -6,6 +6,7 @@
 #include "Blaster/Weapon/Weapon.h"
 #include "DrawDebugHelpers.h"
 #include "Blaster/Blaster.h"
+#include "Blaster/Weapon/Projectiles/Projectile.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -90,6 +91,64 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(
 	}
 }
 
+void ULagCompensationComponent::RocketServerRequest_Implementation(
+	AActor* HitActor,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity,
+	float HitTime,
+	AProjectile* Rocket)
+{
+	// 적중 대상이 캐릭터인 경우 SSR, 주변 반경에 데미지
+	if (ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(HitActor))
+	{
+		FRocketServerSideRewindResult Confirm = RocketServerSideRewind(HitCharacter, TraceStart, InitialVelocity, HitTime);
+	
+		if (Character && Character->GetController() && Character->GetEquippedWeapon() && HitCharacter && Confirm.bHitConfirmed)
+		{
+			AController* FiringController = Character->GetController();
+			if (FiringController)
+			{
+				UGameplayStatics::ApplyRadialDamageWithFalloff(
+					this, // 월드 객체
+					Rocket->Damage, // 최대 데미지
+					10.f, // 최소 데미지
+					Confirm.HitLocation, // 데미지 시작 지점
+					Rocket->DamageInnerRadius, // 최대 데미지 반경
+					Rocket->DamageOuterRadius, // 최소 데미지 반경
+					1.f, // 데미지 감소 비율
+					UDamageType::StaticClass(), // 데미지 타입 클래스
+					TArray<AActor*>(), // 데미지를 받지 않을 액터
+					Rocket, // 데미지 유발자
+					FiringController // InstigatorController
+					);
+			}
+		}
+	}
+	else // 적중 대상이 캐릭터가 아닌 경우 들어오는 분기
+	{
+		if (Character)
+		{
+			AController* FiringController = Character->GetController();
+			if (FiringController)
+			{
+				UGameplayStatics::ApplyRadialDamageWithFalloff(
+					this, // 월드 객체
+					Rocket->Damage, // 최대 데미지
+					10.f, // 최소 데미지
+					Rocket->GetActorLocation(), // 데미지 시작 지점
+					Rocket->DamageInnerRadius, // 최대 데미지 반경
+					Rocket->DamageOuterRadius, // 최소 데미지 반경
+					1.f, // 데미지 감소 비율
+					UDamageType::StaticClass(), // 데미지 타입 클래스
+					TArray<AActor*>(), // 데미지를 받지 않을 액터
+					Rocket, // 데미지 유발자
+					FiringController // InstigatorController
+					);
+			}
+		}
+	}
+}
+
 FServerSideRewindResult ULagCompensationComponent::ServerSideRewind(
 	ABlasterCharacter* HitCharacter,
 	const FVector_NetQuantize& TraceStart,
@@ -116,11 +175,23 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunServerSideRewin
 }
 
 FServerSideRewindResult ULagCompensationComponent::ProjectileServerSideRewind(
-	ABlasterCharacter* HitCharacter, const FVector_NetQuantize& TraceStart,
-	const FVector_NetQuantize100& InitialVelocity, float HitTime)
+	ABlasterCharacter* HitCharacter,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity,
+	float HitTime)
 {
 	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);	// HitTime에 HitCharacter의 히트박스에 대한 위치 정보
 	return ProjectileConfirmHit(FrameToCheck, TraceStart, InitialVelocity);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
+}
+
+FRocketServerSideRewindResult ULagCompensationComponent::RocketServerSideRewind(
+	ABlasterCharacter* HitCharacter,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity,
+	float HitTime)
+{
+	FFramePackage FrameToCheck = GetFrameToCheck(HitCharacter, HitTime);	// HitTime에 HitCharacter의 히트박스에 대한 위치 정보
+	return RocketConfirmHit(FrameToCheck, TraceStart, InitialVelocity);	// 위 정보를 기반으로 라인 트레이스를 통해 적중 사실 return
 }
 
 FFramePackage ULagCompensationComponent::GetFrameToCheck(ABlasterCharacter* HitCharacter, float HitTime)
@@ -485,6 +556,83 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
 	ResetHitBoxes(Package.Character, CurrentFrame);
 	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
 	return FServerSideRewindResult();
+}
+
+FRocketServerSideRewindResult ULagCompensationComponent::RocketConfirmHit(
+	const FFramePackage& Package,
+	const FVector_NetQuantize& TraceStart,
+	const FVector_NetQuantize100& InitialVelocity)
+{
+	if (Package.Character == nullptr) return FRocketServerSideRewindResult();
+
+	// 현재 캐릭터의 BoxComponent 위치를 캐싱
+	FFramePackage CurrentFrame;
+	CacheBoxPositions(Package.Character, CurrentFrame);
+
+	// 캐릭터의 BoxComponent 위치를 Interpolate된 FramePackage 위치로 옮겨줌
+	MoveBoxes(Package.Character, Package);
+	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
+
+	// 머리 히트박스 활성화
+	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
+	HeadBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	HeadBox->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+
+	// 투사체 경로 예측 세팅
+	FPredictProjectilePathParams PathParams;
+	PathParams.bTraceWithCollision = true;
+	PathParams.MaxSimTime = MaxRecordTime;
+	PathParams.LaunchVelocity = InitialVelocity;
+	PathParams.StartLocation = TraceStart;
+	PathParams.SimFrequency = 15.f;
+	PathParams.ProjectileRadius = 5.f;
+	PathParams.TraceChannel = ECC_HitBox;
+	PathParams.ActorsToIgnore.Add(GetOwner());
+	PathParams.DrawDebugTime = 5.f;
+	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
+
+	// 투사체 경로 예측 함수 호출
+	FPredictProjectilePathResult PathResult;
+	UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+
+	if (PathResult.HitResult.bBlockingHit) // 헤드샷인 경우 들어오는 분기
+	{
+		if (PathResult.HitResult.Component.IsValid())
+		{
+			UBoxComponent* Box = Cast<UBoxComponent>(PathResult.HitResult.Component);
+		}
+
+		ResetHitBoxes(Package.Character, CurrentFrame);
+		EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+		return FRocketServerSideRewindResult{ true, true, PathResult.HitResult.Location };
+	}
+	else // 헤드샷이 아닌 경우 들어우는 분기
+	{
+		for (auto& HitBoxPair : Package.Character->HitCollisionBoxes)
+		{
+			// 나머지 히트박스 활성화
+			if (HitBoxPair.Value != nullptr)
+			{
+				HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+				HitBoxPair.Value->SetCollisionResponseToChannel(ECC_HitBox, ECR_Block);
+			}
+		}
+		// 투사체 경로 예측 함수 호출
+		UGameplayStatics::PredictProjectilePath(this, PathParams, PathResult);
+		
+		if (PathResult.HitResult.bBlockingHit) // 바디샷인 경우 들어오는 분기
+		{
+			ResetHitBoxes(Package.Character, CurrentFrame);
+			EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+			return FRocketServerSideRewindResult{ true, false, PathResult.HitResult.Location };
+		}
+	}
+
+	// 아무것도 적중하지 못 한 경우
+	ResetHitBoxes(Package.Character, CurrentFrame);
+	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::QueryAndPhysics);
+	return FRocketServerSideRewindResult();
 }
 
 void ULagCompensationComponent::CacheBoxPositions(ABlasterCharacter* HitCharacter, FFramePackage& OutFramePackage)

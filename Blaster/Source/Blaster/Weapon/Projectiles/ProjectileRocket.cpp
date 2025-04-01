@@ -5,6 +5,9 @@
 #include "Components/BoxComponent.h"
 #include "Sound/SoundCue.h"
 #include "Components/AudioComponent.h"
+#include "Blaster/Character/BlasterCharacter.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Blaster/BlasterComponents/LagCompensationComponent.h"
 
 AProjectileRocket::AProjectileRocket()
 {
@@ -45,11 +48,36 @@ void AProjectileRocket::BeginPlay()
 	}
 }
 
-void AProjectileRocket::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
-                              FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileRocket::OnHit(
+	UPrimitiveComponent* HitComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse,
+	const FHitResult& Hit)
 {
-	ExplodeDamage();
-
+	if (ABlasterCharacter* InstigatorCharacter = Cast<ABlasterCharacter>(GetInstigator()))
+	{
+		if (ABlasterPlayerController* InstigatorController = Cast<ABlasterPlayerController>(InstigatorCharacter->Controller))
+		{
+			if (InstigatorCharacter->HasAuthority() && bServerBullet) // 서버가 들어오는 분기
+			{
+				// 즉시 데미지 적용
+				ExplodeDamage();
+			}
+			// 클라이언트인 경우, 적중 대상이 캐릭터든 아니든 일단 OtherActor를 보내며 서버에 데미지 요청
+			else if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && !bServerBullet)
+			{
+				InstigatorCharacter->GetLagCompensation()->RocketServerRequest(
+					OtherActor,
+					TraceStart,
+					InitialVelocity,
+					InstigatorController->GetServerTime() - InstigatorController->SingleTripTime,
+					this
+					);
+			}
+		}
+	}
+	
 	StartDestroyTimer();
 	
 	if (OtherActor->IsA(APawn::StaticClass()) && DefaultImpactParticle && HitCharacterImpactParticle)

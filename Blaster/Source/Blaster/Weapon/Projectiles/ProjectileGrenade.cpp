@@ -11,6 +11,7 @@ AProjectileGrenade::AProjectileGrenade()
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GrenadeMesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Damage = 100.f;
 	
 	ProjectileMovementComponent->bShouldBounce = true;
 }
