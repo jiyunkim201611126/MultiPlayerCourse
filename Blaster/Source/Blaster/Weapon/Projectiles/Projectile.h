@@ -28,11 +28,17 @@ public:
 	// 서버가 발사한 경우 true, 적중 시 클라이언트가 요청할 것인지 서버가 바로 데미지를 줄 것인지 구분하기 위해 사용
 	bool bServerBullet;
 
+	// SSR 사용을 위해 선언한 변수들
+	// 2단 추진 로켓 구현을 위해 블루프린트도 열어둠
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector_NetQuantize TraceStart;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FVector_NetQuantize100 InitialVelocity;
 
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000.f;
+	
+	virtual void StartDestroyTimer();
 
 #if WITH_EDITOR // 에디터에서만 호출됨
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -40,7 +46,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	void StartDestroyTimer();
 	void DestroyTimerFinished();
 	void SpawnTrailSystem();
 	void ExplodeDamage();

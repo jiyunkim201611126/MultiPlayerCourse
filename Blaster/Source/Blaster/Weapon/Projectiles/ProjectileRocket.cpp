@@ -67,7 +67,7 @@ void AProjectileRocket::OnHit(
 			// 클라이언트인 경우, 적중 대상이 캐릭터든 아니든 일단 OtherActor를 보내며 서버에 데미지 요청
 			else if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && !bServerBullet)
 			{
-				InstigatorCharacter->GetLagCompensation()->RocketServerRequest(
+				InstigatorCharacter->GetLagCompensation()->RocketServerScoreRequest(
 					OtherActor,
 					TraceStart,
 					InitialVelocity,
@@ -78,16 +78,19 @@ void AProjectileRocket::OnHit(
 		}
 	}
 	
-	StartDestroyTimer();
-	
 	if (OtherActor->IsA(APawn::StaticClass()) && DefaultImpactParticle && HitCharacterImpactParticle)
 	{
 		DefaultImpactParticle = HitCharacterImpactParticle;
 	}
-	if (HasAuthority())
-	{
-		MulticastPlayFX();
-	}
+	
+	StartDestroyTimer();
+}
+
+void AProjectileRocket::StartDestroyTimer()
+{
+	Super::StartDestroyTimer();
+	
+	PlayFX();
 }
 
 void AProjectileRocket::Destroyed()
@@ -95,7 +98,7 @@ void AProjectileRocket::Destroyed()
 	Super::Super::Destroyed();
 }
 
-void AProjectileRocket::MulticastPlayFX_Implementation()
+void AProjectileRocket::PlayFX()
 {
 	// 즉시 Destroy되면 안 되기 때문에 Super::OnHit을 호출할 수 없음
 	// 따라서 파티클과 사운드를 재생하는 함수들을 여기서 호출

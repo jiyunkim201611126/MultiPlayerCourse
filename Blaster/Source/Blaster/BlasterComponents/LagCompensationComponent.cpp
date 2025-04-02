@@ -91,7 +91,7 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(
 	}
 }
 
-void ULagCompensationComponent::RocketServerRequest_Implementation(
+void ULagCompensationComponent::RocketServerScoreRequest_Implementation(
 	AActor* HitActor,
 	const FVector_NetQuantize& TraceStart,
 	const FVector_NetQuantize100& InitialVelocity,
@@ -121,6 +121,8 @@ void ULagCompensationComponent::RocketServerRequest_Implementation(
 					Rocket, // 데미지 유발자
 					FiringController // InstigatorController
 					);
+
+				Rocket->StartDestroyTimer();
 			}
 		}
 	}

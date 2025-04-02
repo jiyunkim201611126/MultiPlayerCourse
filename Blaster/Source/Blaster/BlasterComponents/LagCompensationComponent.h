@@ -124,9 +124,10 @@ public:
 		float HitTime,
 		float Damage);
 
-	// 로켓용
+	// 위 함수와 같은 용도, 로켓용
+	// 폭발형 무기는 클라이언트와 서버의 적중 결과가 다른 경우 클라이언트쪽에서 크게 이상해 보일 수 있지만, 그냥 구현해보고 싶어서 구현함
 	UFUNCTION(Server, Reliable)
-	void RocketServerRequest(
+	void RocketServerScoreRequest(
 		AActor* HitActor,
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize100& InitialVelocity,
