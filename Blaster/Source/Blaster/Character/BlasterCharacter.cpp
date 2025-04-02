@@ -266,6 +266,7 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 	{
 		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeapon);
 		StartingWeapon->bDestroyWeapon = true;
+		StartingWeapon->SetOwner(this);
 		if (Combat)
 		{
 			Combat->EquipWeapon(StartingWeapon);

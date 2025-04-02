@@ -67,6 +67,17 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
 			{
 				HighPingWarning();
 				PingAnimationRunningTime = 0.f;
+				if (!HasAuthority())
+				{
+					ServerReportPingStatus(true);
+				}
+			}
+			else
+			{
+				if (!HasAuthority())
+				{
+					ServerReportPingStatus(false);
+				}
 			}
 		}
 		HighPingRunningTime = 0.f;
@@ -86,6 +97,12 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
 			StopHighPingWarning();
 		}
 	}
+}
+
+// 핑이 너무 높은 경우 호출되는 함수
+void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
+{
+	HighPingDelegate.Broadcast(bHighPing);
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaTime)

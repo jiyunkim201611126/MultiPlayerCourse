@@ -150,6 +150,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float Damage = 0.f;
+
+	UPROPERTY(Replicated, EditAnywhere)
+	bool bUseServerSideRewind = false;
+
+	UFUNCTION()
+	void OnPingTooHigh(bool bPingTooHigh);
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;

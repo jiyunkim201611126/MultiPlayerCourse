@@ -109,17 +109,17 @@ void ULagCompensationComponent::RocketServerScoreRequest_Implementation(
 			if (FiringController)
 			{
 				UGameplayStatics::ApplyRadialDamageWithFalloff(
-					this, // 월드 객체
-					Rocket->Damage, // 최대 데미지
-					10.f, // 최소 데미지
-					Confirm.HitLocation, // 데미지 시작 지점
-					Rocket->DamageInnerRadius, // 최대 데미지 반경
-					Rocket->DamageOuterRadius, // 최소 데미지 반경
-					1.f, // 데미지 감소 비율
-					UDamageType::StaticClass(), // 데미지 타입 클래스
-					TArray<AActor*>(), // 데미지를 받지 않을 액터
-					Rocket, // 데미지 유발자
-					FiringController // InstigatorController
+					this,							// 월드 객체
+					Rocket->Damage,					// 최대 데미지
+					10.f,							// 최소 데미지
+					Confirm.HitLocation,			// 데미지 시작 지점
+					Rocket->DamageInnerRadius,		// 최대 데미지 반경
+					Rocket->DamageOuterRadius,		// 최소 데미지 반경
+					1.f,							// 데미지 감소 비율
+					UDamageType::StaticClass(),		// 데미지 타입 클래스
+					TArray<AActor*>(),				// 데미지를 받지 않을 액터
+					Rocket,							// 데미지 유발자
+					FiringController				// InstigatorController
 					);
 
 				Rocket->StartDestroyTimer();
@@ -134,17 +134,17 @@ void ULagCompensationComponent::RocketServerScoreRequest_Implementation(
 			if (FiringController)
 			{
 				UGameplayStatics::ApplyRadialDamageWithFalloff(
-					this, // 월드 객체
-					Rocket->Damage, // 최대 데미지
-					10.f, // 최소 데미지
-					Rocket->GetActorLocation(), // 데미지 시작 지점
-					Rocket->DamageInnerRadius, // 최대 데미지 반경
-					Rocket->DamageOuterRadius, // 최소 데미지 반경
-					1.f, // 데미지 감소 비율
-					UDamageType::StaticClass(), // 데미지 타입 클래스
-					TArray<AActor*>(), // 데미지를 받지 않을 액터
-					Rocket, // 데미지 유발자
-					FiringController // InstigatorController
+					this,							// 월드 객체
+					Rocket->Damage,					// 최대 데미지
+					10.f,							// 최소 데미지
+					Rocket->GetActorLocation(),		// 데미지 시작 지점
+					Rocket->DamageInnerRadius,		// 최대 데미지 반경
+					Rocket->DamageOuterRadius,		// 최소 데미지 반경
+					1.f,							// 데미지 감소 비율
+					UDamageType::StaticClass(),		// 데미지 타입 클래스
+					TArray<AActor*>(),				// 데미지를 받지 않을 액터
+					Rocket,							// 데미지 유발자
+					FiringController				// InstigatorController
 					);
 			}
 		}

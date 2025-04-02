@@ -49,15 +49,14 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 		// 적중 결과를 순회
 		// 클라이언트의 경우 아직은 적중이 확실하지 않으며, 적중했다고 주장하는 상태
 		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
-		if (BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled())
+		if (BlasterOwnerCharacter)
 		{
 			TArray<ABlasterCharacter*> HitCharacters;
 			for (auto HitPair : HitMap)
 			{
 				if (HitPair.Key && InstigatorController)
 				{
-					// 서버는 바로 데미지를 주면 된다
-					if (HasAuthority())
+					if (HasAuthority() && !bUseServerSideRewind) // SSR이 꺼진 클라이언트와 서버가 들어오는 분기
 					{
 						UGameplayStatics::ApplyDamage(
 						HitPair.Key,
@@ -67,7 +66,7 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 						UDamageType::StaticClass()
 						);
 					}
-					// 클라이언트는 적중이 예상되는 캐릭터를 지역변수에 따로 기록한다 (이유는 아래 적혀있음)
+					// SSR이 켜진 클라이언트는 적중이 예상되는 캐릭터를 지역변수에 따로 기록한다 (이유는 아래 적혀있음)
 					if (!HasAuthority())
 					{
 						HitCharacters.Add(HitPair.Key);
@@ -75,8 +74,8 @@ void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 				}
 			}
 			// 위에서 초기화된 기록을 토대로 서버에 데미지를 요청한다
-			// 이 경우 서버가 다시 검증하므로 '몇 개의 펠릿이 맞았는가'는 별로 중요하지 않다
-			if (!HasAuthority())
+			// 이 경우 서버가 다시 검증하므로 '몇 개의 펠릿이 맞았는가'는 중요하지 않다
+			if (!HasAuthority() && bUseServerSideRewind)
 			{
 				// 클라이언트는 Controller의 null체크가 필요하므로 적중 예상 캐릭터를 위에서 따로 기록했다
 				BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;

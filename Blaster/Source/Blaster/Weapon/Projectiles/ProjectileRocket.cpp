@@ -59,13 +59,13 @@ void AProjectileRocket::OnHit(
 	{
 		if (ABlasterPlayerController* InstigatorController = Cast<ABlasterPlayerController>(InstigatorCharacter->Controller))
 		{
-			if (InstigatorCharacter->HasAuthority() && bServerBullet) // 서버가 들어오는 분기
+			if (InstigatorCharacter->HasAuthority() && !bUseServerSideRewind) // 서버가 들어오는 분기
 			{
 				// 즉시 데미지 적용
 				ExplodeDamage();
 			}
 			// 클라이언트인 경우, 적중 대상이 캐릭터든 아니든 일단 OtherActor를 보내며 서버에 데미지 요청
-			else if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && !bServerBullet)
+			else if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && bUseServerSideRewind)
 			{
 				InstigatorCharacter->GetLagCompensation()->RocketServerScoreRequest(
 					OtherActor,

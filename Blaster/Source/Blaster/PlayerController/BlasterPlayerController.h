@@ -4,8 +4,8 @@
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
-class UInputMappingContext;
-class UInputAction;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FHighPingDelegate, bool, bPingTooHigh);
+
 struct FInputActionValue;
 
 UCLASS()
@@ -38,6 +38,8 @@ public:
 
 	// 클라이언트에서 서버까지 걸리는 시간
 	float SingleTripTime;
+
+	FHighPingDelegate HighPingDelegate;
 
 protected:
 	virtual void BeginPlay() override;
@@ -129,7 +131,10 @@ private:
 	UPROPERTY(EditAnywhere)
 	float CheckPingFrequency = 20.f;
 
-	float HighPingThreshold = 50.f;
+	UFUNCTION(Server, Reliable)
+	void ServerReportPingStatus(bool bHighPing);
+
+	float HighPingThreshold = 200.f;
 
 	/**
 	 * 플레이어 인풋 관련 세팅
@@ -141,10 +146,10 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputMappingContext> BlasterContext;
+	TObjectPtr<class UInputMappingContext> BlasterContext;
 
 	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> MoveAction;
+	TObjectPtr<class UInputAction> MoveAction;
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> JumpAction;
@@ -173,7 +178,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> ThrowGrenadeAction;
 
-	void Move(const FInputActionValue& InputActionValue);
+	auto Move(const FInputActionValue& InputActionValue) -> void;
 	void Look(const FInputActionValue& InputActionValue);
 	void Jump();
 	void StopJumping();

@@ -17,7 +17,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
 		if (ABlasterPlayerController* InstigatorController = Cast<ABlasterPlayerController>(InstigatorCharacter->Controller))
 		{
 			ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(OtherActor);
-			if (InstigatorCharacter->HasAuthority() && bServerBullet) // 서버가 들어오는 분기
+			if (InstigatorCharacter->HasAuthority() && !bUseServerSideRewind) // 서버가 들어오는 분기
 			{
 				// 즉시 데미지 적용 후 return
 				UGameplayStatics::ApplyDamage(OtherActor, Damage, InstigatorController, this, UBaseDamageType::StaticClass());
@@ -25,7 +25,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
 				return;
 			}
 			// 클라이언트인 경우 서버에 데미지 요청
-			if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && HitCharacter && !bServerBullet)
+			if (!InstigatorCharacter->HasAuthority() && InstigatorCharacter->GetLagCompensation() && InstigatorCharacter->IsLocallyControlled() && HitCharacter && bUseServerSideRewind)
 			{
 				InstigatorCharacter->GetLagCompensation()->ProjectileServerScoreRequest(
 					HitCharacter,

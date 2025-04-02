@@ -32,10 +32,9 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 		ABlasterCharacter* HitCharacter = Cast<ABlasterCharacter>(FireHit.GetActor());
 		AController* InstigatorController = OwnerPawn->GetController();
 		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(OwnerPawn) : BlasterOwnerCharacter;
-		if (HitCharacter && InstigatorController && BlasterOwnerCharacter && BlasterOwnerCharacter->IsLocallyControlled())
+		if (HitCharacter && InstigatorController && BlasterOwnerCharacter)
 		{
-			// 서버는 즉시 데미지를 적용하면 된다
-			if (HasAuthority())
+			if (HasAuthority() && !bUseServerSideRewind) // SSR이 꺼진 클라이언트와 서버가 들어오는 분기
 			{
 				UGameplayStatics::ApplyDamage(
 				HitCharacter,
@@ -47,7 +46,7 @@ void AHitScanWeapon::Fire(const FVector& HitTarget)
 			}
 			// 클라이언트의 경우 아직은 적중이 확실하지 않으며, 적중했다고 주장하는 상태
 			// 따라서 서버에 검증을 요청한다
-			if (!HasAuthority())
+			if (!HasAuthority() && bUseServerSideRewind) // SSR이 켜진 클라이언트가 들어오는 분기
 			{
 				BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(InstigatorController) : BlasterOwnerController;
 				if (BlasterOwnerController && BlasterOwnerCharacter->GetLagCompensation())
