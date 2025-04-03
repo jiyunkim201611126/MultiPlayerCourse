@@ -439,13 +439,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::SwapWeapons()
 {
-	// 샷건 장전 도중 SwapWeapons 진입 시 장전 애니메이션을 멈추는 용도
-	if (EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && CombatState == ECombatState::ECS_Reloading)
-	{
-		JumpToShotgunMoreReload(false);
-		ClientShouldChangeLocallyReloading();
-		CombatState = ECombatState::ECS_Unoccupied;
-	}
+	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr) return;
+	
+	Character->PlaySwapMontage();
+	CombatState = ECombatState::ECS_SwappingWeapons;
+	
 	AWeapon* TempWeapon = EquippedWeapon;
 	EquippedWeapon = SecondaryWeapon;
 	SecondaryWeapon = TempWeapon;
@@ -855,12 +853,6 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Unoccupied:
-		// 샷건 장전 도중 SwapWeapons 진입 시 장전 애니메이션을 멈추는 용도
-		if (Character && Character->GetMesh() && Character->GetMesh()->GetAnimInstance())
-		{
-			const FName SectionName("ReloadEnd");
-			Character->GetMesh()->GetAnimInstance()->Montage_JumpToSection(SectionName);
-		}
 		if (bFireButtonPressed)
 		{
 			Fire();
@@ -880,6 +872,13 @@ void UCombatComponent::OnRep_CombatState()
 			AttachActorToLeftHand(EquippedWeapon);
 			ShowAttachedGrenade(true);
 		}
+		break;
+	case ECombatState::ECS_SwappingWeapons:
+		if (Character && !Character->IsLocallyControlled())
+		{
+			Character->PlaySwapMontage();
+		}
+		break;
 	}
 }
 

@@ -795,6 +795,15 @@ void ABlasterCharacter::PlayThrowGrenadeMontage()
 	}
 }
 
+void ABlasterCharacter::PlaySwapMontage()
+{
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && SwapMontage)
+	{
+		AnimInstance->Montage_Play(SwapMontage);
+	}
+}
+
 void ABlasterCharacter::StartDissolve()
 {
 	// 시간에 따라 DissolveCurve대로 변화하는 값을 매개변수로 DissolveTrack에 바인딩된 함수를 프레임마다 호출
@@ -838,7 +847,7 @@ void ABlasterCharacter::HideCameraIfCharacterClose()
 
 void ABlasterCharacter::EquipButtonPressed()
 {
-	if (Combat)
+	if (Combat && Combat->CombatState == ECombatState::ECS_Unoccupied)
 	{
 		// 클라이언트가 Equip버튼을 누른 경우 서버에게 착용을 요청
 		ServerEquipButtonPressed();
@@ -858,10 +867,17 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 
 void ABlasterCharacter::SwapButtonPressed()
 {
+	// Sequence가 존재하는 상태에서 Swap하면 Sequence가 줄어들지 않는 버그가 발생
+	// 지금으로선 해결 방법을 알 수 없어서 강제로 Swap을 막은 상태
 	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->Sequence == 0)
 	{
 		// 클라이언트가 Swap버튼을 누른 경우 서버에게 착용을 요청
 		ServerSwapButtonPressed();
+		if (Combat->ShouldSwapWeapons() && !HasAuthority() && Combat->CombatState == ECombatState::ECS_Unoccupied)
+		{
+			PlaySwapMontage();
+			Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+		}
 	}
 }
 

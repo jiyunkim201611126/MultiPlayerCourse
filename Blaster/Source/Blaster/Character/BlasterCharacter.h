@@ -25,8 +25,8 @@ public:
 	virtual void OnRep_PlayerState() override;
 	void UpdatePlayerName() const;
 	void Elim();
-	void DropOrDestroyWeapon(class AWeapon* Weapon);
 	void DropOrDestroyWeapons();
+	void DropOrDestroyWeapon(class AWeapon* Weapon);
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastElim();
 	virtual void Destroyed() override;
@@ -53,6 +53,7 @@ public:
 	void PlayHitReactMontage();
 	void PlayElimMontage();
 	void PlayThrowGrenadeMontage();
+	void PlaySwapMontage();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);
@@ -198,6 +199,9 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	UAnimMontage* ThrowGrenadeMontage;
+	
+	UPROPERTY(EditAnywhere, Category = "Combat")
+	UAnimMontage* SwapMontage;
 
 	void HideCameraIfCharacterClose();
 
