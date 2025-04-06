@@ -242,6 +242,7 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 	Ammo = ServerAmmo;
 	--Sequence;
 	Ammo -= Sequence;
+	UE_LOG(LogTemp, Log, TEXT("%d"), Sequence);
 	SetHUDAmmo();
 }
 
@@ -258,7 +259,7 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
+	if (WeaponType == EWeaponType::EWT_Shotgun && BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
 	{
 		BlasterOwnerCharacter->GetCombat()->JumpToShotgunMoreReload(false);
 	}

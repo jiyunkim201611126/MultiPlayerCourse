@@ -658,6 +658,12 @@ void UCombatComponent::FinishSwap()
 			CombatState = ECombatState::ECS_Unoccupied;
 		}
 	}
+	
+	// 좌클릭 누르고 있는 상태면 사격
+	if (Character->IsLocallyControlled() && bFireButtonPressed)
+	{
+		Fire();
+	}
 }
 
 void UCombatComponent::UpdateAmmoValues()
@@ -727,16 +733,16 @@ int32 UCombatComponent::AmountToReload()
 {
 	if (EquippedWeapon == nullptr) return 0;
 
-	const int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
+	int32 RoomInMag = EquippedWeapon->GetMagCapacity() - EquippedWeapon->GetAmmo();
 	
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
-		const int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
-		const int32 Least = FMath::Min(RoomInMag, AmountCarried);
+		int32 AmountCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		int32 Least = FMath::Min(RoomInMag, AmountCarried);
 		return FMath::Clamp(RoomInMag, 0, Least);
 	}
 	
-	return int32();
+	return 0;
 }
 
 void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
@@ -894,7 +900,7 @@ void UCombatComponent::OnRep_CombatState()
 	case ECombatState::ECS_SwappingWeapons:
 		if (Character && !Character->IsLocallyControlled())
 		{
-			//Character->PlaySwapMontage();
+			Character->PlaySwapMontage();
 		}
 		break;
 	}
