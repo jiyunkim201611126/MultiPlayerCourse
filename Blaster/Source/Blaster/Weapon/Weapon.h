@@ -99,17 +99,25 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter", meta = (editcondition = "bUseScatter"))
 	float HipFireAccurateMaxSubtract = 3.f;
 
-	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 정도
-	// Projectile은 RandomRotator, HitScan은 구체의 반지름으로 적용
+	// 기본 탄퍼짐
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
 	float DefaultSpreadFactor = 0.f;
 	
+	// 크로스헤어 스프레드 상태에 따라 더해지는 탄퍼짐 정도
 	UPROPERTY(VisibleAnywhere, Category = "Combat | Weapon Scatter")
 	float AddSpreadFactor = 0.f;
 	
 	// 탄퍼짐의 기준이 되는 구체의 거리. 클수록 탄퍼짐이 좁아짐
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
-	float DistanceToSphere = 800.f;
+	float DistanceToSphere = 350.f;
+
+	// 조준 시 사격에 의한 탄퍼짐이 줄어드는 속도
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	float AimingSpreadRecoverySpeed = 20.f;
+
+	// 비조준 시 사격에 의한 탄퍼짐이 줄어드는 속도
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	float HipSpreadRecoverySpeed = 10.f;
 
 	/**
 	 * Automatic fire

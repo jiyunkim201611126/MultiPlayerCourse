@@ -335,8 +335,8 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			CrosshairAimFactor = FMath::FInterpTo(CrosshairAimFactor, TargetAimFactor, DeltaTime, 30.f);
 
 			// 사격에 대한 스프레드를 0으로 수렴, 수렴 속도는 조준 상태에 따라 다름.
-			const float ShootingInterpSpeed = bAiming ? 20.f : 10.f;
-			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+			const float ShootingFactorRecoverySpeed = bAiming ? EquippedWeapon->AimingSpreadRecoverySpeed : EquippedWeapon->HipSpreadRecoverySpeed;
+			CrosshairShootingFactor = FMath::FInterpTo(CrosshairShootingFactor, 0.f, DeltaTime, ShootingFactorRecoverySpeed);
 
 			// 최종 추가 탄퍼짐 계산
 			float CrosshairSpreadResult =
@@ -346,10 +346,10 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 				- CrosshairAimFactor;			// 조준 시 -
 			
 			EquippedWeapon->AddSpreadFactor = CrosshairSpreadResult;
-			EquippedWeapon->AddSpreadFactor = FMath::FInterpTo(EquippedWeapon->AddSpreadFactor, 0.f, DeltaTime, ShootingInterpSpeed);
+			EquippedWeapon->AddSpreadFactor = FMath::FInterpTo(EquippedWeapon->AddSpreadFactor, 0.f, DeltaTime, ShootingFactorRecoverySpeed);
 
 			// 최종 크로스헤어 스프레드 수치 계산 (기본 탄퍼짐 + 추가 탄퍼짐)
-			CrosshairSpreadResult += EquippedWeapon->DefaultSpreadFactor / 50.f;
+			CrosshairSpreadResult += EquippedWeapon->DefaultSpreadFactor / 100.f;
 
 			// 음수가 되어 크로스헤어들이 서로를 가로지르는 현상을 방지
 			HUDPackage.CrosshairSpread = FMath::Clamp(CrosshairSpreadResult, 0.f, 100.f);
@@ -437,29 +437,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	Character->bUseControllerRotationYaw = true;
 }
 
-void UCombatComponent::SwapWeapons()
-{
-	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr) return;
-	
-	Character->PlaySwapMontage();
-	CombatState = ECombatState::ECS_SwappingWeapons;
-	
-	AWeapon* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
-
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	PlayEquipWeaponSound(EquippedWeapon);
-	EquippedWeapon->SetHUDAmmo();
-	UpdateCarriedAmmo();
-	MulticastBindFireTimer(EquippedWeapon, true);
-	
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
-	MulticastBindFireTimer(SecondaryWeapon, false);
-}
-
 void UCombatComponent::ClientShouldChangeLocallyReloading_Implementation()
 {
 	bLocallyReloading = false;
@@ -472,11 +449,10 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	DropEquippedWeapon();
 	
 	EquippedWeapon = WeaponToEquip;
+	EquippedWeapon->SetOwner(Character);
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	AttachActorToRightHand(EquippedWeapon);
-	
 	PlayEquipWeaponSound(EquippedWeapon);
-	EquippedWeapon->SetOwner(Character);
 	
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
@@ -639,9 +615,48 @@ void UCombatComponent::FinishReloading()
 	}
 	
 	// 좌클릭 누르고 있는 상태면 사격
-	if (bFireButtonPressed)
+	if (Character->IsLocallyControlled() && bFireButtonPressed)
 	{
 		Fire();
+	}
+}
+
+void UCombatComponent::SwapWeapons()
+{
+	if (CombatState != ECombatState::ECS_Unoccupied || Character == nullptr) return;
+	
+	Character->PlaySwapMontage();
+	Character->bFinishedSwapping = false;
+	CombatState = ECombatState::ECS_SwappingWeapons;
+}
+
+void UCombatComponent::FinishSwapAttachWeapons()
+{
+	AWeapon* TempWeapon = EquippedWeapon;
+	EquippedWeapon = SecondaryWeapon;
+	SecondaryWeapon = TempWeapon;
+	
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachActorToRightHand(EquippedWeapon);
+	PlayEquipWeaponSound(EquippedWeapon);
+	EquippedWeapon->SetHUDAmmo();
+	UpdateCarriedAmmo();
+	MulticastBindFireTimer(EquippedWeapon, true);
+	
+	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
+	AttachActorToBackpack(SecondaryWeapon);
+	MulticastBindFireTimer(SecondaryWeapon, false);
+}
+
+void UCombatComponent::FinishSwap()
+{
+	if (Character)
+	{
+		Character->bFinishedSwapping = true;
+		if (Character->HasAuthority())
+		{
+			CombatState = ECombatState::ECS_Unoccupied;
+		}
 	}
 }
 
@@ -687,8 +702,8 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 	}
 	EquippedWeapon->AddAmmo(1);
 
-	bool bNeedMoreReload = !EquippedWeapon->IsFull() && CarriedAmmo > 0;
-	JumpToShotgunMoreReload(bNeedMoreReload);
+	bool bNeedMoreReload = EquippedWeapon->IsFull() || CarriedAmmo == 0;
+	JumpToShotgunMoreReload(!bNeedMoreReload);
 }
 
 void UCombatComponent::JumpToShotgunMoreReload(bool bNeedMoreReload)
@@ -841,11 +856,14 @@ void UCombatComponent::OnRep_CarriedAmmo()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-	bool bJumpToShotgunEnd = CombatState == ECombatState::ECS_Reloading
-		&& EquippedWeapon != nullptr
-		&& EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun
-		&& (CarriedAmmo == 0 || EquippedWeapon->IsEmpty());
-	JumpToShotgunMoreReload(!bJumpToShotgunEnd);
+
+	if (EquippedWeapon && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun)
+	{
+		bool bJumpToShotgunEnd = 
+			CombatState == ECombatState::ECS_Reloading &&
+			CarriedAmmo == 0;
+		JumpToShotgunMoreReload(!bJumpToShotgunEnd);
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()
@@ -876,7 +894,7 @@ void UCombatComponent::OnRep_CombatState()
 	case ECombatState::ECS_SwappingWeapons:
 		if (Character && !Character->IsLocallyControlled())
 		{
-			Character->PlaySwapMontage();
+			//Character->PlaySwapMontage();
 		}
 		break;
 	}
@@ -917,10 +935,7 @@ bool UCombatComponent::CanFire()
 		return true;
 	}
 
-	if (bLocallyReloading)
-	{
-		return false;
-	}
+	if (bLocallyReloading) return false;
 
 	return !EquippedWeapon->IsEmpty() && EquippedWeapon->bCanFire && CombatState == ECombatState::ECS_Unoccupied;
 }

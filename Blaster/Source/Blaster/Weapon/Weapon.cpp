@@ -168,9 +168,9 @@ void AWeapon::OnEquippedSecondary()
 	if (BlasterOwnerCharacter)
 	{
 		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->GetController()) : BlasterOwnerController;
-		if (BlasterOwnerController && HasAuthority())
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())
 		{
-			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &ThisClass::OnPingTooHigh);
+			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &ThisClass::OnPingTooHigh);
 		}
 	}
 }
@@ -196,7 +196,7 @@ void AWeapon::OnDropped()
 	if (BlasterOwnerCharacter)
 	{
 		BlasterOwnerController = BlasterOwnerController == nullptr ? Cast<ABlasterPlayerController>(BlasterOwnerCharacter->GetController()) : BlasterOwnerController;
-		if (BlasterOwnerController && HasAuthority())
+		if (BlasterOwnerController && HasAuthority() && BlasterOwnerController->HighPingDelegate.IsBound())
 		{
 			BlasterOwnerController->HighPingDelegate.RemoveDynamic(this, &ThisClass::OnPingTooHigh);
 		}
@@ -258,7 +258,7 @@ void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 	
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-	if (WeaponType == EWeaponType::EWT_Shotgun && BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
+	if (BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
 	{
 		BlasterOwnerCharacter->GetCombat()->JumpToShotgunMoreReload(false);
 	}

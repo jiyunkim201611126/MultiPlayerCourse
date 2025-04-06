@@ -26,6 +26,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void FinishReloading();
 
+	UFUNCTION(BlueprintCallable)
+	void FinishSwapAttachWeapons();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishSwap();
+
 	void FireButtonPressed(bool bPressed);
 
 	// 샷건 재장전 애니메이션 재생 중 Shell 노티파이를 만나면 호출되는 함수

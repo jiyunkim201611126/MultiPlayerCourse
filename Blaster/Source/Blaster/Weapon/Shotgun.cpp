@@ -6,6 +6,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Blaster/BlasterComponents/LagCompensationComponent.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "Sound/SoundCue.h"
 
 void AShotgun::FireShotgun(const TArray<FVector_NetQuantize>& HitTargets)
 {

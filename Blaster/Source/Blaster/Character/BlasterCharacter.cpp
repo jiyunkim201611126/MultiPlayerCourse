@@ -266,7 +266,6 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 	{
 		AWeapon* StartingWeapon = World->SpawnActor<AWeapon>(DefaultWeapon);
 		StartingWeapon->bDestroyWeapon = true;
-		StartingWeapon->SetOwner(this);
 		if (Combat)
 		{
 			Combat->EquipWeapon(StartingWeapon);
@@ -867,16 +866,17 @@ void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 
 void ABlasterCharacter::SwapButtonPressed()
 {
-	// Sequence가 존재하는 상태에서 Swap하면 Sequence가 줄어들지 않는 버그가 발생
-	// 지금으로선 해결 방법을 알 수 없어서 강제로 Swap을 막은 상태
-	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->Sequence == 0)
+	if (Combat && Combat->EquippedWeapon && Combat->CombatState == ECombatState::ECS_Unoccupied)
 	{
-		// 클라이언트가 Swap버튼을 누른 경우 서버에게 착용을 요청
 		ServerSwapButtonPressed();
-		if (Combat->ShouldSwapWeapons() && !HasAuthority() && Combat->CombatState == ECombatState::ECS_Unoccupied)
+		bool bSwap = Combat->ShouldSwapWeapons()
+			&& !HasAuthority()
+			&& !IsLocallyReloading();
+		if (bSwap)
 		{
 			PlaySwapMontage();
 			Combat->CombatState = ECombatState::ECS_SwappingWeapons;
+			bFinishedSwapping = false;
 		}
 	}
 }

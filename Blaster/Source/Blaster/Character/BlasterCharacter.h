@@ -68,6 +68,9 @@ public:
 
 	void SpawnDefaultWeapon();
 
+	// 클라이언트측에서 Swap 애니메이션을 제어하기 위한 변수
+	bool bFinishedSwapping = true;
+
 	/**
 	 * Server-side rewind를 위한 히트 박스
 	 */

@@ -102,7 +102,10 @@ void ABlasterPlayerController::CheckPing(float DeltaTime)
 // 핑이 너무 높은 경우 호출되는 함수
 void ABlasterPlayerController::ServerReportPingStatus_Implementation(bool bHighPing)
 {
-	HighPingDelegate.Broadcast(bHighPing);
+	if (HighPingDelegate.IsBound())
+	{
+		HighPingDelegate.Broadcast(bHighPing);
+	}
 }
 
 void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
@@ -724,6 +727,8 @@ void ABlasterPlayerController::EquipButtonPressed()
 
 void ABlasterPlayerController::SwapButtonPressed()
 {
+	if (bDisableGameplay) return;
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
