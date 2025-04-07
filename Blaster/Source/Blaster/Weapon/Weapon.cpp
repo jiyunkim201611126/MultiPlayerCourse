@@ -231,7 +231,11 @@ void AWeapon::SpendRound()
 	}
 	else
 	{
-		++Sequence;
+		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+		if (BlasterOwnerCharacter->IsLocallyControlled())
+		{
+			++Sequence;
+		}
 	}
 }
 
@@ -242,7 +246,6 @@ void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
 	Ammo = ServerAmmo;
 	--Sequence;
 	Ammo -= Sequence;
-	UE_LOG(LogTemp, Log, TEXT("%d"), Sequence);
 	SetHUDAmmo();
 }
 
@@ -250,10 +253,10 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	SetHUDAmmo();
-	ClientAddAmmo(AmmoToAdd);
+	MulticastAddAmmo(AmmoToAdd);
 }
 
-void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+void AWeapon::MulticastAddAmmo_Implementation(int32 AmmoToAdd)
 {
 	if (HasAuthority()) return;
 	
