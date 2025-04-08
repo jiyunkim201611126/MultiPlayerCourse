@@ -223,12 +223,15 @@ private:
 	int32 Ammo;
 
 	UFUNCTION(Client, Reliable)
-	void ClientUpdateAmmo(int32 ServerAmmo);
+	void ClientUpdateAmmoWhenShot(int32 ServerAmmo);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastAddAmmo(int32 AmmoToAdd);
+	UFUNCTION(Client, Reliable)
+	void ClientAddAmmo(int32 AmmoToAdd);
 
 	void SpendRound();
+
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateAmmoWhenEquip(int32 ServerAmmo);
 
 	// 최대 탄창
 	UPROPERTY(EditAnywhere)

@@ -147,6 +147,19 @@ void AWeapon::OnEquipped()
 			BlasterOwnerController->HighPingDelegate.AddDynamic(this, &ThisClass::OnPingTooHigh);
 		}
 	}
+	
+	if (HasAuthority())
+	{
+		ClientUpdateAmmoWhenEquip(Ammo);
+	}
+}
+
+void AWeapon::ClientUpdateAmmoWhenEquip_Implementation(int32 ServerAmmo)
+{
+	if (HasAuthority()) return;
+
+	Ammo = ServerAmmo;
+	SetHUDAmmo();
 }
 
 void AWeapon::OnEquippedSecondary()
@@ -227,19 +240,15 @@ void AWeapon::SpendRound()
 	SetHUDAmmo();
 	if (HasAuthority())
 	{
-		ClientUpdateAmmo(Ammo);
+		ClientUpdateAmmoWhenShot(Ammo);
 	}
 	else
 	{
-		BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
-		if (BlasterOwnerCharacter->IsLocallyControlled())
-		{
-			++Sequence;
-		}
+		++Sequence;
 	}
 }
 
-void AWeapon::ClientUpdateAmmo_Implementation(int32 ServerAmmo)
+void AWeapon::ClientUpdateAmmoWhenShot_Implementation(int32 ServerAmmo)
 {
 	if (HasAuthority()) return;
 	
@@ -253,10 +262,10 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	SetHUDAmmo();
-	MulticastAddAmmo(AmmoToAdd);
+	ClientAddAmmo(AmmoToAdd);
 }
 
-void AWeapon::MulticastAddAmmo_Implementation(int32 AmmoToAdd)
+void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 {
 	if (HasAuthority()) return;
 	
@@ -340,8 +349,14 @@ void AWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 	}
-	
-	SpendRound();
+
+	// 클라이언트 예측을 포함해 Ammo를 1 빼는 함수를 호출한다
+	// 서버와 총기 소유자 외엔 이 정보를 알 필요가 없으니 걸러준다
+	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
+	if (HasAuthority() || BlasterOwnerCharacter->IsLocallyControlled())
+	{
+		SpendRound();
+	}
 }
 
 void AWeapon::StartFireTimer()
