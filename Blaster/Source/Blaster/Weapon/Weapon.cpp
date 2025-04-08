@@ -262,14 +262,24 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 {
 	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
 	SetHUDAmmo();
-	ClientAddAmmo(AmmoToAdd);
+	
+	if (HasAuthority())
+	{
+		ClientAddAmmo(AmmoToAdd);
+		return;
+	}
+	
+	Sequence -= AmmoToAdd;
 }
 
 void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
 {
 	if (HasAuthority()) return;
 	
-	Ammo = FMath::Clamp(Ammo + AmmoToAdd, 0, MagCapacity);
+	Ammo = MagCapacity;
+	Sequence += AmmoToAdd;
+	Ammo -= Sequence;
+	
 	BlasterOwnerCharacter = BlasterOwnerCharacter == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : BlasterOwnerCharacter;
 	if (WeaponType == EWeaponType::EWT_Shotgun && BlasterOwnerCharacter && BlasterOwnerCharacter->GetCombat() && IsFull())
 	{

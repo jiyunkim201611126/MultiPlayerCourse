@@ -49,10 +49,7 @@ void UCombatComponent::BeginPlay()
 			DefaultFOV = Character->GetFollowCamera()->FieldOfView;
 			CurrentFOV = DefaultFOV;
 		}
-		if (Character->HasAuthority())
-		{
-			InitializeCarriedAmmo();
-		}
+		InitializeCarriedAmmo();
 	}
 }
 
@@ -608,16 +605,16 @@ void UCombatComponent::FinishReloading()
 
 	bLocallyReloading = false;
 	
-	if (Character->HasAuthority())
-	{
-		CombatState = ECombatState::ECS_Unoccupied;
-		UpdateAmmoValues();
-	}
+	CombatState = ECombatState::ECS_Unoccupied;
+	UpdateAmmoValues();
 	
 	// 좌클릭 누르고 있는 상태면 사격
 	if (Character->IsLocallyControlled() && bFireButtonPressed)
 	{
-		Fire();
+		// 이유는 모르겠지만 즉시 Fire를 호출할 경우 서버에선 아직 CombatState가 Reloading이라서 사격에 실패함
+		// 이는 각 클라이언트간 비동기를 발생시키기 때문에, 좌클릭을 누르고 있더라도 0.1초 뒤에 사격하도록 함
+		FTimerHandle FireTimerHandle;
+		Character->GetWorldTimerManager().SetTimer(FireTimerHandle, this, &UCombatComponent::Fire, 0.1f, false);
 	}
 }
 
@@ -681,7 +678,11 @@ void UCombatComponent::UpdateAmmoValues()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-	EquippedWeapon->AddAmmo(ReloadAmount);
+	
+	if (Character->HasAuthority() || Character->IsLocallyControlled())
+	{
+		EquippedWeapon->AddAmmo(ReloadAmount);
+	}
 }
 
 void UCombatComponent::ShotgunShellReload()
