@@ -67,6 +67,9 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 		// 크로스헤어 상태 조작
 		SetHUDCrosshairs(DeltaTime);
 
+		// 반동 구현
+		Recoil(DeltaTime);
+
 		// 조준 상태에 따른 카메라 FOV 조작
 		InterpFOV(DeltaTime);
 	}
@@ -110,6 +113,10 @@ void UCombatComponent::Fire()
 			CrosshairShootingFactor += EquippedWeapon->GetHipFireAccurateSubtract();
 			CrosshairShootingFactor = FMath::Clamp(CrosshairShootingFactor, 0.f, EquippedWeapon->GetHipFireAccurateMaxSubtract());
 		}
+
+		VerticalRecoilFactor -= EquippedWeapon->VerticalRecoil;
+		float RandomHorizontalRecoil = FMath::RandRange(-EquippedWeapon->HorizontalRecoil, EquippedWeapon->HorizontalRecoil);
+		HorizontalRecoilFactor -= RandomHorizontalRecoil;
 
 		// 타이머가 바인드되지 않은 경우 다시 바인드
 		if (!EquippedWeapon->OnFireTimerFinished.IsBound())
@@ -354,6 +361,23 @@ void UCombatComponent::SetHUDCrosshairs(float DeltaTime)
 			HUD->SetHUDPackage(HUDPackage);
 		}
 	}
+}
+
+void UCombatComponent::Recoil(float DeltaTime)
+{
+	Character = Character == nullptr ? Cast<ABlasterCharacter>(GetOwner()) : Character;
+	if (Character)
+	{
+		Controller = Controller == nullptr ? Cast<ABlasterPlayerController>(Character->GetController()) : Controller;
+		if (Controller)
+		{
+			Controller->AddPitchInput(VerticalRecoilFactor);
+			Controller->AddYawInput(HorizontalRecoilFactor);
+		}
+	}
+	
+	VerticalRecoilFactor = FMath::FInterpTo(VerticalRecoilFactor, 0.f, DeltaTime, 10.f);
+	HorizontalRecoilFactor = FMath::FInterpTo(HorizontalRecoilFactor, 0.f, DeltaTime, 10.f);
 }
 
 void UCombatComponent::InterpFOV(float DeltaTime)

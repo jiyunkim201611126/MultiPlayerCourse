@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WeaponTypes.h"
+#include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Weapon.generated.h"
 
 DECLARE_DELEGATE(FOnFireTimerFinished);
@@ -118,6 +119,14 @@ public:
 	// 비조준 시 사격에 의한 탄퍼짐이 줄어드는 속도
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
 	float HipSpreadRecoverySpeed = 10.f;
+
+	// 수직 반동, 0.1만 해도 꽤 센 편
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	float VerticalRecoil = 0.1f;
+
+	// 수평 반동
+	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
+	float HorizontalRecoil = 0.01f;
 
 	/**
 	 * Automatic fire

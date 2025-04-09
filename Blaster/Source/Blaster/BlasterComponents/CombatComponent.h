@@ -96,6 +96,8 @@ protected:
 
 	void SetHUDCrosshairs(float DeltaTime);
 
+	void Recoil(float DeltaTime);
+
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 
@@ -162,6 +164,10 @@ private:
 	FVector HitTarget;
 	
 	FHUDPackage HUDPackage;
+
+	// 반동
+	float VerticalRecoilFactor = 0.f;
+	float HorizontalRecoilFactor = 0.f;
 
 	/**
 	 * Aiming and FOV
