@@ -50,10 +50,12 @@ public:
 	
 	void PlayFireMontage(bool bAiming);
 	void PlayReloadMontage();
-	void PlayHitReactMontage();
 	void PlayElimMontage();
 	void PlayThrowGrenadeMontage();
 	void PlaySwapMontage();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastPlayHitReactMontage(FVector_NetQuantize CausedLocation);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ShowSniperScopeWidget(bool bShowScope);

@@ -226,7 +226,7 @@ private:
 	void ClientUpdateAmmoWhenShot(int32 ServerAmmo);
 
 	UFUNCTION(Client, Reliable)
-	void ClientAddAmmo(int32 AmmoToAdd);
+	void ClientAddAmmo(int32 ReloadedAmmo, int32 AmmoToAdd);
 
 	void SpendRound();
 

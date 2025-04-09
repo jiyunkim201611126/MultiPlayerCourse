@@ -686,29 +686,54 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 		}
 	}
 	
-	// 서버가 보는 애니메이션 재생
-	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr))
+	FVector_NetQuantize CausedLocation = DamageCauser->GetActorLocation();
+	MulticastPlayHitReactMontage(CausedLocation);
+}
+
+void ABlasterCharacter::MulticastPlayHitReactMontage_Implementation(FVector_NetQuantize CausedLocation)
+{
+	if (!IsWeaponEquipped()) return;
+
+	FVector HitDirection = CausedLocation - GetActorLocation();
+	float HitRotationYaw = FRotator::ClampAxis(GetActorRotation().Yaw - HitDirection.Rotation().Yaw);
+
+	FName SectionName("Null");
+	if (315.f < HitRotationYaw || HitRotationYaw <= 45.f)
 	{
-		PlayHitReactMontage();
+		SectionName = FName("FromFront");
+	}
+	else if (45.f < HitRotationYaw && HitRotationYaw <= 135.f)
+	{
+		SectionName = FName("FromRight");
+	}
+	else if (135.f < HitRotationYaw && HitRotationYaw <= 225.f)
+	{
+		SectionName = FName("FromBack");
+	}
+	else if (225.f < HitRotationYaw && HitRotationYaw <= 315.f)
+	{
+		SectionName = FName("FromLeft");
+	}
+
+	if (SectionName != FName("Null"))
+	{
+		UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+		if (AnimInstance && HitReactMontage)
+		{
+			AnimInstance->Montage_Play(HitReactMontage);
+			AnimInstance->Montage_JumpToSection(SectionName);
+		}
 	}
 }
 
 void ABlasterCharacter::OnRep_Health(float LastHealth)
 {
 	UpdateHUDHealth();
-	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) && Health < LastHealth)
-	{
-		PlayHitReactMontage();
-	}
 }
 
 void ABlasterCharacter::OnRep_Shield(float LastShield)
 {
 	UpdateHUDShield();
-	if (!GetMesh()->GetAnimInstance()->Montage_IsPlaying(nullptr) && Shield < LastShield)
-	{
-		PlayHitReactMontage();
-	}
 }
 
 void ABlasterCharacter::UpdateHUDHealth()
@@ -757,19 +782,6 @@ void ABlasterCharacter::PollInit()
 			BlasterPlayerState->AddToScore(0.f);
 			BlasterPlayerState->AddToDefeats(0);
 		}
-	}
-}
-
-void ABlasterCharacter::PlayHitReactMontage()
-{
-	if (!IsWeaponEquipped()) return;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && HitReactMontage)
-	{
-		AnimInstance->Montage_Play(HitReactMontage);
-		const FName SectionName("FromFront");
-		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }
 

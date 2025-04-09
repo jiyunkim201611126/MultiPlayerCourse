@@ -196,6 +196,9 @@ private:
 	// 현재 캐릭터가 가지고 있는 총기 종류별 탄 수
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
+	UFUNCTION(Client, Reliable)
+	void ClientUpdateCarriedAmmoMap(EWeaponType WeaponType, int32 AmmoAmount);
+
 	UPROPERTY(EditAnywhere)
 	int32 MaxCarriedAmmo = 500;
 

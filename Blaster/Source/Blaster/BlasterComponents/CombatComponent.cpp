@@ -612,9 +612,9 @@ void UCombatComponent::FinishReloading()
 	if (Character->IsLocallyControlled() && bFireButtonPressed)
 	{
 		// 이유는 모르겠지만 즉시 Fire를 호출할 경우 서버에선 아직 CombatState가 Reloading이라서 사격에 실패함
-		// 이는 각 클라이언트간 비동기를 발생시키기 때문에, 좌클릭을 누르고 있더라도 0.1초 뒤에 사격하도록 함
+		// 이는 각 클라이언트간 비동기를 발생시키기 때문에, 좌클릭을 누르고 있더라도 잠시 뒤에 사격하도록 함
 		FTimerHandle FireTimerHandle;
-		Character->GetWorldTimerManager().SetTimer(FireTimerHandle, this, &UCombatComponent::Fire, 0.1f, false);
+		Character->GetWorldTimerManager().SetTimer(FireTimerHandle, this, &UCombatComponent::Fire, 0.05f, false);
 	}
 }
 
@@ -751,12 +751,19 @@ void UCombatComponent::PickupAmmo(EWeaponType WeaponType, int32 AmmoAmount)
 	if (CarriedAmmoMap.Contains(WeaponType))
 	{
 		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+		ClientUpdateCarriedAmmoMap(WeaponType, AmmoAmount);
 
 		UpdateCarriedAmmo();
 	}
-	if (EquippedWeapon && EquippedWeapon->IsEmpty() && EquippedWeapon->GetWeaponType() == WeaponType)
+}
+
+void UCombatComponent::ClientUpdateCarriedAmmoMap_Implementation(EWeaponType WeaponType, int32 AmmoAmount)
+{
+	if (CarriedAmmoMap.Contains(WeaponType))
 	{
-		Reload();
+		CarriedAmmoMap[WeaponType] = FMath::Clamp(CarriedAmmoMap[WeaponType] + AmmoAmount, 0, MaxCarriedAmmo);
+
+		UpdateCarriedAmmo();
 	}
 }
 

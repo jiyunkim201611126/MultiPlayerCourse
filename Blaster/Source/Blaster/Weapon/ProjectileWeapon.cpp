@@ -5,7 +5,7 @@
 
 void AProjectileWeapon::Fire(const FVector& HitTarget)
 {
-	// 탄환 소모
+	// 탄환 소모 및 탄피 스폰
 	Super::Fire(HitTarget);
 
 	APawn* InstigatorPawn = Cast<APawn>(GetOwner());
@@ -67,6 +67,11 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 				SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
 				SpawnedProjectile->bUseServerSideRewind = false;
 				SpawnedProjectile->Damage = Damage;
+			}
+			else
+			{
+				SpawnedProjectile = World->SpawnActor<AProjectile>(ProjectileClass, SocketTransform.GetLocation(), TargetRotation, SpawnParams);
+				SpawnedProjectile->bUseServerSideRewind = false;
 			}
 		}
 	}

@@ -265,18 +265,18 @@ void AWeapon::AddAmmo(int32 AmmoToAdd)
 	
 	if (HasAuthority())
 	{
-		ClientAddAmmo(AmmoToAdd);
+		ClientAddAmmo(Ammo, AmmoToAdd);
 		return;
 	}
 	
 	Sequence -= AmmoToAdd;
 }
 
-void AWeapon::ClientAddAmmo_Implementation(int32 AmmoToAdd)
+void AWeapon::ClientAddAmmo_Implementation(int32 ReloadedAmmo, int32 AmmoToAdd)
 {
 	if (HasAuthority()) return;
-	
-	Ammo = MagCapacity;
+
+	Ammo = ReloadedAmmo;
 	Sequence += AmmoToAdd;
 	Ammo -= Sequence;
 	
