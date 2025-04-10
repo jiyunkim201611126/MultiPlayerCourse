@@ -126,7 +126,7 @@ public:
 
 	// 수평 반동
 	UPROPERTY(EditAnywhere, Category = "Combat | Weapon Scatter")
-	float HorizontalRecoil = 0.01f;
+	float HorizontalRecoil = 0.03f;
 
 	/**
 	 * Automatic fire
