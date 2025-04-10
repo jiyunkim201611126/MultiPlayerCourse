@@ -168,6 +168,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float Damage = 0.f;
 
+	UPROPERTY(EditAnywhere)
+	float HeadShotDamageModifier = 1.f;
+
 	UPROPERTY(Replicated, EditAnywhere)
 	bool bUseServerSideRewind = false;
 

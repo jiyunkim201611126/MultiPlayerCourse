@@ -32,7 +32,7 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComp,
 					TraceStart,
 					InitialVelocity,
 					InstigatorController->GetServerTime() - InstigatorController->SingleTripTime,
-					Damage
+					this
 					);
 			}
 		}

@@ -733,7 +733,7 @@ void UCombatComponent::UpdateAmmoValues()
 
 void UCombatComponent::ShotgunShellReload()
 {
-	if (Character && Character->HasAuthority())
+	if (Character)
 	{
 		UpdateShotgunAmmoValues();
 	}
@@ -753,7 +753,11 @@ void UCombatComponent::UpdateShotgunAmmoValues()
 	{
 		Controller->SetHUDCarriedAmmo(CarriedAmmo);
 	}
-	EquippedWeapon->AddAmmo(1);
+	
+	if (Character->HasAuthority() || Character->IsLocallyControlled())
+	{
+		EquippedWeapon->AddAmmo(1);
+	}
 
 	bool bNeedMoreReload = EquippedWeapon->IsFull() || CarriedAmmo == 0;
 	JumpToShotgunMoreReload(!bNeedMoreReload);
