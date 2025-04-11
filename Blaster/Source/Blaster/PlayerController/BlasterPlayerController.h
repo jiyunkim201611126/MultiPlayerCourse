@@ -181,7 +181,6 @@ private:
 	auto Move(const FInputActionValue& InputActionValue) -> void;
 	void Look(const FInputActionValue& InputActionValue);
 	void Jump();
-	void StopJumping();
 	void EquipButtonPressed();
 	void SwapButtonPressed();
 	void CrouchButtonPressed();
@@ -191,6 +190,23 @@ private:
 	void FireButtonReleased();
 	void ReloadButtonPressed();
 	void ThrowGrenadeButtonPressed();
+
+	/**
+	 * 시스템
+	 */
+	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> QuitAction;
+	
+	void QuitButtonPressed();
+
+	UPROPERTY(EditAnywhere, Category = "HUD")
+	TSubclassOf<UUserWidget> ReturnToMainMenuWidget;
+
+	UPROPERTY()
+	TObjectPtr<class UReturnToMainMenu> ReturnToMainMenu;
+
+	bool bReturnToMainMenuOpen = false;
 	
 public:
 	UPROPERTY(Replicated)

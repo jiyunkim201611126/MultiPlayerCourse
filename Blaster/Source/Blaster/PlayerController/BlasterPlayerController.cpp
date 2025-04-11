@@ -11,6 +11,7 @@
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/GameState/BlasterGameState.h"
+#include "Blaster/HUD/ReturnToMainMenu.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
@@ -653,7 +654,6 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ThisClass::StopJumping);
 	
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ThisClass::EquipButtonPressed);
 	EnhancedInputComponent->BindAction(SwapAction, ETriggerEvent::Started, this, &ThisClass::SwapButtonPressed);
@@ -664,6 +664,7 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::FireButtonReleased);
 	EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ThisClass::ReloadButtonPressed);
 	EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &ThisClass::ThrowGrenadeButtonPressed);
+	EnhancedInputComponent->BindAction(QuitAction, ETriggerEvent::Started, this, &ThisClass::QuitButtonPressed);
 }
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -701,14 +702,6 @@ void ABlasterPlayerController::Jump()
 	{
 		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
 		BlasterCharacter->Jump();
-	}
-}
-
-void ABlasterPlayerController::StopJumping()
-{
-	if (ACharacter* ControlledPawn = GetCharacter())
-	{
-		ControlledPawn->StopJumping();
 	}
 }
 
@@ -819,6 +812,29 @@ void ABlasterPlayerController::ThrowGrenadeButtonPressed()
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
 		{
 			BlasterCharacter->GrenadeButtonPressed();
+		}
+	}
+}
+
+void ABlasterPlayerController::QuitButtonPressed()
+{
+	if (ReturnToMainMenuWidget == nullptr) return;
+
+	if (ReturnToMainMenu == nullptr)
+	{
+		ReturnToMainMenu = CreateWidget<UReturnToMainMenu>(this, ReturnToMainMenuWidget);
+	}
+
+	if (ReturnToMainMenu)
+	{
+		bReturnToMainMenuOpen = !bReturnToMainMenuOpen;
+		if (bReturnToMainMenuOpen)
+		{
+			ReturnToMainMenu->MenuSetup();
+		}
+		else
+		{
+			ReturnToMainMenu->MenuTearDown();
 		}
 	}
 }

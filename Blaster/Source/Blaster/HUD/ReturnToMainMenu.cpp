@@ -22,22 +22,30 @@ void UReturnToMainMenu::MenuSetup()
 			PlayerController->SetShowMouseCursor(true);
 		}
 	}
+	
+	if (ReturnButton && !ReturnButton->OnClicked.IsBound())
+	{
+		ReturnButton->OnClicked.AddDynamic(this, &ThisClass::ReturnButtonClicked);
+	}
 
 	if (UGameInstance* GameInstance = GetGameInstance())
 	{
 		MultiplayerSessionsSubsystem = GameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
-		if (MultiplayerSessionsSubsystem)
+		if (MultiplayerSessionsSubsystem && !MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.IsBound())
 		{
 			MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 		}
 	}
 }
 
-bool UReturnToMainMenu::Initialize()
+void UReturnToMainMenu::ReturnButtonClicked()
 {
-	if (!Super::Initialize()) return false;
+	ReturnButton->SetIsEnabled(false);
 	
-	return true;
+	if (MultiplayerSessionsSubsystem)
+	{
+		MultiplayerSessionsSubsystem->DestroySession();
+	}
 }
 
 void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
@@ -65,16 +73,6 @@ void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
 	}
 }
 
-void UReturnToMainMenu::ReturnButtonClicked()
-{
-	ReturnButton->SetIsEnabled(false);
-	
-	if (MultiplayerSessionsSubsystem)
-	{
-		MultiplayerSessionsSubsystem->DestroySession();
-	}
-}
-
 void UReturnToMainMenu::MenuTearDown()
 {
 	RemoveFromParent();
@@ -84,9 +82,25 @@ void UReturnToMainMenu::MenuTearDown()
 		PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
 		if (PlayerController)
 		{
-			FInputModeGameAndUI InputModeData;
+			FInputModeGameOnly InputModeData;
 			PlayerController->SetInputMode(InputModeData);
 			PlayerController->SetShowMouseCursor(false);
 		}
 	}
+	
+	if (ReturnButton && ReturnButton->OnClicked.IsBound())
+	{
+		ReturnButton->OnClicked.RemoveDynamic(this, &ThisClass::ReturnButtonClicked);
+	}
+	
+	if (MultiplayerSessionsSubsystem && MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.IsBound())
+	{
+		MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.RemoveDynamic(this, &ThisClass::OnDestroySession);
+	}
+}
+
+FReply UReturnToMainMenu::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+	return FReply::Handled();
 }

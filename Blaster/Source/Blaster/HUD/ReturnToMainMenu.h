@@ -14,10 +14,11 @@ public:
 	void MenuTearDown();
 
 protected:
-	virtual bool Initialize() override;
-
 	UFUNCTION()
 	void OnDestroySession(bool bWasSuccessful);
+
+	// Game이 입력을 가져가는 걸 막는 용도로 선언
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 	
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -30,5 +31,5 @@ private:
 	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 
 	UPROPERTY()
-	class APlayerController* PlayerController;
+	APlayerController* PlayerController;
 };
