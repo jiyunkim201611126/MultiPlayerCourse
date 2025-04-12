@@ -227,7 +227,8 @@ void ABlasterCharacter::UpdatePlayerName() const
 	{
 		OverheadWidget->InitWidget();
 
-		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
+		UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject());
+		if (Widget)
 		{
 			Widget->SetPlayerName(GetPlayerState()->GetPlayerName());
 			OverheadWidget->SetVisibility(false);
@@ -273,19 +274,12 @@ void ABlasterCharacter::SpawnDefaultWeapon()
 	}
 }
 
-// GameMode에 의해 실행됨
-void ABlasterCharacter::Elim()
+void ABlasterCharacter::Elim(bool bPlayerLeftGame)
 {
 	DropOrDestroyWeapons();
 
 	// 클라이언트들에게 알림
-	MulticastElim();
-	GetWorldTimerManager().SetTimer(
-		ElimTimer,
-		this,
-		&ThisClass::ElimTimerFinished,
-		ElimDelay
-		);
+	MulticastElim(bPlayerLeftGame);
 }
 
 void ABlasterCharacter::DropOrDestroyWeapons()
@@ -318,8 +312,11 @@ void ABlasterCharacter::DropOrDestroyWeapon(AWeapon* Weapon)
 	}
 }
 
-void ABlasterCharacter::MulticastElim_Implementation()
+void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 {
+	// 클라이언트가 세션을 나간 경우 true가 됨
+	bLeftGame = bPlayerLeftGame;
+	
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDWeaponAmmo(0);
@@ -328,7 +325,8 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	bElimmed = true;
 	if (OverheadWidget)
 	{
-		if (UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject()))
+		UOverheadWidget* Widget = Cast<UOverheadWidget>(OverheadWidget->GetUserWidgetObject());
+		if (Widget)
 		{
 			Widget->SetPlayerName(FString(""));
 		}
@@ -387,14 +385,37 @@ void ABlasterCharacter::MulticastElim_Implementation()
 	{
 		ShowSniperScopeWidget(false);
 	}
+	
+	GetWorldTimerManager().SetTimer(
+		ElimTimer,
+		this,
+		&ThisClass::ElimTimerFinished,
+		ElimDelay
+		);
 }
 
 void ABlasterCharacter::ElimTimerFinished()
 {
 	// ElimDelay만큼의 시간 이후 리스폰
-	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	if (BlasterGameMode && !bLeftGame)
 	{
 		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+	// 클라이언트가 세션을 나간 경우 들어오는 분기
+	if (bLeftGame && IsLocallyControlled() && OnLeftGame.IsBound())
+	{
+		OnLeftGame.Broadcast();
+	}
+}
+
+void ABlasterCharacter::ServerLeaveGame_Implementation()
+{
+	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+	if (BlasterGameMode && BlasterPlayerState)
+	{
+		BlasterGameMode->PlayerLeftGame(BlasterPlayerState);
 	}
 }
 
@@ -659,6 +680,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	Health = FMath::Clamp(Health - DamageToHealth, 0.f, MaxHealth);
 
 	// DamageType에 의한 추가 효과
+	// const_cast를 사용한다는 것 자체가 구조에 문제가 있는 것으로 보임
+	// 따라서 현재는 전혀 사용하지 않고 있음
 	if (UDamageType* MutableDamageType = const_cast<UDamageType*>(DamageType))
 	{
 		if (UBaseDamageType* CastedDamageType = Cast<UBaseDamageType>(MutableDamageType))
@@ -677,7 +700,8 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	// HP가 0에 도달할 경우 GameMode에게 사망했다고 알림
 	if (Health == 0.f)
 	{
-		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
+		if (BlasterGameMode)
 		{
 			BlasterPlayerController = BlasterPlayerController == nullptr ? Cast<ABlasterPlayerController>(Controller) : BlasterPlayerController;
 			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatorController);

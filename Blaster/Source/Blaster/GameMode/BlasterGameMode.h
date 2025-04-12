@@ -19,6 +19,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void PlayerEliminated(class ABlasterCharacter* EliminatedCharacter, class ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
+	void PlayerLeftGame(class ABlasterPlayerState* PlayerLeaving);
 	
 	// 레벨이 시작된 시간 (게임 시작 시간이랑 다름)
 	float LevelStartingTime = 0.f;

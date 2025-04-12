@@ -9,7 +9,7 @@
 #include "Camera/CameraComponent.h"
 #include "BlasterCharacter.generated.h"
 
-class UInputMappingContext;
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
 
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
@@ -24,11 +24,11 @@ public:
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
 	void UpdatePlayerName() const;
-	void Elim();
+	void Elim(bool bPlayerLeftGame);
 	void DropOrDestroyWeapons();
 	void DropOrDestroyWeapon(class AWeapon* Weapon);
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim();
+	void MulticastElim(bool bPlayerLeftGame);
 	virtual void Destroyed() override;
 	
 	virtual void Tick(float DeltaTime) override;
@@ -73,67 +73,12 @@ public:
 	// 클라이언트측에서 Swap 애니메이션을 제어하기 위한 변수
 	bool bFinishedSwapping = true;
 
-	/**
-	 * Server-side rewind를 위한 히트 박스
-	 */
+	// 클라이언트가 세션을 나갈 때 호출되는 함수
+	UFUNCTION(Server, Reliable)
+	void ServerLeaveGame();
 
-	UPROPERTY(EditAnywhere)
-	class UBoxComponent* head;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* pelvis;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* spine_02;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* spine_03;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* upperarm_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* upperarm_r;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* lowerarm_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* lowerarm_r;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* hand_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* hand_r;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* backpack;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* blanket;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* thigh_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* thigh_r;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* calf_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* calf_r;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* foot_l;
-
-	UPROPERTY(EditAnywhere)
-	UBoxComponent* foot_r;
-
-	UPROPERTY()
-	TMap<FName, UBoxComponent*> HitCollisionBoxes;
-
+	FOnLeftGame OnLeftGame;
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -148,11 +93,14 @@ protected:
 	void PollInit();
 	
 private:
+	UPROPERTY()
+	class ABlasterPlayerController* BlasterPlayerController;
+	
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
 	class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
-	class UCameraComponent* FollowCamera;
+	UCameraComponent* FollowCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
@@ -247,10 +195,11 @@ private:
 
 	UFUNCTION()
 	void OnRep_Shield(float LastShield);
-	
-	UPROPERTY()
-	class ABlasterPlayerController* BlasterPlayerController;
 
+	/**
+	 * Elim
+	 */
+	
 	bool bElimmed = false;
 
 	FTimerHandle ElimTimer;
@@ -259,6 +208,8 @@ private:
 	float ElimDelay = 3.f;
 
 	void ElimTimerFinished();
+
+	bool bLeftGame = false;
 
 	/**
 	 * Dissolve effect
@@ -314,6 +265,69 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AWeapon> DefaultWeapon;
+
+public:
+
+	/**
+	 * Server-side rewind를 위한 히트 박스
+	 */
+
+	UPROPERTY(EditAnywhere)
+	class UBoxComponent* head;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* pelvis;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_02;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* spine_03;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* upperarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* lowerarm_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* hand_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* backpack;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* blanket;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* thigh_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* calf_r;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_l;
+
+	UPROPERTY(EditAnywhere)
+	UBoxComponent* foot_r;
+
+	UPROPERTY()
+	TMap<FName, UBoxComponent*> HitCollisionBoxes;
 	
 public:
 	// Getter, Setter

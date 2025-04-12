@@ -669,6 +669,8 @@ void ABlasterPlayerController::SetupInputComponent()
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
 {
+	if (bDisableGameplay) return;
+	
 	const FVector2d InputAxisVector = InputActionValue.Get<FVector2D>();
 	const FRotator Rotation = GetControlRotation();
 	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
@@ -685,6 +687,8 @@ void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
 
 void ABlasterPlayerController::Look(const FInputActionValue& InputActionValue)
 {
+	if (bDisableGameplay) return;
+	
 	FVector2D LookAxisVector = InputActionValue.Get<FVector2D>();
 
 	constexpr float DefaultFOV = 90.f;
@@ -698,6 +702,8 @@ void ABlasterPlayerController::Look(const FInputActionValue& InputActionValue)
 
 void ABlasterPlayerController::Jump()
 {	
+	if (bDisableGameplay) return;
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn);
@@ -733,6 +739,8 @@ void ABlasterPlayerController::SwapButtonPressed()
 
 void ABlasterPlayerController::CrouchButtonPressed()
 {
+	if (bDisableGameplay) return;
+	
 	if (ACharacter* ControlledPawn = GetCharacter())
 	{
 		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(ControlledPawn))
@@ -816,6 +824,10 @@ void ABlasterPlayerController::ThrowGrenadeButtonPressed()
 	}
 }
 
+/**
+ * 시스템
+ */
+
 void ABlasterPlayerController::QuitButtonPressed()
 {
 	if (ReturnToMainMenuWidget == nullptr) return;
@@ -831,10 +843,21 @@ void ABlasterPlayerController::QuitButtonPressed()
 		if (bReturnToMainMenuOpen)
 		{
 			ReturnToMainMenu->MenuSetup();
+
+			FInputModeGameAndUI InputModeData;
+			InputModeData.SetWidgetToFocus(ReturnToMainMenu->TakeWidget());
+			SetInputMode(InputModeData);
+			SetShowMouseCursor(true);
+			bDisableGameplay = true;
 		}
 		else
 		{
 			ReturnToMainMenu->MenuTearDown();
+			
+			FInputModeGameOnly InputModeData;
+			SetInputMode(InputModeData);
+			SetShowMouseCursor(false);
+			bDisableGameplay = false;
 		}
 	}
 }

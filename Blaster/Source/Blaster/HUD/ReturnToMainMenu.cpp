@@ -4,24 +4,13 @@
 #include "Components/Button.h"
 #include "MultiplayerSessions/Public/MenuSystem/MultiplayerSessionsSubsystem.h"
 #include "GameFramework/GameModeBase.h"
+#include "Blaster/Character/BlasterCharacter.h"
 
 void UReturnToMainMenu::MenuSetup()
 {
 	AddToViewport();
 	SetVisibility(ESlateVisibility::Visible);
 	SetIsFocusable(true);
-
-	if (UWorld* World = GetWorld())
-	{
-		PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
-		if (PlayerController)
-		{
-			FInputModeGameAndUI InputModeData;
-			InputModeData.SetWidgetToFocus(TakeWidget());
-			PlayerController->SetInputMode(InputModeData);
-			PlayerController->SetShowMouseCursor(true);
-		}
-	}
 	
 	if (ReturnButton && !ReturnButton->OnClicked.IsBound())
 	{
@@ -38,10 +27,53 @@ void UReturnToMainMenu::MenuSetup()
 	}
 }
 
+void UReturnToMainMenu::MenuTearDown()
+{
+	RemoveFromParent();
+	
+	if (ReturnButton && ReturnButton->OnClicked.IsBound())
+	{
+		ReturnButton->OnClicked.RemoveDynamic(this, &ThisClass::ReturnButtonClicked);
+	}
+	
+	if (MultiplayerSessionsSubsystem && MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.IsBound())
+	{
+		MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.RemoveDynamic(this, &ThisClass::OnDestroySession);
+	}
+}
+
+FReply UReturnToMainMenu::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+	return FReply::Handled();
+}
+
 void UReturnToMainMenu::ReturnButtonClicked()
 {
 	ReturnButton->SetIsEnabled(false);
-	
+
+	UWorld* World = GetWorld();
+	if (World)
+	{
+		APlayerController* FirstPlayerController = World->GetFirstPlayerController();
+		if (FirstPlayerController)
+		{
+			ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(FirstPlayerController->GetPawn());
+			if (BlasterCharacter)
+			{
+				BlasterCharacter->OnLeftGame.AddDynamic(this, &ThisClass::OnPlayerLeftGame);
+				BlasterCharacter->ServerLeaveGame();
+			}
+			else
+			{
+				ReturnButton->SetIsEnabled(true);
+			}
+		}
+	}
+}
+
+void UReturnToMainMenu::OnPlayerLeftGame()
+{
 	if (MultiplayerSessionsSubsystem)
 	{
 		MultiplayerSessionsSubsystem->DestroySession();
@@ -71,36 +103,4 @@ void UReturnToMainMenu::OnDestroySession(bool bWasSuccessful)
 			}
 		}
 	}
-}
-
-void UReturnToMainMenu::MenuTearDown()
-{
-	RemoveFromParent();
-	
-	if (UWorld* World = GetWorld())
-	{
-		PlayerController = PlayerController == nullptr ? World->GetFirstPlayerController() : PlayerController;
-		if (PlayerController)
-		{
-			FInputModeGameOnly InputModeData;
-			PlayerController->SetInputMode(InputModeData);
-			PlayerController->SetShowMouseCursor(false);
-		}
-	}
-	
-	if (ReturnButton && ReturnButton->OnClicked.IsBound())
-	{
-		ReturnButton->OnClicked.RemoveDynamic(this, &ThisClass::ReturnButtonClicked);
-	}
-	
-	if (MultiplayerSessionsSubsystem && MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.IsBound())
-	{
-		MultiplayerSessionsSubsystem->MultiPlayerOnDestroySessionComplete.RemoveDynamic(this, &ThisClass::OnDestroySession);
-	}
-}
-
-FReply UReturnToMainMenu::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-	Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
-	return FReply::Handled();
 }

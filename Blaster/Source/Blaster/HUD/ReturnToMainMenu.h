@@ -14,11 +14,14 @@ public:
 	void MenuTearDown();
 
 protected:
-	UFUNCTION()
-	void OnDestroySession(bool bWasSuccessful);
-
 	// Game이 입력을 가져가는 걸 막는 용도로 선언
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	
+	UFUNCTION()
+	void OnPlayerLeftGame();
+	
+	UFUNCTION()
+	void OnDestroySession(bool bWasSuccessful);
 	
 private:
 	UPROPERTY(meta = (BindWidget))
