@@ -32,6 +32,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Components/BoxComponent.h"
 #include "Blaster/BlasterComponents/LagCompensationComponent.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -234,6 +236,27 @@ void ABlasterCharacter::UpdatePlayerName() const
 			OverheadWidget->SetVisibility(false);
 		}
 	}
+}
+
+void ABlasterCharacter::MulticastGainedTheLead_Implementation()
+{
+	if (CrownSystem == nullptr) return;
+	if (CrownComponent == nullptr)
+	{
+		CrownComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			CrownSystem,
+			GetCapsuleComponent(),
+			FName(),
+			GetActorLocation() + FVector(0.f, 0.f, 110.f),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false
+			);
+	}
+}
+
+void ABlasterCharacter::MulticastLostTheLead_Implementation()
+{
 }
 
 void ABlasterCharacter::BeginPlay()
