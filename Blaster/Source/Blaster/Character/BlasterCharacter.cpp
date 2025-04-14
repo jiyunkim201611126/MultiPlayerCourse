@@ -19,6 +19,7 @@
 #include "Blaster/HUD/OverheadWidget.h"
 
 // Combat
+#include "NiagaraComponent.h"
 #include "Blaster/Weapon/Weapon.h"
 #include "Blaster/BlasterComponents/CombatComponent.h"
 #include "Kismet/KismetMathLibrary.h"
@@ -34,6 +35,7 @@
 #include "Blaster/BlasterComponents/LagCompensationComponent.h"
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Blaster/GameState/BlasterGameState.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -253,10 +255,18 @@ void ABlasterCharacter::MulticastGainedTheLead_Implementation()
 			false
 			);
 	}
+	if (CrownComponent)
+	{
+		CrownComponent->Activate();
+	}
 }
 
 void ABlasterCharacter::MulticastLostTheLead_Implementation()
 {
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
+	}
 }
 
 void ABlasterCharacter::BeginPlay()
@@ -273,8 +283,6 @@ void ABlasterCharacter::BeginPlay()
 	{
 		OnTakeAnyDamage.AddDynamic(this, &ABlasterCharacter::ReceiveDamage);
 	}
-	
-	PollInit();
 
 	if (AttachedGrenade)
 	{
@@ -408,6 +416,11 @@ void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 	{
 		ShowSniperScopeWidget(false);
 	}
+
+	if (CrownComponent)
+	{
+		CrownComponent->DestroyComponent();
+	}
 	
 	GetWorldTimerManager().SetTimer(
 		ElimTimer,
@@ -537,6 +550,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	
 	RotateInPlace(DeltaTime);
 	HideCameraIfCharacterClose();
+	
+	PollInit();
 }
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
@@ -789,7 +804,6 @@ void ABlasterCharacter::UpdateHUDHealth()
 	if (BlasterPlayerController)
 	{
 		BlasterPlayerController->SetHUDHealth(Health, MaxHealth);
-		UE_LOG(LogTemp, Display, TEXT("HUD health: %f"), Health);
 	}
 }
 
@@ -828,6 +842,13 @@ void ABlasterCharacter::PollInit()
 		{
 			BlasterPlayerState->AddToScore(0.f);
 			BlasterPlayerState->AddToDefeats(0);
+
+			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+
+			if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
+			{
+				MulticastGainedTheLead();
+			}
 		}
 	}
 }

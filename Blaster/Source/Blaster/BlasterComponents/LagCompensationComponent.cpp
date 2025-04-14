@@ -522,8 +522,6 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
 	PathParams.ProjectileRadius = 5.f;
 	PathParams.TraceChannel = ECC_HitBox;
 	PathParams.ActorsToIgnore.Add(GetOwner());
-	PathParams.DrawDebugTime = 5.f;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
 
 	// 투사체 경로 예측 함수 호출
 	FPredictProjectilePathResult PathResult;
@@ -599,8 +597,6 @@ FRocketServerSideRewindResult ULagCompensationComponent::RocketConfirmHit(
 	PathParams.ProjectileRadius = 5.f;
 	PathParams.TraceChannel = ECC_HitBox;
 	PathParams.ActorsToIgnore.Add(GetOwner());
-	PathParams.DrawDebugTime = 5.f;
-	PathParams.DrawDebugType = EDrawDebugTrace::ForDuration;
 
 	// 투사체 경로 예측 함수 호출
 	FPredictProjectilePathResult PathResult;

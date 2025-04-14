@@ -258,7 +258,7 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerState* BlasterPlayerState;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* CrownSystem;
 
 	UPROPERTY()
