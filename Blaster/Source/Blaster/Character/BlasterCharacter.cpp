@@ -383,9 +383,20 @@ void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 		DisableInput(BlasterPlayerController);
 		BlasterPlayerController->bDisableGameplay = true;
 	}
-	// 콜리전 끄기
+	
+	// 0.2초 뒤에 콜리전 끄기
+	// 바로 끄면 다른 클라이언트측 Projectile들이 Hit 이벤트를 검출하지 못 하는 경우가 있음
+	FTimerHandle CollisionTimerHandle;
+	GetWorldTimerManager().SetTimer(
+	CollisionTimerHandle,
+	[this]()
+	{ 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	},
+	0.2f,
+	false
+	);
 
 	// Elim bot 스폰
 	if (ElimBotEffect)
