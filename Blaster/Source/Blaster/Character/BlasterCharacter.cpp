@@ -389,12 +389,11 @@ void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 	FTimerHandle CollisionTimerHandle;
 	GetWorldTimerManager().SetTimer(
 	CollisionTimerHandle,
-	[this]()
-	{ 
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	[this](){ 
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	},
-	0.2f,
+	0.02f,
 	false
 	);
 

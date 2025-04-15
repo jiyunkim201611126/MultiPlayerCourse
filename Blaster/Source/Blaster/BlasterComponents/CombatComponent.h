@@ -136,10 +136,10 @@ private:
 
 	// 상태가 변경되면 클라이언트에서만 OnRep_EquippedWeapon이 자동으로 실행됨
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
-	AWeapon* EquippedWeapon;
+	TObjectPtr<AWeapon> EquippedWeapon;
 
 	UPROPERTY(ReplicatedUsing = OnRep_SecondaryWeapon)
-	AWeapon* SecondaryWeapon;
+	TObjectPtr<AWeapon> SecondaryWeapon;
 
 	UPROPERTY(Replicated)
 	bool bAiming;

@@ -475,9 +475,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		EquipPrimaryWeapon(WeaponToEquip);
 	}
-	
-	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
-	Character->bUseControllerRotationYaw = true;
 }
 
 void UCombatComponent::ClientShouldChangeLocallyReloading_Implementation()
@@ -487,7 +484,7 @@ void UCombatComponent::ClientShouldChangeLocallyReloading_Implementation()
 
 void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 {
-	if (WeaponToEquip == nullptr) return;
+	if (WeaponToEquip == nullptr || Character == nullptr) return;
 	
 	DropEquippedWeapon();
 	
@@ -496,6 +493,9 @@ void UCombatComponent::EquipPrimaryWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	AttachActorToRightHand(EquippedWeapon);
 	PlayEquipWeaponSound(EquippedWeapon);
+	
+	Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+	Character->bUseControllerRotationYaw = true;
 	
 	EquippedWeapon->SetHUDAmmo();
 	UpdateCarriedAmmo();
@@ -511,7 +511,6 @@ void UCombatComponent::EquipSecondaryWeapon(AWeapon* WeaponToEquip)
 	SecondaryWeapon = WeaponToEquip;
 	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
 	AttachActorToBackpack(WeaponToEquip);
-	
 	PlayEquipWeaponSound(SecondaryWeapon);
 	SecondaryWeapon->SetOwner(Character);
 
@@ -675,20 +674,16 @@ void UCombatComponent::SwapWeapons()
 
 void UCombatComponent::FinishSwapAttachWeapons()
 {
-	AWeapon* TempWeapon = EquippedWeapon;
-	EquippedWeapon = SecondaryWeapon;
-	SecondaryWeapon = TempWeapon;
+	if (Character == nullptr || EquippedWeapon == nullptr || SecondaryWeapon == nullptr) return;
 	
-	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	AttachActorToRightHand(EquippedWeapon);
-	PlayEquipWeaponSound(EquippedWeapon);
-	EquippedWeapon->SetHUDAmmo();
-	UpdateCarriedAmmo();
-	MulticastBindFireTimer(EquippedWeapon, true);
-	
-	SecondaryWeapon->SetWeaponState(EWeaponState::EWS_EquippedSecondary);
-	AttachActorToBackpack(SecondaryWeapon);
-	MulticastBindFireTimer(SecondaryWeapon, false);
+	if (Character->HasAuthority() || Character->IsLocallyControlled())
+	{
+		const TObjectPtr<AWeapon> WeaponToEquipPrimary = SecondaryWeapon;
+		const TObjectPtr<AWeapon> WeaponToEquipSecondary = EquippedWeapon;
+
+		EquipPrimaryWeapon(WeaponToEquipPrimary);
+		EquipSecondaryWeapon(WeaponToEquipSecondary);
+	}
 }
 
 void UCombatComponent::FinishSwap()

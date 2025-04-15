@@ -219,6 +219,12 @@ void AWeapon::OnDropped()
 void AWeapon::OnPingTooHigh(bool bPingTooHigh)
 {
 	bUseServerSideRewind = !bPingTooHigh;
+	ServerSetUseSSR(!bPingTooHigh);
+}
+
+void AWeapon::ServerSetUseSSR_Implementation(bool bUseSSR)
+{
+	bUseServerSideRewind = bUseSSR;
 }
 
 void AWeapon::SetHUDAmmo()

@@ -172,10 +172,13 @@ public:
 	float HeadShotDamageModifier = 1.f;
 
 	UPROPERTY(Replicated, EditAnywhere)
-	bool bUseServerSideRewind = false;
+	bool bUseServerSideRewind = true;
 
 	UFUNCTION()
 	void OnPingTooHigh(bool bPingTooHigh);
+
+	UFUNCTION(Server, Reliable)
+	void ServerSetUseSSR(bool bUseSSR);
 	
 protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
