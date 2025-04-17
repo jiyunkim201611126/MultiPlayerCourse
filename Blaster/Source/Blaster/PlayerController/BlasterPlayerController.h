@@ -41,6 +41,9 @@ public:
 
 	FHighPingDelegate HighPingDelegate;
 
+	// 사망 알림
+	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
 protected:
 	virtual void BeginPlay() override;
 	
@@ -81,6 +84,9 @@ protected:
 	void HighPingWarning();
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
+
+	UFUNCTION(Client, Reliable)
+	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 	
 private:
 	UPROPERTY()

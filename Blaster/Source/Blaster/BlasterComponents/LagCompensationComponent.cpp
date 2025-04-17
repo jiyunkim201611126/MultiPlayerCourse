@@ -4,9 +4,9 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/Weapon/Weapon.h"
-#include "DrawDebugHelpers.h"
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/Projectiles/ProjectileBullet.h"
+#include "DrawDebugHelpers.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
