@@ -44,6 +44,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* GrenadesText;
 
+	UPROPERTY(meta = (BindWidget))
+	class UElimAnnouncement* ElimAnnouncement;
+
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
 	void UpdateShieldBar(const float BarPercent) const;
@@ -54,6 +57,7 @@ public:
 	void UpdateCarriedAmmoAmount(const FString& InString) const;
 	void UpdateMatchCountdownText(const FString& InString) const;
 	void UpdateGrenadesAmount(const FString& InString) const;
+	void GenerateElimAnnouncement(const FString& ElimAnnouncementText);
 	
 	void StartHighPingAnimation();
 	void StopHighPingAnimation();

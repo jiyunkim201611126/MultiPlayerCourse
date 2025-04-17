@@ -10,11 +10,11 @@ class BLASTER_API UElimAnnouncement : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetElimAnnouncementText(const FString& AttackerName, const FString& VictimName);
+	void GenerateElimAnnouncementText(const FString& ElimAnnouncementText);
 	
 	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<class UHorizontalBox> AnnouncementBox;
+	TObjectPtr<class UVerticalBox> AnnouncementBox;
 
-	UPROPERTY(meta=(BindWidget))
-	TObjectPtr<class UTextBlock> AnnouncementText;
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UElimAnnouncementText> AnnouncementTextClass;
 };

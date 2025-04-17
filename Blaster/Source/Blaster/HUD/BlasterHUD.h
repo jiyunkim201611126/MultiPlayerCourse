@@ -43,7 +43,7 @@ public:
 
 	void AddAnnouncement();
 
-	void AddElimAnnouncement(FString Attacker, FString Victim);
+	void AddElimAnnouncement(const FString& Attacker, const FString& Victim);
 
 protected:
 	virtual void BeginPlay() override;
@@ -58,9 +58,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float CrosshairSpreadMax = 16.f;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class UElimAnnouncement> ElimAnnouncementClass;
+	
+	TObjectPtr<class UElimAnnouncement> ElimAnnouncement;
 	
 public:
 	FORCEINLINE void SetHUDPackage(const FHUDPackage& Package) { HUDPackage = Package; }

@@ -1,5 +1,6 @@
 #include "CharacterOverlay.h"
 
+#include "ElimAnnouncement.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -81,6 +82,14 @@ void UCharacterOverlay::UpdateGrenadesAmount(const FString& InString) const
 	if (GrenadesText)
 	{
 		GrenadesText->SetText(FText::FromString(InString));
+	}
+}
+
+void UCharacterOverlay::GenerateElimAnnouncement(const FString& ElimAnnouncementText)
+{
+	if (ElimAnnouncement)
+	{
+		ElimAnnouncement->GenerateElimAnnouncementText(ElimAnnouncementText);
 	}
 }
 

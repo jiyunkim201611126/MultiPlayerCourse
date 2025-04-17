@@ -1,12 +1,17 @@
 #include "ElimAnnouncement.h"
 
-#include "Components/TextBlock.h"
+#include "ElimAnnouncementText.h"
+#include "Components/VerticalBox.h"
 
-void UElimAnnouncement::SetElimAnnouncementText(const FString& AttackerName, const FString& VictimName)
+void UElimAnnouncement::GenerateElimAnnouncementText(const FString& ElimAnnouncementText)
 {
-	const FString ElimAnnouncementText = FString::Printf(TEXT("%s elimmed %s!"), *AttackerName, *VictimName);
-	if (AnnouncementText)
+	if (AnnouncementTextClass)
 	{
-		AnnouncementText->SetText(FText::FromString(*ElimAnnouncementText));
+		UElimAnnouncementText* AnnouncementTextWidget = CreateWidget<UElimAnnouncementText>(this, AnnouncementTextClass);
+		if (AnnouncementTextWidget)
+		{
+			AnnouncementTextWidget->SetAnnouncementText(FText::FromString(*ElimAnnouncementText));			
+			AnnouncementBox->AddChildToVerticalBox(AnnouncementTextWidget);
+		}
 	}
 }
