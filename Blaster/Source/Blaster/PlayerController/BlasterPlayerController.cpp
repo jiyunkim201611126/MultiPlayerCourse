@@ -703,6 +703,7 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ThisClass::ReloadButtonPressed);
 	EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &ThisClass::ThrowGrenadeButtonPressed);
 	EnhancedInputComponent->BindAction(QuitAction, ETriggerEvent::Started, this, &ThisClass::QuitButtonPressed);
+	EnhancedInputComponent->BindAction(ChatAction, ETriggerEvent::Started, this, &ThisClass::ChatButtonPressed);
 }
 
 void ABlasterPlayerController::Move(const FInputActionValue& InputActionValue)
@@ -883,7 +884,6 @@ void ABlasterPlayerController::QuitButtonPressed()
 			ReturnToMainMenu->MenuSetup();
 
 			FInputModeGameAndUI InputModeData;
-			InputModeData.SetWidgetToFocus(ReturnToMainMenu->TakeWidget());
 			SetInputMode(InputModeData);
 			SetShowMouseCursor(true);
 			bDisableGameplay = true;
@@ -891,11 +891,48 @@ void ABlasterPlayerController::QuitButtonPressed()
 		else
 		{
 			ReturnToMainMenu->MenuTearDown();
-			
-			FInputModeGameOnly InputModeData;
-			SetInputMode(InputModeData);
-			SetShowMouseCursor(false);
-			bDisableGameplay = false;
+			SetInputGameOnly();
 		}
 	}
+}
+
+void ABlasterPlayerController::ChatButtonPressed()
+{
+	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
+	if (BlasterHUD)
+	{
+		BlasterHUD->CharacterOverlay->SetChatMode();
+
+		FInputModeGameAndUI InputModeData;
+		SetInputMode(InputModeData);
+		SetShowMouseCursor(true);
+		bDisableGameplay = true;
+	}
+}
+
+void ABlasterPlayerController::ServerChat_Implementation(const FText& TextToChat)
+{
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get());
+		if (BlasterPlayer && BlasterPlayer->PlayerState)
+		{
+			BlasterPlayer->ClientChat(TextToChat);
+		}
+	}
+}
+
+void ABlasterPlayerController::ClientChat_Implementation(const FText& TextToChat)
+{
+	if (!BlasterHUD || !BlasterHUD->CharacterOverlay) return;
+	
+	BlasterHUD->CharacterOverlay->GenerateChat(TextToChat);
+}
+
+void ABlasterPlayerController::SetInputGameOnly()
+{
+	FInputModeGameOnly InputModeData;
+	SetInputMode(InputModeData);
+	SetShowMouseCursor(false);
+	bDisableGameplay = false;
 }

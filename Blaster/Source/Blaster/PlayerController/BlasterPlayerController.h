@@ -199,12 +199,16 @@ private:
 
 	/**
 	 * 시스템
-	 */
+	*/
 	
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> QuitAction;
 	
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> ChatAction;
+	
 	void QuitButtonPressed();
+	void ChatButtonPressed();
 
 	UPROPERTY(EditAnywhere, Category = "HUD")
 	TSubclassOf<UUserWidget> ReturnToMainMenuWidget;
@@ -217,4 +221,12 @@ private:
 public:
 	UPROPERTY(Replicated)
 	bool bDisableGameplay = false;
+
+	UFUNCTION(Server, Reliable)
+	void ServerChat(const FText& TextToChat);
+
+	UFUNCTION(Client, Reliable)
+	void ClientChat(const FText& TextToChat);
+
+	void SetInputGameOnly();
 };

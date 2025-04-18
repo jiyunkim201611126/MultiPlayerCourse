@@ -47,6 +47,9 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	class UElimAnnouncement* ElimAnnouncement;
 
+	UPROPERTY(meta = (BindWidget))
+	class UChatting* Chatting;
+
 	void UpdateHealthBar(const float BarPercent) const;
 	void UpdateHealthText(const FString& InString) const;
 	void UpdateShieldBar(const float BarPercent) const;
@@ -58,6 +61,8 @@ public:
 	void UpdateMatchCountdownText(const FString& InString) const;
 	void UpdateGrenadesAmount(const FString& InString) const;
 	void GenerateElimAnnouncement(const FString& ElimAnnouncementText);
+	void SetChatMode();
+	void GenerateChat(const FText& TextToChat);
 	
 	void StartHighPingAnimation();
 	void StopHighPingAnimation();

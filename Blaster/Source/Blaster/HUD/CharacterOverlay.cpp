@@ -1,5 +1,6 @@
 #include "CharacterOverlay.h"
 
+#include "Chatting.h"
 #include "ElimAnnouncement.h"
 #include "Components/Image.h"
 #include "Components/ProgressBar.h"
@@ -90,6 +91,22 @@ void UCharacterOverlay::GenerateElimAnnouncement(const FString& ElimAnnouncement
 	if (ElimAnnouncement)
 	{
 		ElimAnnouncement->GenerateElimAnnouncementText(ElimAnnouncementText);
+	}
+}
+
+void UCharacterOverlay::SetChatMode()
+{
+	if (Chatting)
+	{
+		Chatting->ChatFocusIn();
+	}
+}
+
+void UCharacterOverlay::GenerateChat(const FText& TextToChat)
+{
+	if (Chatting)
+	{
+		Chatting->GenerateChat(TextToChat);
 	}
 }
 
