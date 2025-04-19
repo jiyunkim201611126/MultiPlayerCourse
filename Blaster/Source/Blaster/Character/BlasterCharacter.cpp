@@ -419,6 +419,7 @@ void ABlasterCharacter::MulticastElim_Implementation(bool bPlayerLeftGame)
 	[this](){ 
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		LagCompensation->OffCollisionHitBoxes(this);
 	},
 	0.02f,
 	false
@@ -1162,4 +1163,14 @@ bool ABlasterCharacter::IsLocallyReloading()
 float ABlasterCharacter::GetCameraFOV() const
 {
 	return FollowCamera->FieldOfView;
+}
+
+ETeam ABlasterCharacter::GetTeam()
+{
+	if (ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>())
+	{
+		return BlasterPlayerState->GetTeam();
+	}
+	
+	return ETeam::ET_NoTeam;
 }

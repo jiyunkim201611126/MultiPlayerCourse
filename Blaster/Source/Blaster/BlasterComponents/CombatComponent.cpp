@@ -284,9 +284,17 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 			);
 
 		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우
-		if (TraceHitResult.GetActor() && TraceHitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>())
+		if (TraceHitResult.GetActor())
 		{
-			HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
+			TScriptInterface<IInteractWithCrosshairsInterface> HitActor = TraceHitResult.GetActor();
+			if ((HitActor && HitActor->GetTeam() != Character->GetTeam()) || Character->GetTeam() == ETeam::ET_NoTeam)
+			{
+				HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
+			}
+			else
+			{
+				HUDPackage.CrosshairsColor = FLinearColor(1.f, 1.f, 1.f, 0.7f);
+			}
 		}
 		else
 		{

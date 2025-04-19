@@ -170,6 +170,9 @@ public:
 		const FVector_NetQuantize& TraceStart,
 		const FVector_NetQuantize100& InitialVelocity,
 		float HitTime);
+
+	// 모든 BoxComponent의 Collision을 끄는 함수
+	void OffCollisionHitBoxes(ABlasterCharacter* HitCharacter);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -200,9 +203,6 @@ protected:
 	
 	// 캐릭터 Mesh의 CollisionEnabled를 조정하는 함수
 	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
-
-	// 모든 BoxComponent의 Collision을 끄는 함수
-	void OffCollisionHitBoxes(ABlasterCharacter* HitCharacter);
 
 	// SSR후 적중 결과를 반환하는 함수, 히트스캔용
 	FServerSideRewindResult ConfirmHit(
