@@ -70,9 +70,10 @@ ABlasterCharacter::ABlasterCharacter()
 
 	GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_CanBeShot, ECR_Ignore);
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
-	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_CanBeShot, ECR_Ignore);
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 0.f, 850.f);
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
@@ -155,10 +156,13 @@ ABlasterCharacter::ABlasterCharacter()
 	{
 		if (Box.Value)
 		{
+			Box.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			Box.Value->SetCollisionObjectType(ECC_HitBox);
 			Box.Value->SetCollisionResponseToChannels(ECollisionResponse::ECR_Ignore);
+			Box.Value->SetCollisionResponseToChannel(ECC_Visibility, ECollisionResponse::ECR_Block);
+			Box.Value->SetCollisionResponseToChannel(ECC_WorldDynamic, ECollisionResponse::ECR_Block);
 			Box.Value->SetCollisionResponseToChannel(ECC_HitBox, ECollisionResponse::ECR_Block);
-			Box.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Box.Value->SetCollisionResponseToChannel(ECC_CanBeShot, ECollisionResponse::ECR_Block);
 		}
 	}
 }

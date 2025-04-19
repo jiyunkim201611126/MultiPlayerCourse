@@ -13,6 +13,7 @@
 #include "Sound/SoundCue.h"
 #include "Blaster/Weapon/Projectiles/Projectile.h"
 #include "Blaster/Weapon/Shotgun.h"
+#include "Blaster/Blaster.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -279,7 +280,7 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 			TraceHitResult,
 			Start,
 			End,
-			ECollisionChannel::ECC_Visibility
+			ECC_CanBeShot
 			);
 
 		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우

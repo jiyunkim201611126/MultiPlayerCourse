@@ -322,6 +322,8 @@ FServerSideRewindResult ULagCompensationComponent::ConfirmHit(
 	MoveBoxes(Package.Character, Package);
 	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
 	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
+	// 머리부터 히트박스 켤 거기 때문에 일단 전부 꺼줌
+	OffColiisionHitBoxes(Package.Character, Package);
 
 	// 머리 히트박스 활성화
 	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
@@ -399,6 +401,8 @@ FShotgunServerSideRewindResult ULagCompensationComponent::ShotgunConfirmHit(
 		CacheBoxPositions(Frame.Character, CurrentFrame);
 		MoveBoxes(Frame.Character, Frame);
 		EnableCharacterMeshCollision(Frame.Character, ECollisionEnabled::NoCollision);
+		// 머리부터 히트박스 켤 거기 때문에 일단 전부 꺼줌
+		OffColiisionHitBoxes(Frame.Character, Frame);
 		CurrentFrames.Add(CurrentFrame);
 	}
 	for (auto& Frame : FramePackages)
@@ -506,6 +510,8 @@ FServerSideRewindResult ULagCompensationComponent::ProjectileConfirmHit(
 	MoveBoxes(Package.Character, Package);
 	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
 	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
+	// 머리부터 히트박스 켤 거기 때문에 일단 전부 꺼줌
+	OffColiisionHitBoxes(Package.Character, Package);
 
 	// 머리 히트박스 활성화
 	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
@@ -581,6 +587,8 @@ FRocketServerSideRewindResult ULagCompensationComponent::RocketConfirmHit(
 	MoveBoxes(Package.Character, Package);
 	// HitBox로만 판정 볼 거기 때문에 Mesh는 콜리전 꺼줌
 	EnableCharacterMeshCollision(Package.Character, ECollisionEnabled::NoCollision);
+	// 머리부터 히트박스 켤 거기 때문에 일단 전부 꺼줌
+	OffColiisionHitBoxes(Package.Character, Package);
 
 	// 머리 히트박스 활성화
 	UBoxComponent* HeadBox = Package.Character->HitCollisionBoxes[FName("head")];
@@ -674,6 +682,19 @@ void ULagCompensationComponent::MoveBoxes(ABlasterCharacter* HitCharacter, const
 	}
 }
 
+void ULagCompensationComponent::OffColiisionHitBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package)
+{
+	if (HitCharacter == nullptr) return;
+	
+	for (auto& HitBoxPair : HitCharacter->HitCollisionBoxes)
+	{
+		if (HitBoxPair.Value != nullptr)
+		{
+			HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
+}
+
 void ULagCompensationComponent::ResetHitBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package)
 {
 	if (HitCharacter == nullptr) return;
@@ -685,7 +706,7 @@ void ULagCompensationComponent::ResetHitBoxes(ABlasterCharacter* HitCharacter, c
 			HitBoxPair.Value->SetWorldLocation(Package.HitBoxInfo[HitBoxPair.Key].Location);
 			HitBoxPair.Value->SetWorldRotation(Package.HitBoxInfo[HitBoxPair.Key].Rotation);
 			HitBoxPair.Value->SetBoxExtent(Package.HitBoxInfo[HitBoxPair.Key].BoxExtent);
-			HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			HitBoxPair.Value->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 		}
 	}
 }

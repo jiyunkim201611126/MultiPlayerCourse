@@ -1,5 +1,6 @@
 #include "HitScanWeapon.h"
 
+#include "Blaster/Blaster.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Blaster/Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -74,7 +75,7 @@ void AHitScanWeapon::WeaponTraceHit(const FVector& TraceStart, const FVector& Hi
 			OutHit,
 			TraceStart,
 			End,
-			ECC_Visibility
+			ECC_CanBeShot
 			);
 
 		// 적중 결과에 따른 총알 궤적 파티클 위치 변경
