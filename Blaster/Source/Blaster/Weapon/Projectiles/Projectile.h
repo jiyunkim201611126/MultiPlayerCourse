@@ -1,12 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blaster/Interfaces/ICauseDamage.h"
+#include "Blaster/Interfaces/CauseDamageInterface.h"
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectile : public AActor, public IICauseDamage
+class BLASTER_API AProjectile : public AActor, public IICauseDamageInterface
 {
 	GENERATED_BODY()
 	
@@ -111,4 +111,10 @@ private:
 
 	void StartBlockTimer();
 	void BlockTimerFinished();
+	
+	/**
+	 * ICauseDamage
+	 */
+public:
+	virtual float GetTeammateDamageModifier() override { return TeammateDamageModifier; };
 };

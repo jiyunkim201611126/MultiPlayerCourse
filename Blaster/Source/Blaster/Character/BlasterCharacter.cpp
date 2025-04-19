@@ -736,13 +736,9 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
 	{
 		if (BlasterGameMode->CheckTeammate(InstigatorController, Controller))
 		{
-			if (AWeapon* Weapon = Cast<AWeapon>(DamageCauser))
+			if (TScriptInterface<IICauseDamageInterface> Causer = DamageCauser)
 			{
-				Damage *= Weapon->TeammateDamageModifier;
-			}
-			if (AProjectile* Projectile = Cast<AProjectile>(DamageCauser))
-			{
-				Damage *= Projectile->TeammateDamageModifier;
+				Damage *= Causer->GetTeammateDamageModifier();
 			}
 		}
 	}

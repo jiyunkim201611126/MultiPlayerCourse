@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "WeaponTypes.h"
-#include "Blaster/BlasterComponents/CombatComponent.h"
+#include "Blaster/Interfaces/CauseDamageInterface.h"
 #include "Weapon.generated.h"
 
 DECLARE_DELEGATE(FOnFireTimerFinished);
@@ -30,7 +30,7 @@ enum class EFireType : uint8
 };
 
 UCLASS()
-class BLASTER_API AWeapon : public AActor
+class BLASTER_API AWeapon : public AActor, public IICauseDamageInterface
 {
 	GENERATED_BODY()
 	
@@ -276,4 +276,11 @@ public:
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE int32 GetMagCapacity() const { return MagCapacity; }
 	FORCEINLINE float GetDamage() const { return Damage; }
+	
+	/**
+	 * ICauseDamage
+	 */
+	
+public:
+	virtual float GetTeammateDamageModifier() override { return TeammateDamageModifier; };
 };
