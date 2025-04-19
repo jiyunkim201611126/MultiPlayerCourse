@@ -232,9 +232,6 @@ private:
 	UPROPERTY()
 	ABlasterCharacter* Character;
 
-	UPROPERTY()
-	class ABlasterPlayerController* Controller;
-
 	TDoubleLinkedList<FFramePackage> FrameHistory;
 
 	UPROPERTY(EditAnywhere)

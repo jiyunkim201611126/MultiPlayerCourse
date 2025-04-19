@@ -279,9 +279,6 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Elim")
 	class USoundCue* ElimBotSound;
 
-	UPROPERTY()
-	class ABlasterPlayerState* BlasterPlayerState;
-
 	UPROPERTY(EditAnywhere)
 	class UNiagaraSystem* CrownSystem;
 

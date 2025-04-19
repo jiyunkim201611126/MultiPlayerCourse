@@ -67,5 +67,7 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 			}
 		}
 		SpawnedProjectile->Damage = Damage;
+		SpawnedProjectile->HeadShotDamageModifier = HeadShotDamageModifier;
+		SpawnedProjectile->TeammateDamageModifier = TeammateDamageModifier;
 	}
 }

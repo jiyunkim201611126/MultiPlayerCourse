@@ -20,7 +20,7 @@ public:
 	virtual void PlayerEliminated(class ABlasterCharacter* EliminatedCharacter, class ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController);
 	virtual void RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController);
 	void PlayerLeftGame(class ABlasterPlayerState* PlayerLeaving);
-	
+
 	// 레벨이 시작된 시간 (게임 시작 시간이랑 다름)
 	float LevelStartingTime = 0.f;
 	
@@ -34,6 +34,8 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	float CooldownTime = 10.f;
+	
+	bool CheckTeammate(AController* InstigatorController, AController* DamagedController);
 
 protected:
 	virtual void BeginPlay() override;

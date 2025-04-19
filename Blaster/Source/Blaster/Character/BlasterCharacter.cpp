@@ -36,6 +36,7 @@
 #include "NiagaraSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Blaster/GameState/BlasterGameState.h"
+#include "Blaster/Weapon/Projectiles/Projectile.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -185,10 +186,6 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (LagCompensation)
 	{
 		LagCompensation->Character = this;
-		if (Controller)
-		{
-			LagCompensation->Controller = Cast<ABlasterPlayerController>(Controller);
-		}
 	}
 }
 
@@ -216,6 +213,7 @@ void ABlasterCharacter::PossessedBy(AController* NewController)
 	UpdateHUDHealth();
 	UpdateHUDShield();
 	UpdateHUDAmmo();
+	PollInit();
 }
 
 void ABlasterCharacter::OnRep_PlayerState()
@@ -228,6 +226,7 @@ void ABlasterCharacter::OnRep_PlayerState()
 	UpdateHUDHealth();
 	UpdateHUDShield();
 	UpdateHUDAmmo();
+	PollInit();
 }
 
 void ABlasterCharacter::UpdatePlayerName() const
@@ -486,7 +485,7 @@ void ABlasterCharacter::ElimTimerFinished()
 void ABlasterCharacter::ServerLeaveGame_Implementation()
 {
 	ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>();
-	BlasterPlayerState = BlasterPlayerState == nullptr ? GetPlayerState<ABlasterPlayerState>() : BlasterPlayerState;
+	ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
 	if (BlasterGameMode && BlasterPlayerState)
 	{
 		BlasterGameMode->PlayerLeftGame(BlasterPlayerState);
@@ -588,8 +587,6 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	
 	RotateInPlace(DeltaTime);
 	HideCameraIfCharacterClose();
-	
-	PollInit();
 }
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
@@ -735,6 +732,20 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor,
                                       AActor* DamageCauser)
 {
 	if (bElimmed) return;
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		if (BlasterGameMode->CheckTeammate(InstigatorController, Controller))
+		{
+			if (AWeapon* Weapon = Cast<AWeapon>(DamageCauser))
+			{
+				Damage *= Weapon->TeammateDamageModifier;
+			}
+			if (AProjectile* Projectile = Cast<AProjectile>(DamageCauser))
+			{
+				Damage *= Projectile->TeammateDamageModifier;
+			}
+		}
+	}
 	
 	float DamageToHealth = Damage;
 	if (Shield > 0.f)
@@ -873,21 +884,18 @@ void ABlasterCharacter::UpdateHUDAmmo()
 
 void ABlasterCharacter::PollInit()
 {
-	if (BlasterPlayerState == nullptr)
+	ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+	if (BlasterPlayerState)
 	{
-		BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
-		if (BlasterPlayerState)
+		BlasterPlayerState->AddToScore(0.f);
+		BlasterPlayerState->AddToDefeats(0);
+		SetTeamColor(BlasterPlayerState->GetTeam());
+
+		ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+
+		if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
 		{
-			BlasterPlayerState->AddToScore(0.f);
-			BlasterPlayerState->AddToDefeats(0);
-			SetTeamColor(BlasterPlayerState->GetTeam());
-
-			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
-
-			if (BlasterGameState && BlasterGameState->TopScoringPlayers.Contains(BlasterPlayerState))
-			{
-				MulticastGainedTheLead();
-			}
+			MulticastGainedTheLead();
 		}
 	}
 }

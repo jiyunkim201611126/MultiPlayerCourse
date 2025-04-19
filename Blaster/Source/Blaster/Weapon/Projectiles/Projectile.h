@@ -1,11 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blaster/Interfaces/ICauseDamage.h"
 #include "GameFramework/Actor.h"
 #include "Projectile.generated.h"
 
 UCLASS()
-class BLASTER_API AProjectile : public AActor
+class BLASTER_API AProjectile : public AActor, public IICauseDamage
 {
 	GENERATED_BODY()
 	
@@ -21,6 +22,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	float DamageOuterRadius = 500.f;
 
+	float HeadShotDamageModifier = 1.f;
+	float TeammateDamageModifier = 1.f;
+
 	/**
 	 * SSR 구현을 위한 변수
 	 */
@@ -35,7 +39,7 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float InitialSpeed = 15000.f;
-	
+
 	virtual void StartDestroyTimer();
 
 #if WITH_EDITOR // 에디터에서만 호출됨

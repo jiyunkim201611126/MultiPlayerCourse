@@ -17,6 +17,22 @@ ABlasterGameMode::ABlasterGameMode()
 	bDelayedStart = true;
 }
 
+bool ABlasterGameMode::CheckTeammate(AController* InstigatorController, AController* DamagedController)
+{
+	const ABlasterPlayerState* InstigatorState = InstigatorController->GetPlayerState<ABlasterPlayerState>();
+	const ABlasterPlayerState* DamagedState = DamagedController->GetPlayerState<ABlasterPlayerState>();
+	
+	if (InstigatorState && DamagedState)
+	{
+		if (InstigatorState->GetTeam() == DamagedState->GetTeam())
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ABlasterGameMode::BeginPlay()
 {
 	Super::BeginPlay();

@@ -7,6 +7,7 @@
 #include "Blaster/Blaster.h"
 #include "Blaster/Weapon/Projectiles/ProjectileBullet.h"
 #include "DrawDebugHelpers.h"
+#include "Blaster/GameMode/BlasterGameMode.h"
 
 ULagCompensationComponent::ULagCompensationComponent()
 {
@@ -24,13 +25,14 @@ void ULagCompensationComponent::ServerScoreRequest_Implementation(
 	const FVector_NetQuantize& HitLocation,
 	float HitTime)
 {
+	
 	FServerSideRewindResult Confirm = ServerSideRewind(HitCharacter, TraceStart, HitLocation, HitTime);
 
 	if (Character && Character->GetController() && HitCharacter && Confirm.bHitConfirmed)
 	{
 		if (AWeapon* Weapon = Character->GetEquippedWeapon())
 		{
-			float DamageModifier = Confirm.bHeadShot ? Weapon->HeadShotDamageModifier : 1.0f;
+			float DamageModifier = Confirm.bHeadShot ? Weapon->HeadShotDamageModifier : 1.f;
 			UGameplayStatics::ApplyDamage(
 				HitCharacter,
 				Weapon->GetDamage() * DamageModifier,
@@ -63,7 +65,7 @@ void ULagCompensationComponent::ShotgunServerScoreRequest_Implementation(
 		{
 			float BodyShotDamage = Confirm.BodyShots[HitCharacter] * Character->GetEquippedWeapon()->GetDamage();
 			TotalDamage += BodyShotDamage;
-		}
+		}		
 		UGameplayStatics::ApplyDamage(
 			HitCharacter,
 			TotalDamage,
@@ -85,17 +87,14 @@ void ULagCompensationComponent::ProjectileServerScoreRequest_Implementation(
 
 	if (Character && Character->GetController() && Projectile && HitCharacter && Confirm.bHitConfirmed)
 	{
-		if (AWeapon* Weapon = Character->GetEquippedWeapon())
-		{
-			float DamageModifier = Confirm.bHeadShot ? Weapon->HeadShotDamageModifier : 1.0f;
-			UGameplayStatics::ApplyDamage(
-				HitCharacter,
-				Projectile->Damage * DamageModifier,
-				Character->GetController(),
-				Projectile,
-				UDamageType::StaticClass()
-				);
-		}
+		float DamageModifier = Confirm.bHeadShot ? Projectile->HeadShotDamageModifier : 1.0f;
+		UGameplayStatics::ApplyDamage(
+			HitCharacter,
+			Projectile->Damage * DamageModifier,
+			Character->GetController(),
+			Projectile,
+			UDamageType::StaticClass()
+			);
 	}
 }
 
