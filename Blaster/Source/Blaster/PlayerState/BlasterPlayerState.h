@@ -22,16 +22,19 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* Controller;
 
-	UPROPERTY(ReplicatedUsing=OnRep_Defeats)
+	UPROPERTY(ReplicatedUsing = OnRep_Defeats)
 	int32 Defeats;
 	
 	UFUNCTION()
 	virtual void OnRep_Defeats();
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = OnRep_Team)
 	ETeam Team = ETeam::ET_NoTeam;
+
+	UFUNCTION()
+	void OnRep_Team();
 
 public:
 	FORCEINLINE ETeam GetTeam() const { return Team; }
-	FORCEINLINE void SetTeam(ETeam TeamToSet) { Team = TeamToSet; }
+	void SetTeam(ETeam TeamToSet);
 };

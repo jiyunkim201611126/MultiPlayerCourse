@@ -87,6 +87,7 @@ ABlasterCharacter::ABlasterCharacter()
 	AttachedGrenade->SetupAttachment(GetMesh(), FName(TEXT("GrenadeSocket")));
 	AttachedGrenade->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
+	// 히트박스
 	
 	head = CreateDefaultSubobject<UBoxComponent>(TEXT("head"));
 	head->SetupAttachment(GetMesh(), FName(TEXT("head")));
@@ -270,6 +271,29 @@ void ABlasterCharacter::MulticastLostTheLead_Implementation()
 	if (CrownComponent)
 	{
 		CrownComponent->DestroyComponent();
+	}
+}
+
+void ABlasterCharacter::SetTeamColor(ETeam Team)
+{
+	if (GetMesh() == nullptr || OriginalMaterialInstance == nullptr) return;
+	
+	switch (Team)
+	{
+	case ETeam::ET_RedTeam:
+		GetMesh()->SetMaterial(0, RedMaterialInstance);
+		DissolveMaterialInstance = RedDissolveMaterialInstance;
+		break;
+	case ETeam::ET_BlueTeam:
+		GetMesh()->SetMaterial(0, BlueMaterialInstance);
+		DissolveMaterialInstance = BlueDissolveMaterialInstance;
+		break;
+	case ETeam::ET_NoTeam:
+		GetMesh()->SetMaterial(0, OriginalMaterialInstance);
+		DissolveMaterialInstance = OriginalDissolveMaterialInstance;
+		break;
+	default:
+		break;
 	}
 }
 
@@ -856,6 +880,7 @@ void ABlasterCharacter::PollInit()
 		{
 			BlasterPlayerState->AddToScore(0.f);
 			BlasterPlayerState->AddToDefeats(0);
+			SetTeamColor(BlasterPlayerState->GetTeam());
 
 			ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
 
@@ -1128,4 +1153,9 @@ bool ABlasterCharacter::IsLocallyReloading()
 	if (Combat == nullptr) return false;
 	
 	return Combat->bLocallyReloading;
+}
+
+float ABlasterCharacter::GetCameraFOV() const
+{
+	return FollowCamera->FieldOfView;
 }

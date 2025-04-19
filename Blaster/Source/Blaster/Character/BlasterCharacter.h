@@ -6,7 +6,7 @@
 #include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/TimelineComponent.h"
 #include "Blaster/BlasterTypes/CombatState.h"
-#include "Camera/CameraComponent.h"
+#include "Blaster/BlasterTypes/Team.h"
 #include "BlasterCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLeftGame);
@@ -84,6 +84,8 @@ public:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastLostTheLead();
+
+	void SetTeamColor(ETeam Team);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -106,7 +108,7 @@ private:
 	class USpringArmComponent* CameraBoom;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camera")
-	UCameraComponent* FollowCamera;
+	class UCameraComponent* FollowCamera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
@@ -239,9 +241,31 @@ private:
 	UMaterialInstanceDynamic* DynamicDissolveMaterialInstance;
 
 	// 머티리얼 인스턴스
-	UPROPERTY(EditAnywhere, Category = "Elim")
+	UPROPERTY(VisibleAnywhere, Category = "Elim")
 	UMaterialInstance* DissolveMaterialInstance;
 
+	/**
+	 * 팀 색깔
+	 */
+
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* RedDissolveMaterialInstance;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* RedMaterialInstance;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* BlueDissolveMaterialInstance;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* BlueMaterialInstance;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* OriginalMaterialInstance;
+	
+	UPROPERTY(EditAnywhere, Category = "Elim")
+	UMaterialInstance* OriginalDissolveMaterialInstance;
+	
 	/**
 	 * Elim Effects
 	 */
@@ -358,7 +382,6 @@ public:
 	FORCEINLINE void SetHealth(float Amount) { Health = Amount; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	ECombatState GetCombatState() const;
-	FORCEINLINE float GetCameraFOV() const { return FollowCamera->FieldOfView; }
 	FORCEINLINE UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	FORCEINLINE UCombatComponent* GetCombat() const { return Combat; }
 	FORCEINLINE UStaticMeshComponent* GetAttachedGrenade() const { return AttachedGrenade; }
@@ -368,4 +391,6 @@ public:
 	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
+	
+	float GetCameraFOV() const;
 };
