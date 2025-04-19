@@ -194,15 +194,15 @@ protected:
 	
 	// 현재 프레임의 BoxComponent들을 특정 위치로 옮기는 함수 (라인 트레이스를 통해 Hit 판정을 보기 위해 되감기한다)
 	void MoveBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package);
-
-	// 모든 BoxComponent의 Collision을 끄는 함수
-	void OffColiisionHitBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package);
 	
 	// BoxComponent를 잠시 특정 위치로 옮겼으므로, 라인 트레이스가 끝나면 다시 되돌린다.
 	void ResetHitBoxes(ABlasterCharacter* HitCharacter, const FFramePackage& Package);
 	
 	// 캐릭터 Mesh의 CollisionEnabled를 조정하는 함수
 	void EnableCharacterMeshCollision(ABlasterCharacter* HitCharacter, ECollisionEnabled::Type CollisionEnabled);
+
+	// 모든 BoxComponent의 Collision을 끄는 함수
+	void OffCollisionHitBoxes(ABlasterCharacter* HitCharacter);
 
 	// SSR후 적중 결과를 반환하는 함수, 히트스캔용
 	FServerSideRewindResult ConfirmHit(
