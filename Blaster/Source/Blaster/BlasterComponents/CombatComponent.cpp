@@ -283,9 +283,9 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 			ECC_CanBeShot
 			);
 
-		// Hit한 액터가 있으며, 해당 액터가 InteractWithCrosshairsInterface를 상속받는 경우
 		if (TraceHitResult.GetActor())
 		{
+			// 적팀인 경우 크로스헤어 빨간색으로 변경
 			TScriptInterface<IInteractWithCrosshairsInterface> HitActor = TraceHitResult.GetActor();
 			if ((HitActor && HitActor->GetTeam() != Character->GetTeam()) || Character->GetTeam() == ETeam::ET_NoTeam)
 			{

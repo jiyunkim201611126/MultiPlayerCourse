@@ -20,6 +20,9 @@ public:
 	 * Teams
 	 */
 
+	void RedTeamScores();
+	void BlueTeamScores();
+
 	UPROPERTY()
 	TArray<ABlasterPlayerState*> RedTeam;
 	UPROPERTY()

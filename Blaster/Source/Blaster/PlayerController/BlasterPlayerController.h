@@ -27,11 +27,15 @@ public:
 	void SetHUDAnnouncementCountdown(int32 CountdownTime);
 	void SetHUDGrenades(int32 Grenades);
 	virtual void OnPossess(APawn* InPawn) override;
+	void HideTeamScores();
+	void InitTeamScores();
+	void SetHUDRedTeamScore(int32 RedScore);
+	void SetHUDBlueTeamScore(int32 BlueScore);
 
 	virtual float GetServerTime();
 	// 플레이어 접속 시 호출
 	virtual void ReceivedPlayer() override;
-	void OnMatchStateSet(FName State);
+	void OnMatchStateSet(FName State, bool bTeamsMatch);
 	void HandleWidgetState();
 	void HandleMatchHasStarted();
 	void HandleCooldown();
@@ -43,6 +47,9 @@ public:
 
 	// 사망 알림
 	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
+
+	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
+	bool bShowTeamScores;
 
 protected:
 	virtual void BeginPlay() override;
@@ -79,7 +86,7 @@ protected:
 	void ServerCheckMatchState();
 
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidgame(FName StateOfMatch, float Starting, float Warmup, float Match, float Cooldown);
+	void ClientJoinMidgame(FName StateOfMatch, bool bTeamsMatch, float Starting, float Warmup, float Match, float Cooldown);
 
 	void HighPingWarning();
 	void StopHighPingWarning();
@@ -87,6 +94,9 @@ protected:
 
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
+
+	UFUNCTION()
+	void OnRep_ShowTeamScores();
 	
 private:
 	UPROPERTY()

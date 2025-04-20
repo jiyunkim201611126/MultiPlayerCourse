@@ -1,6 +1,12 @@
 ﻿#include "TeamsGameMode.h"
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
+#include "Blaster/PlayerController/BlasterPlayerController.h"
+
+ATeamsGameMode::ATeamsGameMode()
+{
+	bTeamsMatch = true;
+}
 
 void ATeamsGameMode::PostLogin(APlayerController* NewPlayer)
 {
@@ -21,6 +27,11 @@ void ATeamsGameMode::PostLogin(APlayerController* NewPlayer)
 			{
 				BlasterGameState->BlueTeam.AddUnique(BlasterPlayerState);
 				BlasterPlayerState->SetTeam(ETeam::ET_BlueTeam);
+			}
+			ABlasterPlayerController* BlasterPlayerController = Cast<ABlasterPlayerController>(NewPlayer);
+			if (BlasterPlayerController)
+			{
+				BlasterPlayerController->bShowTeamScores = bTeamsMatch;
 			}
 		}
 	}

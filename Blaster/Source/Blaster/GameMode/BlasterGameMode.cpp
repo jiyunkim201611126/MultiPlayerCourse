@@ -19,6 +19,8 @@ ABlasterGameMode::ABlasterGameMode()
 
 bool ABlasterGameMode::CheckTeammate(AController* InstigatorController, AController* DamagedController)
 {
+	if (!bTeamsMatch) return false;
+	
 	const ABlasterPlayerState* InstigatorState = InstigatorController->GetPlayerState<ABlasterPlayerState>();
 	const ABlasterPlayerState* DamagedState = DamagedController->GetPlayerState<ABlasterPlayerState>();
 	
@@ -84,7 +86,7 @@ void ABlasterGameMode::OnMatchStateSet()
 	{
 		if (ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get()))
 		{
-			BlasterPlayer->OnMatchStateSet(MatchState);
+			BlasterPlayer->OnMatchStateSet(MatchState, bTeamsMatch);
 		}
 	}
 }

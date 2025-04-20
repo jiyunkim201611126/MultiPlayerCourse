@@ -36,6 +36,8 @@ public:
 	float CooldownTime = 10.f;
 	
 	bool CheckTeammate(AController* InstigatorController, AController* DamagedController);
+	
+	bool bTeamsMatch = false;
 
 protected:
 	virtual void BeginPlay() override;
