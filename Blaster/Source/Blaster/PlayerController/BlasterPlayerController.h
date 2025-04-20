@@ -45,7 +45,7 @@ public:
 
 	FHighPingDelegate HighPingDelegate;
 
-	// 사망 알림
+	// 킬로그 전파
 	void BroadcastElim(APlayerState* Attacker, APlayerState* Victim);
 
 	UPROPERTY(ReplicatedUsing = OnRep_ShowTeamScores)
@@ -56,7 +56,7 @@ protected:
 	
 	void SetHUDTime();
 
-	// nullptr 문제를 해소하기 위해 호출하는 함수.
+	// 초기화 타이밍으로 인해 생기는 각종 문제를 해결하기 위해 반복적으로 호출되는 함수, 여기선 CharacterOverlay의 초기화 상태를 점검한다
 	void PollInit();
 
 	/**
@@ -92,11 +92,16 @@ protected:
 	void StopHighPingWarning();
 	void CheckPing(float DeltaTime);
 
+	// 킬로그
 	UFUNCTION(Client, Reliable)
 	void ClientElimAnnouncement(APlayerState* Attacker, APlayerState* Victim);
 
 	UFUNCTION()
 	void OnRep_ShowTeamScores();
+
+	// 매치 종료 시 화면에 나올 문구를 구하는 함수
+	FString GetMatchEndText(const TArray<class ABlasterPlayerState*>& Players);
+	FString GetTeamsMatchEndText(const class ABlasterGameState* BlasterGameState);
 	
 private:
 	UPROPERTY()

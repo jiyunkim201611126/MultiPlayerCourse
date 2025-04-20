@@ -100,8 +100,27 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 	ABlasterPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasterPlayerState>(AttackerController->PlayerState) : nullptr;
 	ABlasterPlayerState* VictimPlayerState = VictimController ? Cast<ABlasterPlayerState>(VictimController->PlayerState) : nullptr;
 
+	// 캐릭터 사망
+	if (EliminatedCharacter)
+	{
+		EliminatedCharacter->Elim(false);
+	}
+
+	// 킬로그 전파
+	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+	{
+		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get());
+		if (BlasterPlayer && AttackerPlayerState && VictimPlayerState)
+		{
+			BlasterPlayer->BroadcastElim(AttackerPlayerState, VictimPlayerState);
+		}
+	}
+
+	// 팀킬한 경우 Elim 알림만 호출하고 리턴
+	if (bTeamsMatch && AttackerPlayerState->GetTeam() == VictimPlayerState->GetTeam()) return;
+
+	// 점수 관련 처리들
 	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
-	
 	if (AttackerPlayerState && AttackerPlayerState != VictimPlayerState && BlasterGameState)
 	{
 		TArray<ABlasterPlayerState*> PlayerCurrentlyInTheLead;
@@ -139,20 +158,6 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 	if (VictimPlayerState)
 	{
 		VictimPlayerState->AddToDefeats(1);
-	}
-	
-	if (EliminatedCharacter)
-	{
-		EliminatedCharacter->Elim(false);
-	}
-
-	for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
-	{
-		ABlasterPlayerController* BlasterPlayer = Cast<ABlasterPlayerController>(It->Get());
-		if (BlasterPlayer && AttackerPlayerState && VictimPlayerState)
-		{
-			BlasterPlayer->BroadcastElim(AttackerPlayerState, VictimPlayerState);
-		}
 	}
 }
 

@@ -13,6 +13,7 @@
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/HUD/ReturnToMainMenu.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
+#include "Blaster/BlasterTypes/Announcement.h"
 
 ABlasterPlayerController::ABlasterPlayerController()
 {
@@ -31,8 +32,9 @@ void ABlasterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// 게임 시작 시 우선 현재 매치 상태 정보 요청
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
+	
+	// 게임 시작 시 우선 현재 매치 상태 정보 요청
 	ServerCheckMatchState();
 	
 	if (IsLocalController())
@@ -185,13 +187,18 @@ void ABlasterPlayerController::ClientJoinMidgame_Implementation(FName StateOfMat
 
 void ABlasterPlayerController::PollInit()
 {
+	// CharacterOverlay가 유효한 경우 아래 구문이 실행되지 않음
+	// 즉 실행 초반엔 이 구문에 계속 들어가게 됨
 	if (CharacterOverlay == nullptr)
 	{
+		// BlasterHUD의 CharacterOverlay가 생성되었을 때 아래 구문에 들어감
 		if (BlasterHUD && BlasterHUD->CharacterOverlay)
 		{
+			// 여기서 CharacterOverlay를 할당, 따라서 아래 로직을 딱 1번만 실행하게 됨
 			CharacterOverlay = BlasterHUD->CharacterOverlay;
 			if (CharacterOverlay)
 			{
+				// 각종 초기화를 진행, 이 함수의 의도는 '원하는 타이밍에 각종 HUD를 초기화'하는 것에 있음
 				if (bInitializeHealth) SetHUDHealth(HUDHealth, HUDMaxHealth);
 				if (bInitializeShield) SetHUDShield(HUDShield, HUDMaxShield);
 				if (bInitializeScore) SetHUDScore(HUDScore);
@@ -327,12 +334,12 @@ void ABlasterPlayerController::SetHUDBlueTeamScore(int32 BlueScore)
 	BlasterHUD = BlasterHUD == nullptr ? GetHUD<ABlasterHUD>() : BlasterHUD;
 	bool bHUDValid = BlasterHUD
 		&& BlasterHUD->CharacterOverlay
-		&& BlasterHUD->CharacterOverlay->RedTeamScore;
+		&& BlasterHUD->CharacterOverlay->BlueTeamScore;
 
 	if (bHUDValid)
 	{
 		FString ScoreText = FString::Printf(TEXT("%d"), BlueScore);
-		BlasterHUD->CharacterOverlay->RedTeamScore->SetText(FText::FromString(ScoreText));
+		BlasterHUD->CharacterOverlay->BlueTeamScore->SetText(FText::FromString(ScoreText));
 	}
 }
 
@@ -642,7 +649,7 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 
 		if (BlasterHUD->Announcement)
 		{
-			BlasterHUD->Announcement->RemoveFromParent();
+			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Collapsed);
 		}
 		
 		if (!HasAuthority()) return;
@@ -675,12 +682,15 @@ void ABlasterPlayerController::HandleCooldown()
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
 	if (BlasterHUD)
 	{
-		BlasterHUD->CharacterOverlay->RemoveFromParent();
-
+		if (BlasterHUD->CharacterOverlay)
+		{
+			BlasterHUD->CharacterOverlay->SetVisibility(ESlateVisibility::Collapsed);
+		}
+		
 		if (BlasterHUD->Announcement)
 		{
 			BlasterHUD->Announcement->SetVisibility(ESlateVisibility::Visible);
-			FString AnnouncementText("New Match Starts In:");
+			FString AnnouncementText = Announcement::NewMatchStartsIn;
 			BlasterHUD->Announcement->UpdateAnnouncementText(AnnouncementText);
 
 			// 대기 시간 중 직전 라운드 우승자 표시
@@ -689,27 +699,7 @@ void ABlasterPlayerController::HandleCooldown()
 			if (BlasterGameState && BlasterPlayerState)
 			{
 				TArray<ABlasterPlayerState*> TopPlayers = BlasterGameState->TopScoringPlayers;
-				FString InfoTextString;
-				if (TopPlayers.Num() == 0)
-				{
-					InfoTextString = FString("There is no winner.");
-				}
-				else if (TopPlayers.Num() == 1 && TopPlayers[0] == BlasterPlayerState)
-				{
-					InfoTextString = FString("You are the winner!");
-				}
-				else if (TopPlayers.Num() == 1)
-				{
-					InfoTextString = FString::Printf(TEXT("Winner: \n%s"), *TopPlayers[0]->GetPlayerName());
-				}
-				else if (TopPlayers.Num() > 1)
-				{
-					InfoTextString = FString("Players tied for the win: \n");
-					for (const auto TiedPlayer : TopPlayers)
-					{
-						InfoTextString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
-					}
-				}
+				FString InfoTextString = bShowTeamScores ? GetTeamsMatchEndText(BlasterGameState) : GetMatchEndText(TopPlayers);
 				
 				BlasterHUD->Announcement->UpdateInfoText(InfoTextString);
 			}
@@ -723,6 +713,72 @@ void ABlasterPlayerController::HandleCooldown()
 	FireButtonReleased();
 }
 
+FString ABlasterPlayerController::GetMatchEndText(const TArray<ABlasterPlayerState*>& Players)
+{
+	ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+	if (BlasterPlayerState == nullptr) return FString();
+	
+	FString ResultString;
+	if (Players.Num() == 0)
+	{
+		ResultString = Announcement::ThereIsNoWinner;
+	}
+	else if (Players.Num() == 1 && Players[0] == BlasterPlayerState)
+	{
+		ResultString = Announcement::YouAreTheWinner;
+	}
+	else if (Players.Num() == 1)
+	{
+		ResultString = FString::Printf(TEXT("Winner: \n%s"), *Players[0]->GetPlayerName());
+	}
+	else if (Players.Num() > 1)
+	{
+		ResultString = Announcement::PlayersTiedForTheWin;
+		ResultString.Append(FString("\n"));
+		for (const auto TiedPlayer : Players)
+		{
+			ResultString.Append(FString::Printf(TEXT("%s\n"), *TiedPlayer->GetPlayerName()));
+		}
+	}
+
+	return ResultString;
+}
+
+FString ABlasterPlayerController::GetTeamsMatchEndText(const ABlasterGameState* BlasterGameState)
+{
+	if (BlasterGameState == nullptr) return FString();
+
+	FString ResultString;
+
+	int32 RedTeamScore = BlasterGameState->RedTeamScore;
+	int32 BlueTeamScore = BlasterGameState->BlueTeamScore;
+
+	if (RedTeamScore == 0 && BlueTeamScore == 0)
+	{
+		ResultString = Announcement::ThereIsNoWinner;
+	}
+	else if (RedTeamScore == BlueTeamScore)
+	{
+		ResultString = FString::Printf(TEXT("%s\n"), *Announcement::TeamsTiedForTheWin);
+	}
+	else if (RedTeamScore > BlueTeamScore)
+	{
+		ResultString = Announcement::RedTeamWins;
+		ResultString.Append(TEXT("\n"));
+		ResultString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::RedTeam, RedTeamScore));
+		ResultString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::BlueTeam, BlueTeamScore));
+	}
+	else if (BlueTeamScore > RedTeamScore)
+	{
+		ResultString = Announcement::BlueTeamWins;
+		ResultString.Append(TEXT("\n"));
+		ResultString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::BlueTeam, BlueTeamScore));
+		ResultString.Append(FString::Printf(TEXT("%s: %d\n"), *Announcement::RedTeam, RedTeamScore));
+	}
+	
+	return ResultString;
+}
+
 void ABlasterPlayerController::BroadcastElim(APlayerState* Attacker, APlayerState* Victim)
 {
 	ClientElimAnnouncement(Attacker, Victim);
@@ -730,6 +786,7 @@ void ABlasterPlayerController::BroadcastElim(APlayerState* Attacker, APlayerStat
 
 void ABlasterPlayerController::ClientElimAnnouncement_Implementation(APlayerState* Attacker, APlayerState* Victim)
 {
+	// 내가 포함된 킬로그는 you로 표시
 	const APlayerState* Self = GetPlayerState<APlayerState>();
 	if (Attacker && Victim && Self)
 	{
@@ -787,10 +844,12 @@ void ABlasterPlayerController::SetupInputComponent()
 
 	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 
+	// 기본 조작
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Look);
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Jump);
-	
+
+	// Blaster용 조작
 	EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &ThisClass::EquipButtonPressed);
 	EnhancedInputComponent->BindAction(SwapAction, ETriggerEvent::Started, this, &ThisClass::SwapButtonPressed);
 	EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::CrouchButtonPressed);
@@ -800,6 +859,8 @@ void ABlasterPlayerController::SetupInputComponent()
 	EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ThisClass::FireButtonReleased);
 	EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &ThisClass::ReloadButtonPressed);
 	EnhancedInputComponent->BindAction(ThrowGrenadeAction, ETriggerEvent::Started, this, &ThisClass::ThrowGrenadeButtonPressed);
+
+	// 시스템
 	EnhancedInputComponent->BindAction(QuitAction, ETriggerEvent::Started, this, &ThisClass::QuitButtonPressed);
 	EnhancedInputComponent->BindAction(ChatAction, ETriggerEvent::Started, this, &ThisClass::ChatButtonPressed);
 }
@@ -997,7 +1058,7 @@ void ABlasterPlayerController::QuitButtonPressed()
 void ABlasterPlayerController::ChatButtonPressed()
 {
 	BlasterHUD = BlasterHUD == nullptr ? Cast<ABlasterHUD>(GetHUD()) : BlasterHUD;
-	if (BlasterHUD)
+	if (BlasterHUD && BlasterHUD->CharacterOverlay)
 	{
 		BlasterHUD->CharacterOverlay->SetChatMode();
 

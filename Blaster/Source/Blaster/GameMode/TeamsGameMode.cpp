@@ -56,6 +56,32 @@ void ATeamsGameMode::Logout(AController* Exiting)
 	}
 }
 
+void ATeamsGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
+	ABlasterPlayerController* VictimController, ABlasterPlayerController* AttackerController)
+{
+	Super::PlayerEliminated(EliminatedCharacter, VictimController, AttackerController);
+	
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+	ABlasterPlayerState* AttackerPlayerState = AttackerController ? Cast<ABlasterPlayerState>(AttackerController->PlayerState) : nullptr;
+	ABlasterPlayerState* VictimPlayerState = VictimController ? Cast<ABlasterPlayerState>(VictimController->PlayerState) : nullptr;
+
+	// 팀킬인 경우 바로 리턴
+	if (AttackerPlayerState->GetTeam() == VictimPlayerState->GetTeam()) return;
+
+	// 팀 점수 획득
+	if (BlasterGameState && AttackerPlayerState)
+	{
+		if (AttackerPlayerState->GetTeam() == ETeam::ET_RedTeam)
+		{
+			BlasterGameState->RedTeamScores();
+		}
+		if (AttackerPlayerState->GetTeam() == ETeam::ET_BlueTeam)
+		{
+			BlasterGameState->BlueTeamScores();
+		}
+	}
+}
+
 void ATeamsGameMode::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
