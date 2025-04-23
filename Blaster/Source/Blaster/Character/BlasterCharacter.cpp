@@ -352,6 +352,10 @@ void ABlasterCharacter::DropOrDestroyWeapons()
 		{
 			DropOrDestroyWeapon(Combat->SecondaryWeapon);
 		}
+		if (Combat->TheFlag)
+		{
+			DropOrDestroyWeapon(Combat->TheFlag);
+		}
 	}
 }
 
@@ -594,8 +598,6 @@ void ABlasterCharacter::RotateInPlace(float DeltaTime)
 {
 	if (Combat && Combat->bHoldingTheFlag)
 	{
-		bUseControllerRotationYaw = false;
-		GetCharacterMovement()->bOrientRotationToMovement = true;
 		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 	}
 	// 서버에 의해 원격 조작되는 캐릭터는 SimProxiesTurn을 사용
@@ -632,7 +634,7 @@ float ABlasterCharacter::CalculateSpeed()
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
 {
-	if (Combat && Combat->EquippedWeapon == nullptr) return;
+	if (Combat && (Combat->EquippedWeapon == nullptr || Combat->bHoldingTheFlag)) return;
 	
 	float Speed = CalculateSpeed();
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
@@ -986,6 +988,7 @@ void ABlasterCharacter::EquipButtonPressed()
 {
 	if (Combat && Combat->CombatState == ECombatState::ECS_Unoccupied)
 	{
+		if (Combat->bHoldingTheFlag) return;
 		// 클라이언트가 Equip버튼을 누른 경우 서버에게 착용을 요청
 		ServerEquipButtonPressed();
 	}
@@ -1006,6 +1009,7 @@ void ABlasterCharacter::SwapButtonPressed()
 {
 	if (Combat && Combat->EquippedWeapon && Combat->CombatState == ECombatState::ECS_Unoccupied)
 	{
+		if (Combat->bHoldingTheFlag) return;
 		ServerSwapButtonPressed();
 		bool bSwap = Combat->ShouldSwapWeapons()
 			&& !HasAuthority()
@@ -1029,6 +1033,7 @@ void ABlasterCharacter::ServerSwapButtonPressed_Implementation()
 
 void ABlasterCharacter::CrouchButtonPressed()
 {
+	if (Combat && Combat->bHoldingTheFlag) return;
 	if (bIsCrouched)
 	{
 		UnCrouch();
@@ -1057,6 +1062,12 @@ void ABlasterCharacter::AimButtonReleased()
 
 void ABlasterCharacter::Jump()
 {
+	if (Combat && Combat->bHoldingTheFlag)
+	{
+		Super::Jump();
+		return;
+	}
+	
 	if (bIsCrouched)
 	{
 		UnCrouch();

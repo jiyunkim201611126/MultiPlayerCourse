@@ -33,7 +33,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME(UCombatComponent, CombatState);
 	DOREPLIFETIME(UCombatComponent, Grenades);
-	DOREPLIFETIME(UCombatComponent, bHoldingTheFlag);
+	DOREPLIFETIME(UCombatComponent, TheFlag);
 }
 
 void UCombatComponent::BeginPlay()
@@ -79,7 +79,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
-	if (EquippedWeapon == nullptr || Character == nullptr) return;
+	if (bHoldingTheFlag || EquippedWeapon == nullptr || Character == nullptr) return;
 	
 	// 일단 바로 변경, 아직 다른 클라이언트는 반영되지 않음
 	bFireButtonPressed = bPressed;
@@ -288,7 +288,7 @@ FVector_NetQuantize UCombatComponent::TraceUnderCrosshairs(FHitResult& TraceHitR
 		{
 			// 적팀인 경우 크로스헤어 빨간색으로 변경
 			TScriptInterface<IInteractWithCrosshairsInterface> HitActor = TraceHitResult.GetActor();
-			if ((HitActor && HitActor->GetTeam() != Character->GetTeam()) || Character->GetTeam() == ETeam::ET_NoTeam)
+			if (HitActor && (HitActor->GetTeam() != Character->GetTeam() || Character->GetTeam() == ETeam::ET_NoTeam))
 			{
 				HUDPackage.CrosshairsColor = FLinearColor(1.f, 0.f, 0.f, 0.7f);
 			}
@@ -444,7 +444,7 @@ void UCombatComponent::InterpFOV(float DeltaTime)
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
-	if (Character == nullptr || EquippedWeapon == nullptr) return;
+	if (bHoldingTheFlag || Character == nullptr || EquippedWeapon == nullptr) return;
 	
 	// 일단 바로 변경, 아직 다른 클라이언트는 반영되지 않음
 	bAiming = bIsAiming;
@@ -481,9 +481,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	{
 		Character->Crouch();
 		bHoldingTheFlag = true;
-		AttachFlagToLeftHand(WeaponToEquip);
 		WeaponToEquip->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachFlagToLeftHand(WeaponToEquip);
 		WeaponToEquip->SetOwner(Character);
+		TheFlag = WeaponToEquip;
+		Character->bUseControllerRotationYaw = false;
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 		return;
 	}
 	
@@ -497,11 +500,24 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 }
 
-void UCombatComponent::OnRep_HoldingTheFlag()
+void UCombatComponent::OnRep_TheFlag()
 {
-	if (bHoldingTheFlag && Character && Character->IsLocallyControlled())
+	if (TheFlag == nullptr)
+	{
+		bHoldingTheFlag = false;
+		return;
+	}
+	if (Character)
 	{
 		Character->Crouch();
+		bHoldingTheFlag = true;
+		TheFlag->SetWeaponState(EWeaponState::EWS_Equipped);
+		AttachFlagToLeftHand(TheFlag);
+		if (Character->IsLocallyControlled())
+		{
+			Character->bUseControllerRotationYaw = false;
+			Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
 	}
 }
 
@@ -852,7 +868,7 @@ void UCombatComponent::ClientUpdateCarriedAmmoMap_Implementation(EWeaponType Wea
 
 void UCombatComponent::ThrowGrenade()
 {
-	if (Grenades == 0 || CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
+	if (bHoldingTheFlag || Grenades == 0 || CombatState != ECombatState::ECS_Unoccupied || EquippedWeapon == nullptr) return;
 	
 	CombatState = ECombatState::ECS_ThrowingGrenade;
 	if (Character)

@@ -254,11 +254,14 @@ private:
 
 	void UpdateHUDGrenades();
 
-	UPROPERTY(ReplicatedUsing = OnRep_HoldingTheFlag)
+	UPROPERTY()
 	bool bHoldingTheFlag = false;
 
+	UPROPERTY(ReplicatedUsing = OnRep_TheFlag)
+	AWeapon* TheFlag;
+
 	UFUNCTION()
-	void OnRep_HoldingTheFlag();
+	void OnRep_TheFlag();
 
 public:
 	FORCEINLINE int32 GetGrenades() const { return Grenades; }

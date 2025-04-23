@@ -45,7 +45,7 @@ public:
 	void PlayFireMontage() const;
 	virtual void Fire(const FVector& HitTarget);
 	bool bCanFire = true;
-	void Dropped();
+	virtual void Dropped();
 	void AddAmmo(int32 AmmoToAdd);
 	
 	// 탄퍼짐을 적용한 수치로 라인 트레이스의 End 벡터를 계산하는 함수
