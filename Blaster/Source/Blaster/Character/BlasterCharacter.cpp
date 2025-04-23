@@ -592,10 +592,16 @@ void ABlasterCharacter::Tick(float DeltaTime)
 
 void ABlasterCharacter::RotateInPlace(float DeltaTime)
 {
+	if (Combat && Combat->bHoldingTheFlag)
+	{
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		TurningInPlace = ETurningInPlace::ETIP_NotTurning;
+	}
 	// 서버에 의해 원격 조작되는 캐릭터는 SimProxiesTurn을 사용
  	if (GetLocalRole() > ROLE_SimulatedProxy && IsLocallyControlled())
  	{
- 		AimOffset(DeltaTime);		
+ 		AimOffset(DeltaTime);
  	}
  	else
  	{

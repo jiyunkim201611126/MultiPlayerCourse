@@ -8,6 +8,7 @@
 #define CUSTOM_DEPTH_WHITE 0
 #define CUSTOM_DEPTH_BLUE 1
 #define CUSTOM_DEPTH_PURPLE 2
+#define CUSTOM_DEPTH_ORANGE 3
 
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
@@ -19,6 +20,7 @@ enum class EWeaponType : uint8
 	EWT_Shotgun UMETA(DisplayName = "Shotgun"),
 	EWT_SniperRifle UMETA(DisplayName = "Sniper Rifle"),
 	EWT_GrenadeLauncher UMETA(DisplayName = "Grenade Launcher"),
+	EWT_Flag UMETA(DisplayName = "Flag"),
 	
 	EWT_MAX UMETA(DisplayName = "DefualtMax"),
 };
@@ -30,6 +32,7 @@ enum class EWeaponGrade : uint8
 	EWG_Common = CUSTOM_DEPTH_WHITE			UMETA(DisplayName = "Common"),
 	EWG_Rare = CUSTOM_DEPTH_BLUE			UMETA(DisplayName = "Rare"),
 	EWG_Legendary = CUSTOM_DEPTH_PURPLE		UMETA(DisplayName = "Legendary"),
+	EWG_Myth = CUSTOM_DEPTH_ORANGE			UMETA(DisplayName = "Myth"),
 
 	EWG_MAX UMETA(DisplayName = "DefualtMax"),
 };
