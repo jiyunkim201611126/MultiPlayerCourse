@@ -387,6 +387,7 @@ public:
 	FORCEINLINE float GetMaxShield() const { return MaxShield; }
 	bool IsLocallyReloading();
 	FORCEINLINE ULagCompensationComponent* GetLagCompensation() const { return LagCompensation; }
+	FORCEINLINE bool IsHoldingTheFlag() const;
 	
 	float GetCameraFOV() const;
 	virtual ETeam GetTeam() override;

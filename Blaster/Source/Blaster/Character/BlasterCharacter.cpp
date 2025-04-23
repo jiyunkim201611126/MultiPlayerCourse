@@ -1160,6 +1160,12 @@ bool ABlasterCharacter::IsLocallyReloading()
 	return Combat->bLocallyReloading;
 }
 
+bool ABlasterCharacter::IsHoldingTheFlag() const
+{
+	if (Combat == nullptr) return false;
+	return Combat->bHoldingTheFlag;
+}
+
 float ABlasterCharacter::GetCameraFOV() const
 {
 	return FollowCamera->FieldOfView;
