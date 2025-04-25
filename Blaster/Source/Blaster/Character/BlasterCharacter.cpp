@@ -516,12 +516,12 @@ void ABlasterCharacter::Destroyed()
 	}
 }
 
-void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
+void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon, bool bOverlapped)
 {
 	if (IsLocallyControlled())
 	{
 		// 추가되는 경우
-		if (!OverlappingWeapons.Contains(Weapon))
+		if (!OverlappingWeapons.Contains(Weapon) && bOverlapped)
 		{
 			if (!OverlappingWeapons.IsEmpty() && OverlappingWeapons.Top())
 			{
@@ -533,7 +533,7 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 			Weapon->ShowPickupWidget(true);
 		}
 		// 제외되는 경우
-		else
+		else if (OverlappingWeapons.Contains(Weapon) && !bOverlapped)
 		{
 			if (OverlappingWeapons.Num() == 1)
 			{
@@ -561,12 +561,12 @@ void ABlasterCharacter::SetOverlappingWeapon(AWeapon* Weapon)
 	else
 	{
 		// 추가되는 경우
-		if (!OverlappingWeapons.Contains(Weapon))
+		if (!OverlappingWeapons.Contains(Weapon) && bOverlapped)
 		{
 			OverlappingWeapons.Emplace(Weapon);
 		}
 		// 제외되는 경우
-		else
+		else if (OverlappingWeapons.Contains(Weapon) && !bOverlapped)
 		{
 			OverlappingWeapons.Remove(Weapon);
 		}

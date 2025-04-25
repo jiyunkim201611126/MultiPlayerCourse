@@ -363,7 +363,7 @@ public:
 	
 public:
 	// Getter, Setter
-	void SetOverlappingWeapon(AWeapon* Weapon);
+	void SetOverlappingWeapon(AWeapon* Weapon, bool bOverlapped);
 	bool IsWeaponEquipped();
 	bool IsAiming();
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }

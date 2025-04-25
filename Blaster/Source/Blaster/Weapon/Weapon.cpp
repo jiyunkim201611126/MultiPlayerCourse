@@ -77,9 +77,9 @@ void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent,	AActor* 
                               bool bFromSweep, const FHitResult& SweepResult)
 {
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter)
+	if (BlasterCharacter && !BlasterCharacter->IsHoldingTheFlag())
 	{
-		BlasterCharacter->SetOverlappingWeapon(this);
+		BlasterCharacter->SetOverlappingWeapon(this, true);
 	}
 }
 
@@ -87,9 +87,9 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter)
+	if (BlasterCharacter && !BlasterCharacter->IsHoldingTheFlag())
 	{
-		BlasterCharacter->SetOverlappingWeapon(this);
+		BlasterCharacter->SetOverlappingWeapon(this, false);
 	}
 }
 
