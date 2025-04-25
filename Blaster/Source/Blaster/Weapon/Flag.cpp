@@ -1,6 +1,7 @@
 ﻿#include "Flag.h"
 
 #include "Blaster/Blaster.h"
+#include "Blaster/Interfaces/InteractWithCrosshairsInterface.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
@@ -57,5 +58,27 @@ void AFlag::OnDropped()
 	FlagMesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	FlagMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	FlagMesh->SetCollisionResponseToChannel(ECC_HitBox, ECR_Ignore);
+}
+
+void AFlag::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	TScriptInterface<IInteractWithCrosshairsInterface> Character = OtherActor;
+
+	if (Character && Character->GetTeam() == Team)
+	{
+		Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+	}
+}
+
+void AFlag::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	TScriptInterface<IInteractWithCrosshairsInterface> Character = OtherActor;
+
+	if (Character && Character->GetTeam() == Team)
+	{
+		Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+	}
 }
 

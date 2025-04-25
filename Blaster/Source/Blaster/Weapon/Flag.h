@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Weapon.h"
+#include "Blaster/BlasterTypes/Team.h"
 #include "Flag.generated.h"
 
 UCLASS()
@@ -19,7 +20,24 @@ protected:
 	virtual void OnEquipped() override;
 	virtual void OnDropped() override;
 
+	virtual void OnSphereOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult) override;
+	
+	virtual void OnSphereEndOverlap(
+		UPrimitiveComponent* OverlappedComponent,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex) override;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* FlagMesh;
+
+	UPROPERTY(EditAnywhere)
+	ETeam Team;
 };
