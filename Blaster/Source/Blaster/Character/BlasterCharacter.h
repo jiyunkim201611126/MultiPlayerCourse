@@ -22,12 +22,8 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-	void UpdatePlayerName() const;
+	
 	void Elim(bool bPlayerLeftGame);
-	void DropOrDestroyWeapons();
-	void DropOrDestroyWeapon(class AWeapon* Weapon);
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastElim(bool bPlayerLeftGame);
 	virtual void Destroyed() override;
 	
 	virtual void Tick(float DeltaTime) override;
@@ -61,7 +57,7 @@ public:
 
 	// Overlap될 때 변수 자체는 서버와 클라이언트 모두가 변경되지만, 콜백 함수는 겹친 클라이언트의 인스턴스에서만 호출.
 	UPROPERTY(ReplicatedUsing = OnRep_OverlappingWeapons)
-	TArray<AWeapon*> OverlappingWeapons;
+	TArray<class AWeapon*> OverlappingWeapons;
 	
 	void UpdateHUDHealth();
 	void UpdateHUDShield();
@@ -98,6 +94,9 @@ protected:
 	
 	// 시작 시 우상단 Score를 Refresh하기 위한 함수
 	void PollInit();
+
+	void OnPlayerStateInitialize(class ABlasterPlayerState* BlasterPlayerState);
+	void SetSpawnPoint(ETeam Team);
 	
 private:
 	UPROPERTY()
@@ -111,6 +110,8 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;
+	
+	void UpdatePlayerName() const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UCombatComponent* Combat;
@@ -205,7 +206,10 @@ private:
 
 	/**
 	 * Elim
-	 */
+	*/
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastElim(bool bPlayerLeftGame);
 	
 	bool bElimmed = false;
 
@@ -217,6 +221,10 @@ private:
 	void ElimTimerFinished();
 
 	bool bLeftGame = false;
+
+	// 무기 드랍
+	void DropOrDestroyWeapons();
+	void DropOrDestroyWeapon(class AWeapon* Weapon);
 
 	/**
 	 * Dissolve effect

@@ -2,6 +2,9 @@
 #include "Blaster/GameState/BlasterGameState.h"
 #include "Blaster/PlayerState/BlasterPlayerState.h"
 #include "Blaster/PlayerController/BlasterPlayerController.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/PlayerStart.h"
+#include "Kismet/GameplayStatics.h"
 
 ATeamsGameMode::ATeamsGameMode()
 {
@@ -79,6 +82,33 @@ void ATeamsGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter,
 		{
 			BlasterGameState->BlueTeamScores();
 		}
+	}
+}
+
+void ATeamsGameMode::RequestRespawn(ACharacter* ElimmedCharacter, AController* ElimmedController)
+{
+	if (ElimmedCharacter)
+	{
+		ElimmedCharacter->Reset();
+		ElimmedCharacter->Destroy();
+	}
+	
+	if (ElimmedController && MatchState == MatchState::InProgress)
+	{
+		TArray<AActor*> PlayerStarts;
+		UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
+
+		TArray<FVector> PlayerLocations;
+		for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+		{
+			APlayerController* PlayerController = It->Get();
+			if (PlayerController && PlayerController != ElimmedController && PlayerController->GetPawn())
+			{
+				PlayerLocations.Add(PlayerController->GetFocalLocation());
+			}
+		}
+		
+		RestartPlayer(ElimmedController);
 	}
 }
 
