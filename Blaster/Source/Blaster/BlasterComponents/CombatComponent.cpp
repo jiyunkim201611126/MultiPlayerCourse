@@ -502,22 +502,35 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_TheFlag()
 {
+	if (Character == nullptr) return;
 	if (TheFlag == nullptr)
 	{
 		bHoldingTheFlag = false;
-		return;
-	}
-	if (Character)
-	{
-		Character->Crouch();
-		bHoldingTheFlag = true;
-		TheFlag->SetWeaponState(EWeaponState::EWS_Equipped);
-		AttachFlagToLeftHand(TheFlag);
+		Character->UnCrouch();
 		if (Character->IsLocallyControlled())
 		{
-			Character->bUseControllerRotationYaw = false;
-			Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+			if (Character->GetEquippedWeapon())
+			{
+				Character->bUseControllerRotationYaw = true;
+				Character->GetCharacterMovement()->bOrientRotationToMovement = false;
+			}
+			else
+			{
+				Character->bUseControllerRotationYaw = false;
+				Character->GetCharacterMovement()->bOrientRotationToMovement = true;
+			}
 		}
+		return;
+	}
+	
+	Character->Crouch();
+	bHoldingTheFlag = true;
+	TheFlag->SetWeaponState(EWeaponState::EWS_Equipped);
+	AttachFlagToLeftHand(TheFlag);
+	if (Character->IsLocallyControlled())
+	{
+		Character->bUseControllerRotationYaw = false;
+		Character->GetCharacterMovement()->bOrientRotationToMovement = true;
 	}
 }
 

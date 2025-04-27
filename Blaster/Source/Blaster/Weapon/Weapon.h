@@ -187,6 +187,7 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 	virtual void OnWeaponStateSet();
+	virtual void OnInitial();
 	virtual void OnEquipped();
 	virtual void OnEquippedSecondary();
 	virtual void OnDropped();

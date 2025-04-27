@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Blaster/Character/BlasterCharacter.h"
 
 AFlag::AFlag()
 {
@@ -18,6 +19,13 @@ AFlag::AFlag()
 	SetRootComponent(FlagMesh);
 	GetAreaSphere()->SetupAttachment(FlagMesh);
 	GetPickupWidget()->SetupAttachment(FlagMesh);
+}
+
+void AFlag::BeginPlay()
+{
+	Super::BeginPlay();
+
+	InitialTransform = GetActorTransform();
 }
 
 void AFlag::OnConstruction(const FTransform& Transform)
@@ -36,13 +44,34 @@ void AFlag::Dropped()
 	BlasterOwnerController = nullptr;
 }
 
+void AFlag::ResetFlag()
+{
+	ABlasterCharacter* FlagBearer = Cast<ABlasterCharacter>(GetOwner());
+	if (FlagBearer)
+	{
+		SetWeaponState(EWeaponState::EWS_Initial);
+		FDetachmentTransformRules DetachRules(EDetachmentRule::KeepWorld, true);
+		FlagMesh->DetachFromComponent(DetachRules);
+		
+		FlagBearer->SetHoldingTheFlag(false);
+		FlagBearer->CrouchButtonPressed();
+		
+		SetOwner(nullptr);
+		BlasterOwnerCharacter = nullptr;
+		BlasterOwnerController = nullptr;
+
+		SetActorTransform(InitialTransform);
+	}
+}
+
 void AFlag::OnEquipped()
 {
 	ShowPickupWidget(false);
 	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FlagMesh->SetSimulatePhysics(false);
 	FlagMesh->SetEnableGravity(false);
-	FlagMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FlagMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	FlagMesh->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
 }
 
 void AFlag::OnDropped()
@@ -61,11 +90,11 @@ void AFlag::OnDropped()
 }
 
 void AFlag::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+                            UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	TScriptInterface<IInteractWithCrosshairsInterface> Character = OtherActor;
 
-	if (Character && Character->GetTeam() == Team)
+	if (Character && Character->GetTeam() != Team)
 	{
 		Super::OnSphereOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 	}
@@ -76,7 +105,7 @@ void AFlag::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor*
 {
 	TScriptInterface<IInteractWithCrosshairsInterface> Character = OtherActor;
 
-	if (Character && Character->GetTeam() == Team)
+	if (Character && Character->GetTeam() != Team)
 	{
 		Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
 	}

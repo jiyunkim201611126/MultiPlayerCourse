@@ -1230,3 +1230,24 @@ ETeam ABlasterCharacter::GetTeam()
 	
 	return ETeam::ET_NoTeam;
 }
+
+void ABlasterCharacter::SetHoldingTheFlag(bool bHolding)
+{
+	if (Combat == nullptr) return;
+	
+	Combat->bHoldingTheFlag = bHolding;
+	if (!bHolding)
+	{
+		Combat->TheFlag = nullptr;
+		if (GetEquippedWeapon())
+		{
+			bUseControllerRotationYaw = true;
+			GetCharacterMovement()->bOrientRotationToMovement = false;
+		}
+		else
+		{
+			bUseControllerRotationYaw = false;
+			GetCharacterMovement()->bOrientRotationToMovement = true;
+		}
+	}
+}

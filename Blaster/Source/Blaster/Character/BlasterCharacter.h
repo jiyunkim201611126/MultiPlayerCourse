@@ -399,4 +399,5 @@ public:
 	
 	float GetCameraFOV() const;
 	virtual ETeam GetTeam() override;
+	void SetHoldingTheFlag(bool bHolding);
 };

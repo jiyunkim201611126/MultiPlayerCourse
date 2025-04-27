@@ -14,8 +14,10 @@ public:
 	AFlag();
 	
 	virtual void Dropped() override;
+	void ResetFlag();
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void OnEquipped() override;
 	virtual void OnDropped() override;
@@ -40,4 +42,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	ETeam Team;
+
+	FTransform InitialTransform;
+
+public:
+	FORCEINLINE ETeam GetTeam() const { return Team; }
+	FORCEINLINE FTransform GetInitialTransform() const { return InitialTransform; }
 };

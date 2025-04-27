@@ -87,7 +87,7 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor);
-	if (BlasterCharacter && !BlasterCharacter->IsHoldingTheFlag())
+	if (BlasterCharacter)
 	{
 		BlasterCharacter->SetOverlappingWeapon(this, false);
 	}
@@ -112,6 +112,9 @@ void AWeapon::OnWeaponStateSet()
 {
 	switch (WeaponState)
 	{
+	case EWeaponState::EWS_Initial:
+		OnInitial();
+		break;
 	case EWeaponState::EWS_Equipped:
 		OnEquipped();
 		break;
@@ -121,6 +124,15 @@ void AWeapon::OnWeaponStateSet()
 	case EWeaponState::EWS_Dropped:
 		OnDropped();
 		break;
+	}
+}
+
+void AWeapon::OnInitial()
+{
+	// Flag에서 사용
+	if (HasAuthority())
+	{
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	}
 }
 
