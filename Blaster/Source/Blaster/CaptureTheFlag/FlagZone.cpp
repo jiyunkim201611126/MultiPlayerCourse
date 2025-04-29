@@ -29,6 +29,8 @@ void AFlagZone::OnSphereOverlap(
 	bool bFromSweep,
 	const FHitResult& SweepResult)
 {
+	// Overlap 이벤트는 당연히 서버만 확인
+	// 상대 진영 Flag를 본인의 진영으로 가져오면 점수 증가 
 	AFlag* OverlappingFlag = Cast<AFlag>(OtherActor);
 	if (OverlappingFlag && OverlappingFlag->GetTeam() != Team)
 	{

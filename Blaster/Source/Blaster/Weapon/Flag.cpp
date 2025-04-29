@@ -25,6 +25,7 @@ void AFlag::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 제자리로 돌아갈 때 사용할 Transform 초기화
 	InitialTransform = GetActorTransform();
 }
 

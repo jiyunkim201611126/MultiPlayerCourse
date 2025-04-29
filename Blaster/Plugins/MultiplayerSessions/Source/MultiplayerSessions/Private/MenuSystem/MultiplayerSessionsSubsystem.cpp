@@ -20,6 +20,8 @@ StartSessionCompleteDelegate(FOnStartSessionCompleteDelegate::CreateUObject(this
 
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
+	DesiredMatchType = MatchType;
+	
 	if (!SessionInterface.IsValid())
 	{
 		return;

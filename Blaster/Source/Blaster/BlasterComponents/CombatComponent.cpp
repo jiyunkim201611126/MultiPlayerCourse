@@ -503,6 +503,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 void UCombatComponent::OnRep_TheFlag()
 {
 	if (Character == nullptr) return;
+
+	// Flag를 Drop하거나 점수 획득에 성공한 경우
 	if (TheFlag == nullptr)
 	{
 		bHoldingTheFlag = false;
@@ -522,7 +524,8 @@ void UCombatComponent::OnRep_TheFlag()
 		}
 		return;
 	}
-	
+
+	// Flag를 습득한 경우
 	Character->Crouch();
 	bHoldingTheFlag = true;
 	TheFlag->SetWeaponState(EWeaponState::EWS_Equipped);

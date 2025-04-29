@@ -1,18 +1,12 @@
 #include "LobbyGameMode.h"
 #include "GameFramework/GameStateBase.h"
 
-void ALobbyGameMode::PostLogin(APlayerController* NewPlayer)
+void ALobbyGameMode::StartGame()
 {
-	Super::PostLogin(NewPlayer);
-
-	int32 NumberOfPlayer = GameState.Get()->PlayerArray.Num();
-	if (NumberOfPlayer == 2)
+	UWorld* World = GetWorld();
+	if (World)
 	{
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			bUseSeamlessTravel = true;
-			World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
-		}
+		bUseSeamlessTravel = true;
+		World->ServerTravel(FString("/Game/Maps/BlasterMap?listen"));
 	}
 }
